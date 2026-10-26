@@ -1,9 +1,9 @@
 /** Adaptador DOM del canvas. Resolución interna fija; el CSS se encarga del escalado 16:9. */
 
+import { VIEWPORT } from '../config/balance';
 import { withAlpha } from './color';
-import type { Viewport } from './types';
 
-export const VIEWPORT: Viewport = { width: 1280, height: 720 };
+export { VIEWPORT };
 
 /** Obtiene el contexto 2D del canvas del juego o lanza un error claro. */
 export function getGameContext(canvasId = 'game-canvas'): CanvasRenderingContext2D {

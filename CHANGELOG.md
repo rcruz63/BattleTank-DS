@@ -9,6 +9,10 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 ### Añadido
 
+- Mundo en rejilla de 4 m con materiales destructibles e indestructibles, borde cerrado y
+  generación procedural determinista validada (alcanzabilidad, spawns con distancias mínimas).
+- Escena de coberturas como prismas con culling, recorte, sombreado plano, niebla, rejilla de suelo
+  y escombros bajos al destruirlas; demo visual temporal en `main.ts`.
 - Pipeline de render: cámara de periscopio, proyección perspectiva, recorte de plano cercano,
   algoritmo del pintor por profundidad, utilidades de color y niebla, y adaptador de canvas; 21
   tests unitarios.
