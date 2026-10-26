@@ -9,6 +9,9 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 ### Añadido
 
+- Pipeline de render: cámara de periscopio, proyección perspectiva, recorte de plano cercano,
+  algoritmo del pintor por profundidad, utilidades de color y niebla, y adaptador de canvas; 21
+  tests unitarios.
 - Núcleo del juego: utilidades matemáticas (ángulos, interpolación, vectores 2D/3D), generador
   pseudoaleatorio determinista, bucle de simulación de paso fijo con interpolación de render y
   bus de eventos tipado, con 29 tests unitarios.

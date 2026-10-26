@@ -1,7 +1,7 @@
 # Estado del proyecto — BattleTank-DS
 
-> **Actualizado:** 2026-10-26 · **Fase actual:** 2 — Render
-> **Último commit:** `feat(core): matemáticas, rng determinista y bucle de paso fijo`
+> **Actualizado:** 2026-10-26 · **Fase actual:** 3 — Mundo y escena
+> **Último commit:** `feat(render): pipeline de cámara, proyección, recorte y painter`
 >
 > Este fichero es el punto de entrada para retomar el proyecto, sea otra persona, otro chat u
 > otro modelo. Se actualiza en **cada commit**. La verdad sobre el alcance está en el plan.
@@ -16,6 +16,9 @@
 
 ## Hecho
 
+- [x] **Fase 2 — Render.** Cámara con base ortonormal y proyección, recorte de plano cercano para
+      polígonos y segmentos, painter's algorithm, mezcla de colores/niebla y adaptador de canvas;
+      21 tests en `tests/render/`.
 - [x] **Fase 1 — Núcleo.** `src/core/math.ts` (ángulos, vectores 2D/3D), `src/core/rng.ts`
       (mulberry32 determinista), `src/core/loop.ts` (paso fijo con interpolación y protección
       anti-espiral) y `src/core/events.ts` (bus tipado); 29 tests unitarios en `tests/core/`.
@@ -28,15 +31,16 @@
 
 ## En curso
 
-- [ ] **Fase 2 — Render.** Canvas escalado, cámara, proyección, recorte de plano cercano,
-      sombreado plano, niebla y painter's algorithm (`src/render/`).
+- [ ] **Fase 3 — Mundo y escena.** Rejilla de celdas, generación procedural validada, prismas de
+      coberturas, rejilla de suelo, culling y escena unida (`src/world/`, `src/render/scene.ts`).
 
 ## Pendiente (por fases)
 
 | Fase | Contenido | Estado |
 |---|---|---|
 | 1 | Núcleo: matemáticas, RNG, bucle de paso fijo y bus de eventos | Completada |
-| 2 | Render: canvas, cámara, proyección, recorte, painter y niebla | En curso |
+| 2 | Render: canvas, cámara, proyección, recorte, painter y niebla | Completada |
+| 3 | Mundo: rejilla, generación procedural validada, escena de prismas | En curso |
 | 3 | Mundo: rejilla, generación procedural validada, escena de prismas | Pendiente |
 | 4 | Jugador: movimiento solidario, colisión, cámara de periscopio | Pendiente |
 | 5 | Combate: disparo, recarga, proyectiles, impactos y escombros | Pendiente |
