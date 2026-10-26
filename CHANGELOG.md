@@ -9,6 +9,9 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 ### Añadido
 
+- Núcleo del juego: utilidades matemáticas (ángulos, interpolación, vectores 2D/3D), generador
+  pseudoaleatorio determinista, bucle de simulación de paso fijo con interpolación de render y
+  bus de eventos tipado, con 29 tests unitarios.
 - Bootstrap del proyecto con Vite, TypeScript estricto, Vitest, ESLint y Prettier; scripts de
   desarrollo, build, test y puerta de calidad `npm run check`.
 - Límites duros de tamaño y complejidad en ESLint, incluida la prohibición de bucles anidados.

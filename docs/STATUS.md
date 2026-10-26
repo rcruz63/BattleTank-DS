@@ -1,7 +1,7 @@
 # Estado del proyecto — BattleTank-DS
 
-> **Actualizado:** 2026-10-26 · **Fase actual:** 1 — Núcleo
-> **Último commit:** `chore: bootstrap vite+ts, lint, tests y documentación base`
+> **Actualizado:** 2026-10-26 · **Fase actual:** 2 — Render
+> **Último commit:** `feat(core): matemáticas, rng determinista y bucle de paso fijo`
 >
 > Este fichero es el punto de entrada para retomar el proyecto, sea otra persona, otro chat u
 > otro modelo. Se actualiza en **cada commit**. La verdad sobre el alcance está en el plan.
@@ -16,6 +16,9 @@
 
 ## Hecho
 
+- [x] **Fase 1 — Núcleo.** `src/core/math.ts` (ángulos, vectores 2D/3D), `src/core/rng.ts`
+      (mulberry32 determinista), `src/core/loop.ts` (paso fijo con interpolación y protección
+      anti-espiral) y `src/core/events.ts` (bus tipado); 29 tests unitarios en `tests/core/`.
 - [x] **Fase 0 — Bootstrap.** Vite + TypeScript estricto + Vitest + ESLint + Prettier; canvas y
       HUD base en `index.html`/`src/ui/styles.css`; scripts `dev/build/preview/typecheck/lint/test/check`;
       límites duros de tamaño/complejidad activos en ESLint, incluida la prohibición de bucles anidados.
@@ -25,14 +28,15 @@
 
 ## En curso
 
-- [ ] **Fase 1 — Núcleo.** Bucle de paso fijo, matemáticas 2D/3D, RNG determinista, bus de
-      eventos y sus tests (`tests/core/*.test.ts`).
+- [ ] **Fase 2 — Render.** Canvas escalado, cámara, proyección, recorte de plano cercano,
+      sombreado plano, niebla y painter's algorithm (`src/render/`).
 
 ## Pendiente (por fases)
 
 | Fase | Contenido | Estado |
 |---|---|---|
-| 2 | Render: canvas, cámara, proyección, recorte, painter y niebla | Pendiente |
+| 1 | Núcleo: matemáticas, RNG, bucle de paso fijo y bus de eventos | Completada |
+| 2 | Render: canvas, cámara, proyección, recorte, painter y niebla | En curso |
 | 3 | Mundo: rejilla, generación procedural validada, escena de prismas | Pendiente |
 | 4 | Jugador: movimiento solidario, colisión, cámara de periscopio | Pendiente |
 | 5 | Combate: disparo, recarga, proyectiles, impactos y escombros | Pendiente |
