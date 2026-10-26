@@ -10,6 +10,8 @@ export interface MaterialDefinition {
   readonly maxHealth: number;
   /** Altura en metros. Debe superar la altura del ojo para ocultar la visión. */
   readonly height: number;
+  /** Altura de los escombros una vez destruida (no oculta ni bloquea). */
+  readonly rubbleHeight: number;
   readonly color: string;
   readonly rubbleColor: string;
 }
@@ -21,6 +23,7 @@ export const MATERIALS: Readonly<Record<MaterialId, MaterialDefinition>> = {
     destructible: true,
     maxHealth: 40,
     height: 2.4,
+    rubbleHeight: 0.35,
     color: '#8a6a3f',
     rubbleColor: '#4c3b23',
   },
@@ -30,6 +33,7 @@ export const MATERIALS: Readonly<Record<MaterialId, MaterialDefinition>> = {
     destructible: true,
     maxHealth: 90,
     height: 3,
+    rubbleHeight: 0.45,
     color: '#8c4b3a',
     rubbleColor: '#573128',
   },
@@ -39,6 +43,7 @@ export const MATERIALS: Readonly<Record<MaterialId, MaterialDefinition>> = {
     destructible: false,
     maxHealth: Number.POSITIVE_INFINITY,
     height: 3.2,
+    rubbleHeight: 0.5,
     color: '#86867c',
     rubbleColor: '#56564f',
   },
@@ -48,6 +53,7 @@ export const MATERIALS: Readonly<Record<MaterialId, MaterialDefinition>> = {
     destructible: false,
     maxHealth: Number.POSITIVE_INFINITY,
     height: 3.4,
+    rubbleHeight: 0.5,
     color: '#5d666b',
     rubbleColor: '#3d4448',
   },

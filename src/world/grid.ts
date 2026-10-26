@@ -68,6 +68,14 @@ export function damageObstacle(
   return obstacle.health === 0;
 }
 
+/** Altura física de la celda: altura de la cobertura o de sus escombros; 0 si está libre. */
+export function obstacleHeightAt(grid: WorldGrid, x: number, z: number): number {
+  const obstacle = getObstacle(grid, x, z);
+  if (!obstacle) return 0;
+  const material = MATERIALS[obstacle.material];
+  return obstacle.health > 0 ? material.height : material.rubbleHeight;
+}
+
 /** Centro en coordenadas de mundo de una celda. */
 export function cellCenter(grid: WorldGrid, x: number, z: number): WorldPoint {
   return {

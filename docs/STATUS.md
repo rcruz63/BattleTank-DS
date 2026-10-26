@@ -1,7 +1,7 @@
 # Estado del proyecto — BattleTank-DS
 
-> **Actualizado:** 2026-10-26 · **Fase actual:** 5 — Combate
-> **Último commit:** `feat(player): movimiento solidario, colisión y cámara de periscopio`
+> **Actualizado:** 2026-10-26 · **Fase actual:** 6 — Enemigos e IA
+> **Último commit:** `feat(combat): disparo, recarga, proyectiles e impactos`
 >
 > Este fichero es el punto de entrada para retomar el proyecto, sea otra persona, otro chat u
 > otro modelo. Se actualiza en **cada commit**. La verdad sobre el alcance está en el plan.
@@ -16,6 +16,10 @@
 
 ## Hecho
 
+- [x] **Fase 5 — Combate.** Disparo con recarga de 2,4 s y flanco, proyectiles en subpasos con
+      colisión contra coberturas y blancos, daño por material (madera 1 impacto, ladrillo 3,
+      hormigón/acero inmunes), escombros que dejan pasar los proyectiles, retroceso de cámara,
+      fogonazo, marca de impacto y anillo de recarga con segundos. 100 tests en verde.
 - [x] **Fase 4 — Jugador.** Entrada de teclado (WASD/flechas, disparo de flanco), movimiento
       solidario con giro del casco, colisión círculo-rejilla con deslizamiento y subpasos, cámara de
       periscopio y overlay procedural (máscara, mira, cañón y casco); `createGame` cablea el bucle.
@@ -39,8 +43,9 @@
 
 ## En curso
 
-- [ ] **Fase 5 — Combate.** Disparo con recarga, proyectiles, impactos, daño a coberturas, retroceso
-      y feedback (anillo de recarga, destellos) (`src/systems/combat.ts`, `src/entities/bullet.ts`).
+- [ ] **Fase 6 — Enemigos e IA.** Tanques Panzer III/Tiger I, línea de visión por rejilla, A*, máquina
+      de estados de combate, proyectiles enemigos, daño al jugador y render de tanques (`src/entities/enemy.ts`,
+      `src/systems/ai.ts`, `src/world/los.ts`, `src/world/pathfind.ts`, `src/render/models.ts`).
 
 ## Pendiente (por fases)
 
@@ -50,7 +55,8 @@
 | 2 | Render: canvas, cámara, proyección, recorte, painter y niebla | Completada |
 | 3 | Mundo: rejilla, generación procedural validada, escena de prismas | Completada |
 | 4 | Jugador: movimiento solidario, colisión, cámara de periscopio | Completada |
-| 5 | Combate: disparo, recarga, proyectiles, impactos y escombros | En curso |
+| 5 | Combate: disparo, recarga, proyectiles, impactos y escombros | Completada |
+| 6 | Enemigos: modelos, IA con LOS/A*, dificultad por parámetros | En curso |
 | 3 | Mundo: rejilla, generación procedural validada, escena de prismas | Pendiente |
 | 4 | Jugador: movimiento solidario, colisión, cámara de periscopio | Pendiente |
 | 5 | Combate: disparo, recarga, proyectiles, impactos y escombros | Pendiente |
@@ -71,7 +77,7 @@
 - El audio se sintetiza con WebAudio: no habrá ficheros de audio ni assets externos.
 - La interfaz y la documentación van en español; los identificadores del código, en inglés.
 - `main.ts` ya arranca el juego real (`createGame`): se puede recorrer el escenario con WASD.
-  El HUD funcional y los enemigos llegan en las fases 6-8; el texto de estado actual es temporal.
+  El HUD funcional y la IA de enemigos llegan en las fases 6-8; el texto de estado actual es temporal.
 - `main.ts` dibuja todavía una pantalla de arranque; se sustituirá por el bucle real en la fase 1.
 
 ## Comandos de referencia

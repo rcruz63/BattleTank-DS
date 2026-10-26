@@ -18,8 +18,6 @@ import { clipPolygonNearPlane } from './clip';
 import { mixHexColors, shadeHexColor } from './color';
 import type { PerspectiveCamera, RenderFace, ScreenPoint, Viewport } from './types';
 
-const RUBBLE_HEIGHT = 0.35;
-
 interface WorldFace {
   readonly points: readonly Vec3[];
   readonly normal: Vec3;
@@ -152,17 +150,21 @@ function wallFaces(options: WallFacesOptions): WorldFace[] {
 }
 
 /** Escombros bajos de una cobertura destruida: ya no ocultan la visión. */
-function rubbleFaces(
-  grid: WorldGrid,
-  x: number,
-  z: number,
-  color: string,
-): WorldFace[] {
+interface RubbleFacesOptions {
+  readonly grid: WorldGrid;
+  readonly x: number;
+  readonly z: number;
+  readonly color: string;
+  readonly height: number;
+}
+
+function rubbleFaces(options: RubbleFacesOptions): WorldFace[] {
+  const { grid, x, z, color, height } = options;
   const bounds = cellBounds(grid, x, z);
   const sides = SIDE_DEFINITIONS.map((definition) =>
-    sideFace(definition, bounds, RUBBLE_HEIGHT, color),
+    sideFace(definition, bounds, height, color),
   );
-  return [...sides, topFace(bounds, RUBBLE_HEIGHT, color)];
+  return [...sides, topFace(bounds, height, color)];
 }
 
 function obstacleFaces(
@@ -172,7 +174,15 @@ function obstacleFaces(
   obstacle: CellObstacle,
 ): WorldFace[] {
   const material = MATERIALS[obstacle.material];
-  if (obstacle.health <= 0) return rubbleFaces(grid, x, z, material.rubbleColor);
+  if (obstacle.health <= 0) {
+    return rubbleFaces({
+      grid,
+      x,
+      z,
+      color: material.rubbleColor,
+      height: material.rubbleHeight,
+    });
+  }
   return wallFaces({ grid, x, z, height: material.height, color: material.color });
 }
 

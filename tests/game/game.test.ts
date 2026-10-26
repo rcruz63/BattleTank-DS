@@ -12,6 +12,21 @@ describe('composición del juego', () => {
     game.dispose();
   });
 
+  it('dispara, consume el flanco y entra en recarga', () => {
+    const input = createInputState();
+    const game = createGame({ seed: 42, input, bindInput: false });
+
+    input.handleKeyDown('Space');
+    game.update(1 / 60);
+    expect(game.bullets).toHaveLength(1);
+    expect(game.player.reloadRemaining).toBeGreaterThan(0);
+
+    game.update(1 / 60);
+    expect(game.bullets).toHaveLength(1);
+
+    game.dispose();
+  });
+
   it('responde a la entrada de avance y giro', () => {
     const input = createInputState();
     const game = createGame({ seed: 42, input, bindInput: false });

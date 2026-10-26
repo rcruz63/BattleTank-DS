@@ -1,9 +1,10 @@
 /**
- * Overlay del periscopio: máscara oscura, mira y silueta del cañón/casco.
+ * Overlay del periscopio: máscara oscura, mira, recarga, destellos y silueta del cañón/casco.
  *
- * Se pinta después del mundo. El HUD (vida, progreso, radar…) es DOM y vive en `src/ui/`.
+ * Se pinta después del mundo. El HUD de misión (vida, progreso, radar…) es DOM y vive en `src/ui/`.
  */
 
+import { clamp } from '../core/math';
 import { VIEWPORT } from '../config/balance';
 import { PALETTE } from '../config/palette';
 import { withAlpha } from './color';
@@ -12,6 +13,25 @@ import type { Viewport } from './types';
 const TOP_MASK = 58;
 const BOTTOM_MASK = 118;
 const SIDE_MASK = 64;
+
+export interface PeriscopeState {
+  /** 0 = recién disparado; 1 = listo. */
+  readonly reloadProgress: number;
+  readonly reloadRemaining: number;
+  readonly ready: boolean;
+  /** 0..1, intensidad del fogonazo. */
+  readonly muzzleFlash: number;
+  /** 0..1, intensidad de la marca de impacto. */
+  readonly hitMarker: number;
+}
+
+const READY_STATE: PeriscopeState = {
+  reloadProgress: 1,
+  reloadRemaining: 0,
+  ready: true,
+  muzzleFlash: 0,
+  hitMarker: 0,
+};
 
 function drawMask(context: CanvasRenderingContext2D, viewport: Viewport): void {
   const { width, height } = viewport;
@@ -34,6 +54,29 @@ function drawMask(context: CanvasRenderingContext2D, viewport: Viewport): void {
     width - 2 * SIDE_MASK - 2,
     height - TOP_MASK - BOTTOM_MASK - 2,
   );
+}
+
+function drawHullEdges(context: CanvasRenderingContext2D, viewport: Viewport): void {
+  const { width, height } = viewport;
+  context.fillStyle = 'rgba(6, 8, 5, 0.9)';
+
+  context.beginPath();
+  context.moveTo(0, height);
+  context.lineTo(0, height - 170);
+  context.lineTo(width * 0.24, height - 96);
+  context.lineTo(width * 0.24, height - BOTTOM_MASK);
+  context.lineTo(0, height);
+  context.closePath();
+  context.fill();
+
+  context.beginPath();
+  context.moveTo(width, height);
+  context.lineTo(width, height - 170);
+  context.lineTo(width * 0.76, height - 96);
+  context.lineTo(width * 0.76, height - BOTTOM_MASK);
+  context.lineTo(width, height);
+  context.closePath();
+  context.fill();
 }
 
 function drawGunBarrel(context: CanvasRenderingContext2D, viewport: Viewport): void {
@@ -60,26 +103,24 @@ function drawGunBarrel(context: CanvasRenderingContext2D, viewport: Viewport): v
   context.stroke();
 }
 
-function drawHullEdges(context: CanvasRenderingContext2D, viewport: Viewport): void {
-  const { width, height } = viewport;
-  context.fillStyle = 'rgba(6, 8, 5, 0.9)';
+function drawMuzzleFlash(
+  context: CanvasRenderingContext2D,
+  viewport: Viewport,
+  intensity: number,
+): void {
+  if (intensity <= 0.01) return;
+  const centerX = viewport.width / 2;
+  const centerY = viewport.height - BOTTOM_MASK - 30;
+  const glowRadius = 26 + 34 * intensity;
 
+  context.fillStyle = withAlpha(PALETTE.destelloDisparo, 0.28 * intensity);
   context.beginPath();
-  context.moveTo(0, height);
-  context.lineTo(0, height - 170);
-  context.lineTo(width * 0.24, height - 96);
-  context.lineTo(width * 0.24, height - BOTTOM_MASK);
-  context.lineTo(0, height);
-  context.closePath();
+  context.arc(centerX, centerY, glowRadius, 0, Math.PI * 2);
   context.fill();
 
+  context.fillStyle = withAlpha('#fff2c4', 0.9 * intensity);
   context.beginPath();
-  context.moveTo(width, height);
-  context.lineTo(width, height - 170);
-  context.lineTo(width * 0.76, height - 96);
-  context.lineTo(width * 0.76, height - BOTTOM_MASK);
-  context.lineTo(width, height);
-  context.closePath();
+  context.arc(centerX, centerY, 8 + 10 * intensity, 0, Math.PI * 2);
   context.fill();
 }
 
@@ -120,14 +161,6 @@ function drawCenterMark(
   context.fill();
 }
 
-function drawCrosshair(context: CanvasRenderingContext2D, viewport: Viewport): void {
-  const centerX = viewport.width / 2;
-  const centerY = viewport.height / 2;
-  drawCrossLines(context, centerX, centerY);
-  drawCenterMark(context, centerX, centerY);
-  drawRangeTicks(context, centerX, centerY);
-}
-
 function drawRangeTicks(
   context: CanvasRenderingContext2D,
   centerX: number,
@@ -146,12 +179,83 @@ function drawRangeTicks(
   context.stroke();
 }
 
+function drawReloadRing(
+  context: CanvasRenderingContext2D,
+  viewport: Viewport,
+  state: PeriscopeState,
+): void {
+  const centerX = viewport.width / 2;
+  const centerY = viewport.height / 2;
+  const radius = 31;
+
+  context.strokeStyle = withAlpha(PALETTE.mira, 0.16);
+  context.lineWidth = 3;
+  context.beginPath();
+  context.arc(centerX, centerY, radius, 0, Math.PI * 2);
+  context.stroke();
+
+  if (state.ready) return;
+
+  const progress = clamp(state.reloadProgress, 0, 1);
+  context.strokeStyle = withAlpha(PALETTE.progreso, 0.9);
+  context.lineWidth = 3;
+  context.beginPath();
+  context.arc(
+    centerX,
+    centerY,
+    radius,
+    -Math.PI / 2,
+    -Math.PI / 2 + Math.PI * 2 * progress,
+  );
+  context.stroke();
+
+  context.fillStyle = withAlpha(PALETTE.texto, 0.85);
+  context.font = '14px monospace';
+  context.textAlign = 'center';
+  context.fillText(`${state.reloadRemaining.toFixed(1)} s`, centerX, centerY + 88);
+}
+
+function drawHitMarker(
+  context: CanvasRenderingContext2D,
+  viewport: Viewport,
+  intensity: number,
+): void {
+  if (intensity <= 0.01) return;
+  const centerX = viewport.width / 2;
+  const centerY = viewport.height / 2;
+  const alpha = clamp(intensity, 0, 1);
+  const inner = 26;
+  const outer = 36;
+
+  context.strokeStyle = withAlpha('#fff6d8', 0.9 * alpha);
+  context.lineWidth = 2;
+  context.beginPath();
+  context.moveTo(centerX - outer, centerY - outer);
+  context.lineTo(centerX - inner, centerY - inner);
+  context.moveTo(centerX + outer, centerY - outer);
+  context.lineTo(centerX + inner, centerY - inner);
+  context.moveTo(centerX - outer, centerY + outer);
+  context.lineTo(centerX - inner, centerY + inner);
+  context.moveTo(centerX + outer, centerY + outer);
+  context.lineTo(centerX + inner, centerY + inner);
+  context.stroke();
+}
+
 export function drawPeriscope(
   context: CanvasRenderingContext2D,
   viewport: Viewport = VIEWPORT,
+  state: PeriscopeState = READY_STATE,
 ): void {
   drawMask(context, viewport);
   drawHullEdges(context, viewport);
   drawGunBarrel(context, viewport);
-  drawCrosshair(context, viewport);
+  drawMuzzleFlash(context, viewport, state.muzzleFlash);
+
+  const centerX = viewport.width / 2;
+  const centerY = viewport.height / 2;
+  drawCrossLines(context, centerX, centerY);
+  drawCenterMark(context, centerX, centerY);
+  drawRangeTicks(context, centerX, centerY);
+  drawReloadRing(context, viewport, state);
+  drawHitMarker(context, viewport, state.hitMarker);
 }

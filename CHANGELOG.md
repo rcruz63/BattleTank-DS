@@ -9,6 +9,9 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 ### Añadido
 
+- Combate del jugador: recarga, proyectiles balísticos en subpasos, impactos contra coberturas
+  destructibles e indestructibles, retroceso de cámara, fogonazo, marca de impacto y anillo de
+  recarga; los escombros dejan pasar los proyectiles.
 - Jugador jugable: entrada de teclado con disparo de flanco, movimiento solidario casco-mira,
   colisión con deslizamiento y subpasos, cámara de periscopio y overlay procedural (máscara, mira,
   cañón y casco). Composición en `src/game/game.ts` y arranque real en `main.ts`; verificado con

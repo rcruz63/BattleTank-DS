@@ -15,6 +15,12 @@ export interface PlayerState {
   readonly reverseSpeed: number;
   readonly turnSpeed: number;
   readonly radius: number;
+  readonly reloadSeconds: number;
+  readonly damage: number;
+  readonly shellSpeed: number;
+  readonly armor: number;
+  /** Tiempo restante de recarga; 0 = arma lista. */
+  reloadRemaining: number;
   alive: boolean;
 }
 
@@ -28,6 +34,11 @@ export function createPlayer(spawn: SpawnPoint): PlayerState {
     reverseSpeed: PLAYER_TANK.speed * 0.5,
     turnSpeed: degreesToRadians(PLAYER_TANK.turnSpeedDegrees),
     radius: PLAYER_RADIUS,
+    reloadSeconds: PLAYER_TANK.reloadSeconds,
+    damage: PLAYER_TANK.damage,
+    shellSpeed: PLAYER_TANK.shellSpeed,
+    armor: PLAYER_TANK.armor,
+    reloadRemaining: 0,
     alive: true,
   };
 }
