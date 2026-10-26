@@ -7,16 +7,17 @@ se comprueba a mano antes de dar por buena la entrega. El objetivo es que la pue
 ## 1. Estrategia por capas
 
 La lógica se separa para poder probarla sin DOM y sin Canvas: `core` y `world` son puros, `systems`
-son reglas deterministas sobre estado, los constructores de caras (`worldFaces`, `bulletFaces`)
-producen datos y solo el pintor toca el contrato gráfico (`FaceCanvas`). La composición del frame
-vive en `render/renderer.ts`; **no hay una escena unificada (`render/scene.ts`)**. La UI y el audio
-son adaptadores finos que se sustituyen por dobles.
+son reglas deterministas sobre estado, los constructores de caras (`worldFaces`, `models`,
+`bulletFaces`) producen datos, `faces` los proyecta y solo el pintor toca el contrato gráfico
+(`FaceCanvas`). La composición del frame vive en `render/renderer.ts`; **no hay una escena unificada
+(`render/scene.ts`)**. La UI y el audio son adaptadores finos que se sustituyen por dobles. Estado:
+**121 tests en 23 ficheros** con las fases 0–6 cerradas.
 
 | Nivel | Qué cubre | Herramienta | Cuándo |
 |---|---|---|---|
 | Unitarias de lógica pura | `core`, `world`, `systems`, `entities`, helpers puros de `ui` | Vitest (Node) | En cada feature, antes de la implementación |
-| Renderer con contexto simulado | Culling, caras de coberturas y proyectiles, orden de pintado, oclusión, presupuesto | Vitest + contexto gráfico falso | Fases 2–5 y cada cambio de render |
-| Integración headless | Cadenas de sistemas y `game` con estado inicial fijo y N pasos, sin Canvas | Vitest | Fases 4–9 |
+| Renderer con contexto simulado | Culling, caras de coberturas/tanques/proyectiles, orden de pintado, oclusión, presupuesto | Vitest + contexto gráfico falso | Fases 2–6 y cada cambio de render |
+| Integración headless | Cadenas de sistemas, IA y `game` con estado inicial fijo y N pasos, sin Canvas | Vitest | Fases 4–9 |
 | Manual (QA) | Sensación, legibilidad, audio, oclusión visual, rendimiento, reinicio | Navegador + checklist | Cada checkpoint de demo y antes de la entrega |
 | E2E de navegador | Flujo completo en un navegador automatizado | **Fuera de 0.1.0** (deuda conocida) | Se valora después |
 
@@ -50,27 +51,31 @@ DOM o WebAudio, el diseño que se está probando no está separado: extrae la l�
 | `world/generate` | Determinismo por semilla; conectividad de spawns y pickups (*flood fill*); borde cerrado; sin solapamientos; distancias mínimas; reintentos acotados. |
 | `world/grid` | Conversión mundo↔celda, límites, consultas de ocupación, daño de coberturas, altura de escombros y alcanzabilidad. |
 | `world/collision` | Círculo contra celda vacía/cobertura, deslizamiento por ejes, no atravesar coberturas (incluido desplazamiento grande), bordes del mundo, estabilidad en esquinas. |
+| `world/los` | Línea despejada en celdas libres; cobertura intacta bloquea; cobertura fuera de la línea no bloquea; escombros no bloquean; fuera del mapa no hay visión. |
+| `world/pathfind` | Ruta recta con celdas contiguas; rodeo de una cobertura; `null` con destino bloqueado/encerrado; origen igual a destino; rechazo de origen bloqueado o fuera del mapa. |
 | `entities/player` | Creación desde `tanks.ts` y el spawn; rumbo solidario, velocidad, recarga, blindaje y vida inicial. Cubierto de forma indirecta por `movement` y `game`; test directo previsto. |
-| `entities/bullet` (fase 5) | Normalización de la dirección, valores por defecto de radio, dueño, daño y ciclo de vida inicial. Tests previstos al cerrar la fase. |
+| `entities/bullet` | Normalización de la dirección, valores por defecto de radio, dueño, daño y ciclo de vida inicial. |
+| `entities/enemy` | Creación del Panzer III/Tiger I desde `tanks.ts` y el spawn; vida, blindaje, radios y modo de IA inicial. |
 | `systems/input` | **W/S y ↑/↓** para el avance; **A/D y ←/→** para el giro; el disparo (`Espacio`) es un flanco que se consume; `clear` libera teclas y disparo pendiente. El adaptador de teclado evita el scroll con las flechas. |
 | `systems/movement` | Avance en el sentido de la mira, retroceso más lento, giro del casco y la mira a la vez, sin entrada no cambia nada, se detiene ante cobertura, normalización del ángulo. |
-| `systems/combat` (fase 5) | `isWeaponReady`/`reloadProgress`; recarga de 2,4 s; no dispara durante la recarga; un disparo crea un proyectil en la boca del cañón alineado con la mira; los proyectiles avanzan en subpasos, impactan en coberturas por altura y en objetivos, aplican daño y destruyen madera (1 impacto) y ladrillo (3); caducidad del proyectil. Tests previstos al cerrar la fase. |
+| `systems/combat` | `isWeaponReady`/`reloadProgress`; recarga de 2,4 s; no dispara durante la recarga; un disparo crea un proyectil en la boca del cañón alineado con la mira; los proyectiles avanzan en subpasos, impactan en coberturas por altura y en objetivos, aplican daño y destruyen madera (1 impacto) y ladrillo (3); caducidad; filtrado por facción (sin fuego amigo). |
+| `systems/ai` | Dispara con LOS, encarado y tras recargar; no dispara a través de cobertura intacta; alertado sin LOS avanza con A*; se queda quieto si el jugador está destruido; `alertEnemiesNear` despierta solo a los cercanos al estampido. |
 | `render/camera` | Transformación mundo→cámara con yaw/posición conocidos; proyección del centro; focal según FOV; puntos detrás de cámara. |
+| `render/faces` | `projectWorldFaces`: descarte de caras traseras, recorte de plano cercano, proyección, profundidad media, sombreado por normal y niebla; cubierto vía `worldFaces`, `models` y la prueba de oclusión. |
 | `render/clip` | Polígono delante sin cambios; parcialmente detrás recortado a `z ≥ 0,3`; totalmente detrás descartado; polígonos con varios vértices. |
 | `render/color` | Sombreado plano por normal, mezcla de colores y niebla; extremos de la mezcla. |
-| `render/worldFaces` | Caras de coberturas desde una rejilla fija: culling por distancia, caras traseras, recorte, sombreado y niebla; cobertura destruida sin caras altas (solo escombros); orden determinista. |
-| `render/bulletFaces` (fase 5) | Tracers de proyectiles: descarte detrás del plano cercano, dos caras por proyectil (halo y núcleo), profundidad para el painter y radio visual mínimo. Tests previstos al cerrar la fase. |
+| `render/worldFaces` | `buildWallWorldFaces`: caras de coberturas desde una rejilla fija, omisión de caras que tocan otra cobertura intacta, culling por distancia; cobertura destruida sin caras altas (solo escombros); `buildWorldFaces` como atajo de test. |
+| `render/models` | Caras de casco, cadenas, torreta y cañón del enemigo; todas las caras entre el suelo y la altura del tanque; orientación según el rumbo; colores de `tanks.ts`. |
+| `render/bulletFaces` | Tracers de proyectiles: descarte detrás del plano cercano, dos caras por proyectil (halo y núcleo), profundidad para el painter y radio visual mínimo. |
 | `render/background` | Fondo, horizonte y rejilla de suelo proyectada con una cámara fija. |
 | `render/painter` | Orden **de mayor a menor profundidad** (lo más lejano primero), desempate estable, secuencia de operaciones en el contexto simulado, no muta la entrada, presupuesto con el fixture denso. |
-| `render/renderer` | Composición del frame: fondo y rejilla antes que las caras, caras del mundo + proyectiles antes del pintor; devuelve el número de caras pintadas. Test con contexto falso previsto. |
+| `render/renderer` | Composición del frame: fondo y rejilla antes que las caras; coberturas + tanques en una sola proyección + proyectiles añadidos; devuelve el número de caras pintadas. Test con contexto falso previsto. |
 | `render/periscope` | Validación manual/visual (usa el contexto completo, no solo `FaceCanvas`): máscara, mira, cañón y casco no tapan la zona útil. |
-| `render/models` (previsto, fase 6) | Caras y vértices de cada modelo de tanque/pickup dentro de lo esperado; colores de la paleta. |
-| `systems/ai` (fase 6) | Transiciones de la máquina de estados; patrulla sin LOS; ataca con LOS; no dispara a través de coberturas; A* al perder LOS; reposiciona; muere. |
 | `systems/loot` (fase 7) | Efectos de pickups, topes, acumulación, caducidad y pérdida al morir. |
 | `systems/mission` / `systems/score` / `systems/progression` (fase 9) | Validación de misiones, progreso, victoria/derrota, puntuación y persistencia con almacenamiento falso. |
 | `ui` (parte pura, fase 8) | Formateo de segundos/puntos/porcentajes, umbrales de color de vida, matemática del radar, cuenta atrás de efectos. El DOM real no se prueba en unitarias. |
 | `audio` (fase 10) | Con un doble de `AudioBus`: mapeo de eventos a efectos, mute/volumen, no lanzar si no hay WebAudio. |
-| `game` | `createGame` con semilla e `InputState` inyectado: expone arena, jugador y estado; `update` responde a avance/giro y (fase 5) disparo; `dispose` desengancha la entrada; en fases posteriores, máquina de estados, pausa y reinicio. |
+| `game` | `createGame` con semilla e `InputState` inyectado: expone arena, jugador, enemigos y proyectiles; `update` responde a avance/giro/disparo y mueve la IA; `dispose` desengancha la entrada. En fases posteriores: máquina de estados, pausa y reinicio. |
 
 ## 4. Renderer con contexto simulado
 
@@ -98,31 +103,24 @@ la misma entrada debe dar exactamente la misma lista de operaciones.
 
 ### Aserción de oclusión (la prueba clave)
 
-Fixture fijo, cámara mirando al frente:
+`tests/render/occlusion.test.ts` es la prueba de referencia; monta una cámara fija en el centro de la
+mira, una cobertura de ladrillo y un enemigo detrás:
 
-1. Una cobertura **intacta** delante (p. ej. a 12 m) y otra geometría **detrás** (otra cobertura a
-   20 m; cuando existan enemigos, un tanque), alineadas con la cámara.
-2. `worldFaces` (y `bulletFaces` para proyectiles) genera las caras; se localiza la cara frontal de
-   la cobertura delantera y la cara de lo que está detrás.
-3. Se afirma que:
-   - ambas caras existen (no se ha culled la cobertura que ocluye);
-   - la profundidad de la cobertura es menor que la de lo que hay detrás;
-   - en el orden de pintado, lo de detrás aparece **antes** que la cobertura.
-4. Se repite con la cobertura destruida en la rejilla:
-   - ya no existe la cara alta que tapaba;
-   - el objeto de detrás sigue pintándose y no queda oculto.
-5. Se repite con la cobertura fuera del frustum/detrás de la cámara: no debe colarse en la lista de
-   caras ni romper la proyección.
-6. Con proyectiles: un tracer detrás de una cobertura debe pintarse antes que la cobertura; uno
-   delante, después.
+1. **Cobertura intacta:** `buildWallWorldFaces` y `tankWorldFaces` generan las caras; se proyectan y
+   se comprueba que hay caras del enemigo y que alguna cara de la cobertura cubre el punto central de
+   la pantalla (la mira).
+2. **Cobertura destruida:** se aplica `damageObstacle` hasta 0 y se repite la proyección; la cobertura
+   ya no cubre el centro de la mira y la línea hacia el enemigo queda despejada.
+3. **Orden de pintado:** los tests del `painter` cubren el orden de mayor a menor profundidad; como
+   coberturas, tanques y proyectiles comparten lista y profundidad, una cobertura intacta se pinta
+   después de lo que está detrás y lo tapa.
+4. **Proyectiles:** los tracers (`bulletFaces`) entran en la misma lista con su profundidad; un tracer
+   detrás de una cobertura se pinta antes y queda oculto.
+5. **Culling y recorte:** cubiertos en `worldFaces`, `faces` y `clip` (caras traseras, fuera de
+   distancia, detrás del plano cercano).
 
-Se comprueba además que la entrada no se ha mutado (congelada con `Object.freeze` o comparada
-antes/después) y, en el fixture denso, que no se superan las 1 500 caras ni las 500 operaciones de
-dibujo.
-
-> **Nota de alcance:** los enemigos aún no existen (fase 6). Hasta entonces la oclusión se ejercita
-> con **dos coberturas** y con proyectiles; la prueba con tanque enemigo se añade cuando exista
-> `systems/ai` y `render/models.ts`.
+Se comprueba además que la entrada no se muta y, en el fixture denso, que no se superan las 1 500
+caras ni las 500 operaciones de dibujo.
 
 ## 5. Integración headless
 
@@ -135,10 +133,10 @@ avanzan como en el juego real y se afirman invariantes. Escenarios mínimos:
 | Disparo y recarga | Un disparo listo crea un proyectil; durante 2,4 s el arma no dispara; el flanco de entrada no repite fuego al mantener la tecla. |
 | Proyectil e impacto | Un proyectil avanza en subpasos, impacta en una cobertura y le aplica daño; madera cae al primer impacto y ladrillo al tercero; la cobertura destruida deja de bloquear el paso y los proyectiles pasan por encima de los escombros. |
 | Caducidad | Un proyectil que no impacta desaparece al superar su vida útil y no se simula para siempre. |
+| IA: percepción y ataque | Un enemigo con LOS, encarado y recargado dispara; sin LOS avanza con A*; no dispara a través de cobertura intacta; el estampido alerta solo a los enemigos a ≤ 60 m. |
+| Daño y blindaje | Con los valores de `tanks.ts`, el Sherman destruye un Panzer III en 3 impactos y un Tiger I en 4; el blindaje reduce el daño recibido; al llegar a 0 el tanque muere y deja de simularse. |
 | Determinismo | Misma semilla + misma secuencia de intenciones ⇒ mismo estado final, sin depender del reloj real. |
-| Enemigos y victoria (fase 6+) | Destruir enemigos sube el progreso; al 100 % se dispara la victoria con puntuación. |
-| Derrota y reintento (fase 9) | Vida a 0 provoca derrota; el reintento reinicia la misión actual. |
-| Pickups (fase 7) | Recoger aplica efecto, respeta topes y caduca. |
+| Victoria, derrota y pickups (fases 7-9) | Destruir enemigos sube el progreso; al 100 % victoria; vida a 0 derrota y reintento; pickups aplican efecto y caducan. |
 
 Los fixtures se construyen con los helpers de `tests/helpers/` (previsto) para no duplicar escenarios.
 Los valores de estado se comparan con aserciones explícitas, no con snapshots largos y frágiles.
@@ -166,13 +164,15 @@ Los valores de estado se comparan con aserciones explícitas, no con snapshots l
 
 Se ejecuta con `npm run dev` (y antes de la entrega también con `npm run build && npm run preview`).
 Marcar cada punto en el navegador; anotar semilla, fase y navegador usado. Los puntos marcados
-**(fase N)** aún no se pueden probar en la fase 5; quedan aquí para la QA de 0.1.0.
+**(fase N)** aún no se pueden probar en la fase 6; quedan aquí para la QA de 0.1.0.
 
 ### Preparación
 
 - [ ] `npm run check` en verde; sin errores ni warnings en la consola del navegador.
 - [ ] Canvas 16:9 sin deformación ni recortes en ventanas grandes y pequeñas (letterboxing).
 - [ ] El arranque muestra semilla y texto de estado temporal; `F3` completo cuando exista.
+- [ ] `?seed=123` reproduce el mismo escenario y reparto de enemigos; sin parámetro la semilla cambia.
+- [ ] `window.__BT__` expone el estado en la consola (`seed`, `player`, `enemies`, `bullets`, `arena`).
 
 ### Movimiento y controles (fase 4)
 
@@ -182,6 +182,7 @@ Marcar cada punto en el navegador; anotar semilla, fase y navegador usado. Los p
 - [ ] No se puede mirar libremente ni asomarse: la cámara es solidaria.
 - [ ] Colisión con coberturas y bordes: se desliza, no atraviesa, no se queda clavado en esquinas.
 - [ ] Al disparar, la cámara retrocede un instante y vuelve; el rumbo lógico no cambia.
+- [ ] Al recibir daño se ve el tinte rojo; al morir aparece la pantalla provisional «TANQUE DESTRUIDO».
 - [ ] `Esc` pausa y `M` silencia **(fases 8/10)**.
 
 ### Combate (fase 5)
@@ -192,6 +193,10 @@ Marcar cada punto en el navegador; anotar semilla, fase y navegador usado. Los p
       los escombros no lo detienen.
 - [ ] Madera cae con 1 impacto; ladrillo con 3; hormigón y acero no se destruyen.
 - [ ] Al destruir una cobertura se ve y se dispara a través; se puede pasar por la celda.
+- [ ] Los proyectiles enemigos hacen daño al jugador y el blindaje se nota (comparar Panzer III y
+      Tiger I).
+- [ ] El anillo de recarga, los segundos, el fogonazo y la marca de impacto se ven y no tapan la
+      mira.
 - [ ] No se experimentan tirones ni errores al disparar o destruir varias coberturas seguidas.
 
 ### Oclusión
@@ -200,14 +205,17 @@ Marcar cada punto en el navegador; anotar semilla, fase y navegador usado. Los p
 - [ ] A través de una cobertura destruida sí se ve y se dispara; los escombros no tapan la vista.
 - [ ] No se ve por encima de ninguna cobertura.
 - [ ] En esquinas y con la cobertura pegada a la cámara no aparecen huecos ni artefactos graves.
-- [ ] Enemigos que respetan la misma oclusión y radar **(fases 6/8)**.
+- [ ] Los enemigos quedan ocultos tras una cobertura intacta y son visibles al destruirla.
+- [ ] Los enemigos respetan la misma oclusión: no disparan a través de coberturas intactas.
+- [ ] Radar **(fase 8)**.
 
 ### HUD (fase 8)
 
 - [ ] Vida con barra y número, color según porcentaje, legible; no tapa la mira.
 - [ ] Progreso solo en porcentaje y sube al destruir enemigos; nunca muestra cuántos quedan.
 - [ ] Puntuación visible y correcta; récord en pausa/resumen.
-- [ ] Recarga: anillo y segundos restantes; destello al estar lista.
+- [ ] Recarga: anillo y segundos restantes (ya visibles en el periscopio); destello al estar lista
+      y HUD completo **(fase 8)**.
 - [ ] Iconos y cuenta atrás de potencia/mejora; avisos de estado legibles.
 - [ ] Contraste alto y estados distinguibles sin depender solo del color.
 
@@ -226,10 +234,15 @@ Marcar cada punto en el navegador; anotar semilla, fase y navegador usado. Los p
 
 ### Enemigos e IA (fase 6)
 
-- [ ] Patrullan, detectan, apuntan y disparan; no disparan a través de coberturas.
-- [ ] Rodean obstáculos con A* y no se quedan atascados en una partida larga.
-- [ ] La dificultad crece entre misiones y el balance de `config/tanks.ts` se siente justo.
+- [ ] Los enemigos están al acecho hasta ver al jugador o hasta oír un disparo cercano (≤ 60 m).
+- [ ] Con línea de visión avanzan a atacar; apuntan con giro limitado, esperan la reacción y disparan
+      con dispersión y recarga.
+- [ ] Sin línea de visión avanzan con A* rodeando coberturas y no se quedan atascados.
+- [ ] No disparan a través de coberturas intactas; los escombros sí dejan pasar.
+- [ ] Se ven con su modelo de cajas (casco, cadenas, torreta y cañón) y con la oclusión correcta.
+- [ ] El balance de `config/tanks.ts` se siente justo (3 impactos al ligero, 4 al pesado).
 - [ ] No hay comportamientos absurdos (aimbot perfecto, disparos a través de muros, temblores).
+- [ ] La dificultad escalada por misión y el estado de reposición **(fases 9/deuda)**.
 
 ### Pickups (fase 7)
 
@@ -286,6 +299,12 @@ La entrega se acepta cuando se cumplen los diez criterios del plan
 - **Sin verificación de audio real**: solo se prueba el adaptador con dobles; el timbre y la mezcla
   son QA manual.
 - **Sin umbral de cobertura** configurado ni benchmark de rendimiento automatizado.
+- **LOS por muestreo de 1 m:** aproximación suficiente para celdas de 4 m, pero no un DDA exacto; se
+  revisa si aparece un fallo de esquina en QA.
+- **IA sin reposición/coordinación:** la máquina es `idle/advance/attack`; no hay flanqueo ni
+  coberturas inteligentes (deuda planificada).
+- **Ganchos de depuración** (`?seed`, `window.__BT__`): no forman parte de la API del juego y no se
+  prueban como contrato; sí se usan en QA manual.
 - **Sin matriz de navegadores automatizada**: se prueba en un navegador de escritorio moderno.
 - **Artefactos cosméticos del painter's algorithm**: limitación aceptada ([`DECISIONS.md`](DECISIONS.md),
   ADR-002); no se eliminan con tests, solo se acotan con fixtures.

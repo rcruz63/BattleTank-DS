@@ -232,18 +232,18 @@ contrato lo garantiza.
 
 ### Añadir un tanque
 
-1. Añade sus stats de balance a `src/config/tanks.ts` (PV, velocidad, giro, recarga, daño, reducción,
-   bando) y decide si otorga puntos al destruirse.
-2. Si es enemigo, inclúyelo en la composición de alguna misión (`src/config/missions.ts`) y usa los
-   parámetros de IA existentes.
-3. Crea su modelo de polígonos en `src/render/models.ts` y su color de facción en
-   `src/config/palette.ts`; mantén el número de caras dentro del presupuesto de rendimiento.
-4. Tests: validación de los datos de configuración, snapshot de render para el modelo (caras y orden)
-   y comportamiento de daño/muerte si cambia la IA.
-5. Actualiza la tabla de balance de [`GAME_DESIGN.md`](GAME_DESIGN.md#13-balance-de-tanques-segunda-guerra-mundial),
+1. Añade sus stats y colores a `src/config/tanks.ts` (PV, velocidad, giro, recarga, daño, blindaje,
+   velocidad de proyectil, colores de casco/torreta/cadenas/cañón y bando); es la fuente de verdad.
+2. Si es enemigo, inclúyelo en la composición de la misión (`src/config/missions.ts`, fase 9) y usa
+   los parámetros de IA existentes (`AI_TUNING` en `balance.ts`).
+3. Crea su modelo de cajas/polígonos en `src/render/models.ts`; mantén el número de caras dentro del
+   presupuesto de rendimiento.
+4. Tests: validación de los datos de configuración, test de caras del modelo (tipos de caja y orden)
+   y comportamiento de daño/muerte/IA si cambia.
+5. Actualiza el resumen de balance de [`GAME_DESIGN.md`](GAME_DESIGN.md#13-balance-de-tanques-segunda-guerra-mundial),
    el `CHANGELOG.md` y `STATUS.md`.
-6. Si el tanque necesita una mecánica nueva (torreta independiente, blindaje por ángulo…), no es un
-   dato: es feature + diseño + ADR si cambia contratos.
+6. Si el tanque necesita una mecánica nueva (torreta independiente, blindaje por ángulo, tipo de
+   proyectil…), no es un dato: es feature + diseño + ADR si cambia contratos.
 
 ### Añadir un pickup
 
@@ -285,9 +285,11 @@ Detalle completo en [`TESTING.md`](TESTING.md); resumen de convenciones:
 - Deterministas: semillas fijas, sin red, sin esperas reales (`vi.useFakeTimers()` cuando haga falta).
   Nada de depender del reloj o del orden de ejecución.
 - Sin DOM real ni jsdom: la UI se prueba con funciones puras extraídas; el renderer, con un contexto
-  2D simulado y una instantánea fija.
+  2D simulado y fixtures de rejilla/cámara/caras; la IA, con rejilla, jugador y RNG inyectados.
 - Helpers compartidos en `tests/helpers/` (previsto) para no duplicar fixtures.
 - Los tests son código: también se leen, se refactorizan y no se dejan comentados.
+- Estado actual: **121 tests en 23 ficheros** (`tests/core`, `tests/world`, `tests/render`,
+  `tests/systems`, `tests/game`), incluidas las pruebas de LOS, A*, IA, modelos y oclusión.
 
 ## 12. Si falla `npm run check`
 
@@ -324,5 +326,23 @@ Decisiones que este documento ha tenido que asumir; conviene cerrarlas y corregi
 - **Sin CI:** la calidad se verifica solo en local. Si se añade integración continua, documentar el
   flujo aquí y en `README.md`.
 - **Licencia:** no declarada; pendiente de decisión del usuario.
+- **Balance fase 6:** el balance real está en `src/config/tanks.ts` (Panzer III 100 PV; Tiger I
+  140 PV y 10 % de blindaje); el ajuste de dificultad por misión queda para la fase 9.
 - **Pendientes de diseño:** ver [`GAME_DESIGN.md`](GAME_DESIGN.md#12-pendientes-de-diseño-para-el-lead)
-  (impactos al ligero, fórmula de puntuación, reducciones de daño, densidad, cadencia escalada…).
+  (fórmula de puntuación, reducciones de daño de pickups, balance de misiones, reposición de IA…).
+
+## 14. Ganchos de depuración
+
+Herramientas de desarrollo y QA; no forman parte de la API del juego ni deben usarse desde la lógica:
+
+- **`?seed=<entero>`** en la URL (`http://localhost:5173/?seed=123`): `main.ts` la lee y la pasa a
+  `createGame`. Reproduce escenario, spawns y reparto de enemigos; sin parámetro se usa la hora
+  actual. Es la forma recomendada de adjuntar un caso reproducible a un bug o comparar balance.
+- **`window.__BT__`**: `main.ts` expone la instancia `Game` (tipada en `src/global.d.ts`) para
+  inspeccionarla desde la consola:
+  `__BT__.seed`, `__BT__.player`, `__BT__.enemies`, `__BT__.bullets`, `__BT__.arena`. Permite leer
+  estado y recolocarlo para QA manual. No es estable entre fases y no debe referenciarse desde
+  `src/` (salvo el propio `main.ts`/tipos).
+- Para tests automáticos, usa las APIs inyectables: semilla en `createGame({ seed })` e `InputState`
+  propio; no dependas de la URL ni de `window`.
+- Sigue prohibido el `console.log` de depuración permanente: estos dos ganchos son la vía sancionada.

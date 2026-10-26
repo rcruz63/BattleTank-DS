@@ -2,13 +2,12 @@
 
 Documento de diseño del vertical slice **0.1.0**. Se deriva del plan aprobado
 ([`PLAN.md`](PLAN.md), fuente de verdad del alcance); si hay conflicto, manda el plan y se corrige
-este documento. Estado: fases 0–4 cerradas y fase 5 (combate) en curso; el detalle vivo está en
-[`STATUS.md`](STATUS.md).
+este documento. Estado: fases 0–6 cerradas (bootstrap, núcleo, render, mundo, jugador, combate e
+IA); la siguiente es la fase 7 (pickups). El detalle vivo está en [`STATUS.md`](STATUS.md).
 
 **Balance de tanques:** los números concretos (PV, velocidad, giro, recarga, daño, blindaje y
 velocidad de proyectil) viven en **`src/config/tanks.ts`**, que es la fuente de verdad. Este
-documento describe roles y criterios de diseño y no duplica esos valores para que no diverjan; el
-balance se ajusta en la fase 6.
+documento describe roles y criterios de diseño; el ajuste fino de dificultad se hace en la fase 9.
 
 - **Título provisional:** BATTLE TANK — PERISCOPIO.
 - **Ambientación:** frente occidental, 1944. Jugador aliado con un M4 Sherman contra carros del Eje.
@@ -99,6 +98,11 @@ teclas y vida.
   persona; previsto, se fija en la fase 8.
 - **Pantallas:** menú, briefing, pausa, resumen de misión y derrota/final de campaña.
 
+Estado actual (fase 6): hay un HUD **temporal** con semilla, enemigos vivos, proyectiles, vida y
+recarga. Ya existen en el periscopio el anillo de recarga con segundos, el fogonazo, la marca de
+impacto y el retroceso de cámara; el overlay rojo de daño y la pantalla provisional «TANQUE
+DESTRUIDO» están implementados. El HUD/radar definitivos llegan en la fase 8.
+
 ### Esquema ASCII (conceptual)
 
 ```text
@@ -138,9 +142,11 @@ decimal (español) y **no deben depender solo del color**: los estados llevan ic
   **pitch fijo** ligeramente hacia abajo y FOV horizontal ≈ **72°**.
 - La imagen se enmarca con una máscara oscura pintada en el canvas; la mira tiene marcas de
   distancia y en el primer plano se dibujan la silueta del cañón y el borde del casco. **El overlay
-  está en canvas, no en CSS** (decisión actual de la fase 4).
-- Retroceso de cámara al disparar y sacudida al recibir daño: son efectos **visuales**; nunca cambian
-  el rumbo lógico ni la posición de simulación.
+  está en canvas, no en CSS** (decisión actual desde la fase 4).
+- Retroceso de cámara al disparar (implementado): sube el pitch y la cámara retrocede unos
+  centímetros durante un instante. Al recibir daño se tiñe la pantalla de rojo; la sacudida de cámara
+  por impacto queda como deuda. Todos son efectos **visuales**: nunca cambian el rumbo lógico ni la
+  simulación.
 - No hay vista por encima de las coberturas ni asomarse: la cámara está por debajo de la altura
   mínima de cobertura. La oclusión es **total mientras la cobertura está intacta**.
 - Las coberturas destruidas dejan escombros bajos: se ve (y se dispara) a través de ellas.
@@ -188,32 +194,39 @@ cobertura con material, altura y vida.
 ## 8. Enemigos e IA
 
 Dos tipos de carro del Eje, con apariencia de polígonos planos por tipo y colores de facción. Los
-stats concretos están en **`src/config/tanks.ts`** (fuente de verdad) y se ajustarán en la fase 6.
+stats concretos están en **`src/config/tanks.ts`** (fuente de verdad) y el ajuste fino llega en la fase 9.
 
 | Enemigo | Clase | Rol |
 |---|---|---|
 | Panzer III | Ligero | Rápido y numeroso; presiona y flanquea. |
 | Tiger I | Pesado | Lento, mucha vida y daño; ancla posiciones. |
 
-**Máquina de estados:** `idle/patrulla → avanzar → atacar → reposicionar → muerto`.
+**Máquina de estados actual (fase 6):** `idle → advance → attack`; la muerte se representa con
+`alive = false` (el estado «muerto» no es un modo de IA).
 
-- **Patrulla:** sin línea de visión del jugador; se mueve por la zona.
-- **Avanzar:** ha perdido la línea de visión; navega con A* básico de rejilla hacia la última
-  posición conocida del jugador, con evitación local entre enemigos.
-- **Atacar:** tiene línea de visión; apunta y dispara respetando cadencia y dispersión.
-- **Reposicionar:** tras disparar, recibir impacto o quedar bloqueado, busca una posición mejor.
-- **Muerto:** deja de simularse; otorga puntos y sube el progreso.
+- **Idle (acecho):** sin alerta. No patrulla todavía ni tiene línea de visión; espera.
+- **Advance:** alertado pero sin línea de visión (o fuera de rango de ataque). Navega con A* de 4
+  direcciones hacia la posición del jugador y se mueve con colisión deslizante; recalcula la ruta
+  periódicamente y al chocar.
+- **Attack:** alertado, con línea de visión y dentro de rango. Gira la torreta/casco con velocidad
+  limitada hacia el jugador, espera el tiempo de reacción y dispara con dispersión cuando está
+  encarado y ha recargado; después vuelve a recargar.
+- **Alerta:** se despiertan al ver al jugador (LOS + rango) o al oír un disparo del jugador a menos
+  de **60 m** (`alertEnemiesNear`); un enemigo alertado ya no vuelve a idle mientras el jugador viva.
+- **Muerte:** deja de simularse y de dibujarse; la puntuación/progreso llega en las fases 8-9.
 
 Reglas de justicia y comportamiento:
 
-- **Línea de visión por raycast de rejilla (DDA):** no disparan a través de coberturas intactas.
-- **Sin *aimbot*:** la dispersión depende de la distancia y del tiempo de apuntado; la precisión es
-  una probabilidad por disparo que escala con la misión, no un acierto garantizado.
-- **Escalado por misión:** precisión, tiempo de reacción, daño y número/composición de enemigos
-  (ver §9). La cadencia también debería escalar, pero la tabla del plan no fija ese parámetro: se
-  resolverá en `config/` en la fase 6 (ver §12).
-- **Sin coordinación avanzada:** no hay flanqueo táctico coordinado ni coberturas inteligentes en
-  0.1.0; solo A* básico y evitación local.
+- **Línea de visión por muestreo de la rejilla:** no disparan a través de coberturas intactas; los
+  escombros no bloquean.
+- **Sin *aimbot*:** el cañón gira con velocidad limitada, hay tiempo de reacción y el disparo lleva
+  dispersión; acertar no está garantizado.
+- **Escalado por misión:** precisión, reacción, daño y composición de enemigos (fase 9); los valores
+  base de la IA viven en `AI_TUNING` (`src/config/balance.ts`) y se ajustarán allí.
+- **Sin coordinación avanzada:** no hay flanqueo coordinado, reposición táctica ni uso inteligente de
+  coberturas; solo A* básico y colisión. Es deuda planificada, no un fallo.
+- **Daño mutuo con blindaje:** el daño base se reduce según `armor` del tanque (jugador y enemigos);
+  el Panzer III cae en 3 impactos y el Tiger I en 4 con el cañón del Sherman.
 
 ## 9. Misiones y dificultad
 
@@ -226,7 +239,10 @@ Campaña de 3 misiones generadas con parámetros escalados, definidos como datos
 | 2 | Cruce de caminos | 4 ligeros + 1 pesado | 16 % | 35 % | 1,1 s | ×1,0 |
 | 3 | Última línea | 4 ligeros + 2 pesados | 20 % | 45 % | 0,9 s | ×1,2 |
 
-- **Arena:** 64–96 m de lado (rejilla de 16×16 a 24×24 celdas de 4 m).
+- **Arena:** 64–96 m de lado (rejilla de 16×16 a 24×24 celdas de 4 m); la generación actual usa
+  20×20 (80 m) por defecto.
+- **Reparto provisional:** en la fase 6 `game.ts` reparte Panzer III y Tiger I de forma provisional;
+  la composición exacta por misión llega con estos datos en la fase 9.
 - **Semilla:** cada misión usa una semilla visible en el briefing; la misma semilla reproduce el
   mismo escenario (útil para depurar y para repetir una partida).
 - **Progreso:** porcentaje de enemigos destruidos. No se muestra el número restante.
@@ -277,10 +293,9 @@ Todo el sonido se **sintetiza con WebAudio**; no hay ficheros de audio ni músic
 
 ## 12. Pendientes de diseño para el Lead
 
-- **Número de impactos al Panzer III (corregido):** con los valores actuales de
-  `src/config/tanks.ts` (60 PV y 40 de daño del Sherman) cae en **2 impactos**, no en 3 como decía el
-  plan. Se documenta la diferencia y el balance se ajustará en la fase 6 (subir PV, bajar daño o
-  corregir el texto del plan).
+- **Impactos y balance (resuelto):** con los valores actuales de `src/config/tanks.ts` el Sherman
+  hace **3 impactos al Panzer III** (100 PV) y **4 al Tiger I** (140 PV y 10 % de blindaje), que es
+  lo que fija el plan. Cualquier ajuste de balance se hace en `tanks.ts` y se refleja aquí.
 - **Fórmula de la bonificación por vida restante:** no definida; proponer una lineal sobre la vida
   máxima del jugador (definida en `src/config/tanks.ts`) y fijarla en `config/balance.ts`.
 - **Combinación de reducciones de daño:** reducción base del Sherman (10 %) + mejoras (−10 % ×3);
@@ -290,8 +305,9 @@ Todo el sonido se **sintetiza con WebAudio**; no hay ficheros de audio ni músic
 - **Significado exacto de «densidad de coberturas»:** supuesto de trabajo, porcentaje de celdas
   interiores ocupadas por cobertura; la generación actual usa 14 % por defecto en `balance.ts` y la
   misión lo ajustará; confirmar la interpretación.
-- **Precisión IA:** supuesto de trabajo, probabilidad de acierto por disparo antes de aplicar
-  dispersión por distancia y tiempo de apuntado; a confirmar en la fase 6.
+- **Precisión IA (actualizada):** la IA usa tolerancia de apuntado, tiempo de reacción y
+  dispersión (`AI_TUNING`), no una probabilidad de acierto; la tabla de misiones traducirá su
+  «precisión %» a estos parámetros en la fase 9.
 - **Pickup de cura con vida al máximo:** no está definido si se puede recoger (y se desperdicia) o
   si se ignora; supuesto: se puede recoger y no supera el máximo.
 - **Potencia con efecto activo:** supuesto, al recoger otra se renueva el temporizador de 20 s, no se
@@ -302,14 +318,19 @@ Todo el sonido se **sintetiza con WebAudio**; no hay ficheros de audio ni músic
   práctica solo se pierde por vida a 0. Confirmar si se elimina la mención o se implementa un
   mecanismo de fuera de límites (poco probable en 0.1.0).
 - **Claves de `localStorage`:** sin fijar; decisión de la fase 9.
-- **Radio de detección de enemigos:** sin fijar; decisión de la fase 6.
+- **Reposición y coordinación de la IA:** la máquina actual es `idle/advance/attack`; el estado de
+  reposición y el flanqueo del plan quedan como deuda posterior (no bloquean 0.1.0).
+- **Sacudida de cámara al recibir daño:** hoy se usa tinte rojo; la sacudida queda como deuda de
+  feedback.
+- **Balance definitivo:** ajuste de dificultad previsto para la fase 9 sobre los valores de
+  `tanks.ts` y `AI_TUNING`.
 
 ## 13. Balance de tanques (Segunda Guerra Mundial)
 
 **La fuente de verdad es `src/config/tanks.ts`.** Allí viven PV, velocidad, giro, recarga, daño,
-blindaje y velocidad de proyectil de cada carro; este documento no los duplica para que no
-diverjan. Los daños enemigos son **base**: el multiplicador de misión (×0,8 / ×1,0 / ×1,2) se aplica
-encima (fase 9).
+blindaje, velocidad de proyectil y colores de cada carro; este documento resume los criterios y los
+impactos, no sustituye al fichero. Los daños enemigos son **base**: el multiplicador de misión
+(×0,8 / ×1,0 / ×1,2) se aplicará encima (fase 9).
 
 | Unidad | Bando | Rol de diseño |
 |---|---|---|
@@ -317,17 +338,20 @@ encima (fase 9).
 | Panzer III (ligero) | Eje | Rápido y numeroso; presiona y obliga a moverse. |
 | Tiger I (pesado) | Eje | Lento, duro y con blindaje; poca cadencia y mucho daño. |
 
+Balance actual de referencia (leer siempre `tanks.ts` antes de ajustar):
+
+- Panzer III: **100 PV**, daño 10, recarga 3 s. Con el Sherman (40 de daño) cae en **3 impactos**,
+  como fija el plan.
+- Tiger I: **140 PV**, blindaje 10 %, daño 20, recarga 4 s. Con el blindaje, el Sherman necesita
+  **4 impactos**.
+- El blindaje se aplica como reducción de daño recibido: `daño × (1 − armor)`.
+
 Criterios de diseño:
 
 - El Sherman gana por movilidad, cadencia e información (radar), no por vida ni daño bruto.
 - El Panzer III muere rápido pero presiona; el Tiger I obliga a usar coberturas y flanqueo.
-- El blindaje se aplica como reducción de daño recibido (configurado por tanque en `tanks.ts`).
 - El objetivo es una partida de 2–5 minutos por misión, ajustada con simulación headless.
-
-Corrección conocida: con los valores actuales (60 PV del Panzer III y 40 de daño del Sherman) el
-ligero cae en **2 impactos**, no en 3 como decía el plan. La discrepancia queda documentada y el
-balance se ajusta en la fase 6. Todos los valores son datos: ningún sistema codifica números de
-balance.
+- Todos los valores son datos: ningún sistema codifica números de balance.
 
 ## 14. Fuera de alcance de 0.1.0
 

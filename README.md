@@ -14,12 +14,14 @@ técnica) en [`docs/STATUS.md`](docs/STATUS.md).
 ## Estado
 
 > **Versión objetivo: `0.1.0` (vertical slice jugable) — en desarrollo**, todavía no publicado.
-> Al redactarse este README las fases 0–4 están cerradas (bootstrap, núcleo, render, mundo y
-> jugador) y la fase 5 (combate) está en curso. El proyecto ya se juega en parte: `WASD` o flechas
-> mueven y giran el tanque, `Espacio` dispara con 2,4 s de recarga, los proyectiles impactan en las
-> coberturas (madera 1 impacto, ladrillo 3), las destruyen y la cámara retrocede al disparar. Aún
-> faltan enemigos, pickups, HUD funcional, misiones y audio. Consulta
-> [`docs/STATUS.md`](docs/STATUS.md) para el estado exacto del día.
+> Al redactarse este README las fases 0–6 están cerradas (bootstrap, núcleo, render, mundo, jugador,
+> combate e IA) y la siguiente es la fase 7 (pickups). Ya hay un combate jugable: `WASD`/flechas
+> mueven y giran el tanque, `Espacio` dispara con 2,4 s de recarga, las coberturas de madera y
+> ladrillo se destruyen, los Panzer III y Tiger I esperan al acecho, detectan por línea de visión,
+> avanzan con A* y disparan (el estampido de tu cañón alerta a los cercanos); el daño respeta el blindaje y
+> hay overlay rojo al recibirlo y una pantalla provisional de tanque destruido. Faltan pickups, HUD
+> funcional, misiones y audio. Consulta [`docs/STATUS.md`](docs/STATUS.md) para el estado exacto del
+> día.
 
 El título «BATTLE TANK — PERISCOPIO» es provisional y puede cambiarse en un commit de
 documentación. La interfaz y la documentación van en español; los identificadores, tipos y nombres
@@ -74,8 +76,21 @@ npm run preview  # sirve dist/ para verificar el build
 | Depuración | `F3` | Previsto: overlay con fps, caras, celdas visibles y entidades. |
 
 No hay clic para disparar, ni apuntado libre con el ratón, ni gamepad/móvil en 0.1.0. Mientras llega
-el HUD definitivo (fase 8), la pantalla muestra un texto temporal con semilla, vida y teclas. Todos
-los detalles de diseño están en [`docs/GAME_DESIGN.md`](docs/GAME_DESIGN.md).
+el HUD definitivo (fase 8), la pantalla muestra un texto temporal con semilla, enemigos vivos,
+proyectiles, vida y estado de recarga. Todos los detalles de diseño están en
+[`docs/GAME_DESIGN.md`](docs/GAME_DESIGN.md).
+
+## Depuración
+
+- **Escenario reproducible:** arranca con `npm run dev` y abre
+  `http://localhost:5173/?seed=123`. La misma semilla genera el mismo escenario, reparto de enemigos
+  y spawns; sin el parámetro se usa la hora actual. Sirve para reproducir un bug o comparar cambios
+  de balance.
+- **Inspección desde la consola:** `main.ts` expone `window.__BT__` con la instancia del juego
+  (`Game`): `__BT__.seed`, `__BT__.player`, `__BT__.enemies`, `__BT__.bullets`, `__BT__.arena`. Es un
+  gancho de depuración/QA, no una API estable del juego; puede cambiar entre fases.
+
+Ambos ganchos son solo para desarrollo y pruebas: la lógica del juego no debe depender de ellos.
 
 ## Estructura resumida
 
@@ -86,21 +101,21 @@ BattleTank-DS/
 │   ├── main.ts         # arranque: canvas + bucle de paso fijo + createGame
 │   ├── config/         # datos puros: balance, materiales, tanques, paleta e identidad
 │   ├── core/           # matemáticas, RNG determinista, bucle de paso fijo, eventos
-│   ├── world/          # rejilla, generación, spawns, geometría y colisión (LOS/A* en fase 6)
-│   ├── render/         # cámara, proyección, recorte, caras, painter, fondo y overlay de periscopio
-│   ├── entities/       # estado del jugador y del proyectil (enemigos y pickups en fases 6-7)
-│   ├── systems/        # entrada, movimiento y combate (IA, loot, misión y puntuación después)
+│   ├── world/          # rejilla, generación, spawns, geometría, colisión, LOS y A*
+│   ├── render/         # cámara, caras, modelos de tanques, painter, fondo y periscopio
+│   ├── entities/       # jugador, proyectil y enemigo (pickups en la fase 7)
+│   ├── systems/        # entrada, movimiento, combate e IA (loot, misión y puntuación después)
 │   ├── ui/             # estilos base; HUD, radar y pantallas en la fase 8
 │   ├── audio/          # efectos sintetizados con WebAudio (fase 10)
 │   └── game/           # composición actual (createGame); máquina de estados en fases 8-9
-├── tests/              # espejo de src/ (core, render, world, systems, game) + integración
+├── tests/              # espejo de src/ (121 tests en 23 ficheros) + integración headless
 ├── docs/               # plan, estado y documentación del proyecto
 └── dist/               # build generado (no versionado)
 ```
 
-No existe una carpeta `render/scene.ts`: la composición del frame vive en `render/renderer.ts`, y las
-caras las construyen `render/worldFaces.ts` (coberturas) y `render/bulletFaces.ts` (proyectiles).
-`render/models.ts` (modelos de tanques y pickups) llega con la fase 6. El estado por fase y el
+No existe una carpeta `render/scene.ts`: la composición del frame vive en `render/renderer.ts`, que
+junta coberturas (`worldFaces.ts`), tanques enemigos (`models.ts`) y proyectiles (`bulletFaces.ts`),
+proyecta una sola lista de caras (`faces.ts`) y la pinta con el painter. El estado por fase y el
 inventario exacto de ficheros están en [`docs/STATUS.md`](docs/STATUS.md); la estructura completa,
 los contratos entre capas y el pipeline de render, en [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
