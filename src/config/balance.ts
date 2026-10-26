@@ -29,3 +29,6 @@ export const RENDER_DEFAULTS = {
 
 /** Dirección de la luz para el sombreado plano; se normaliza al usarla. */
 export const LIGHT_DIRECTION = { x: 0.35, y: 0.85, z: 0.25 } as const;
+
+/** Radio de colisión del jugador (m). Menor que media celda para poder sortear huecos. */
+export const PLAYER_RADIUS = 1.35;

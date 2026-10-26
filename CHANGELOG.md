@@ -9,6 +9,10 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 ### Añadido
 
+- Jugador jugable: entrada de teclado con disparo de flanco, movimiento solidario casco-mira,
+  colisión con deslizamiento y subpasos, cámara de periscopio y overlay procedural (máscara, mira,
+  cañón y casco). Composición en `src/game/game.ts` y arranque real en `main.ts`; verificado con
+  captura headless.
 - Mundo en rejilla de 4 m con materiales destructibles e indestructibles, borde cerrado y
   generación procedural determinista validada (alcanzabilidad, spawns con distancias mínimas).
 - Escena de coberturas como prismas con culling, recorte, sombreado plano, niebla, rejilla de suelo

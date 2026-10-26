@@ -1,7 +1,7 @@
 # Estado del proyecto — BattleTank-DS
 
-> **Actualizado:** 2026-10-26 · **Fase actual:** 4 — Jugador
-> **Último commit:** `feat(world): generación procedural determinista del escenario`
+> **Actualizado:** 2026-10-26 · **Fase actual:** 5 — Combate
+> **Último commit:** `feat(player): movimiento solidario, colisión y cámara de periscopio`
 >
 > Este fichero es el punto de entrada para retomar el proyecto, sea otra persona, otro chat u
 > otro modelo. Se actualiza en **cada commit**. La verdad sobre el alcance está en el plan.
@@ -16,6 +16,10 @@
 
 ## Hecho
 
+- [x] **Fase 4 — Jugador.** Entrada de teclado (WASD/flechas, disparo de flanco), movimiento
+      solidario con giro del casco, colisión círculo-rejilla con deslizamiento y subpasos, cámara de
+      periscopio y overlay procedural (máscara, mira, cañón y casco); `createGame` cablea el bucle.
+      Verificado con captura headless de Chrome. 88 tests en verde.
 - [x] **Fase 3 — Mundo y escena.** Rejilla de celdas, materiales (madera/ladrillo/hormigón/acero),
       generación procedural determinista con borde cerrado, validación de alcanzabilidad y spawns
       con distancias mínimas; escena de prismas con culling, recorte, sombreado, niebla, rejilla de
@@ -35,8 +39,8 @@
 
 ## En curso
 
-- [ ] **Fase 4 — Jugador.** Movimiento solidario con la mira, giro, colisión con deslizamiento,
-      cámara de periscopio integrada en el bucle y overlay de mira (`src/entities/`, `src/systems/`).
+- [ ] **Fase 5 — Combate.** Disparo con recarga, proyectiles, impactos, daño a coberturas, retroceso
+      y feedback (anillo de recarga, destellos) (`src/systems/combat.ts`, `src/entities/bullet.ts`).
 
 ## Pendiente (por fases)
 
@@ -45,7 +49,8 @@
 | 1 | Núcleo: matemáticas, RNG, bucle de paso fijo y bus de eventos | Completada |
 | 2 | Render: canvas, cámara, proyección, recorte, painter y niebla | Completada |
 | 3 | Mundo: rejilla, generación procedural validada, escena de prismas | Completada |
-| 4 | Jugador: movimiento solidario, colisión, cámara de periscopio | En curso |
+| 4 | Jugador: movimiento solidario, colisión, cámara de periscopio | Completada |
+| 5 | Combate: disparo, recarga, proyectiles, impactos y escombros | En curso |
 | 3 | Mundo: rejilla, generación procedural validada, escena de prismas | Pendiente |
 | 4 | Jugador: movimiento solidario, colisión, cámara de periscopio | Pendiente |
 | 5 | Combate: disparo, recarga, proyectiles, impactos y escombros | Pendiente |
@@ -65,8 +70,8 @@
 - No hay `pnpm` instalado en la máquina; se usa **npm** (Node 24 / npm 11).
 - El audio se sintetiza con WebAudio: no habrá ficheros de audio ni assets externos.
 - La interfaz y la documentación van en español; los identificadores del código, en inglés.
-- La demo de `main.ts` genera un escenario y gira la cámara automáticamente; es temporal hasta
-  integrar el jugador (fase 4).
+- `main.ts` ya arranca el juego real (`createGame`): se puede recorrer el escenario con WASD.
+  El HUD funcional y los enemigos llegan en las fases 6-8; el texto de estado actual es temporal.
 - `main.ts` dibuja todavía una pantalla de arranque; se sustituirá por el bucle real en la fase 1.
 
 ## Comandos de referencia

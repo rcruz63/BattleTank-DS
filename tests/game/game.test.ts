@@ -1,0 +1,33 @@
+import { describe, expect, it } from 'vitest';
+import { createGame } from '../../src/game/game';
+import { createInputState } from '../../src/systems/input';
+
+describe('composición del juego', () => {
+  it('crea el escenario con la semilla pedida y expone el estado', () => {
+    const game = createGame({ seed: 42, bindInput: false });
+    expect(game.seed).toBe(42);
+    expect(game.arena.grid.seed).toBe(42);
+    expect(game.player.health).toBeGreaterThan(0);
+    expect(game.player.alive).toBe(true);
+    game.dispose();
+  });
+
+  it('responde a la entrada de avance y giro', () => {
+    const input = createInputState();
+    const game = createGame({ seed: 42, input, bindInput: false });
+    const start = { ...game.player.position };
+
+    input.handleKeyDown('KeyW');
+    game.update(0.1);
+    expect(game.player.position.z).toBeGreaterThan(start.z);
+    expect(game.player.position.x).toBeCloseTo(start.x, 6);
+
+    input.handleKeyUp('KeyW');
+    input.handleKeyDown('KeyD');
+    const yawBefore = game.player.yaw;
+    game.update(0.1);
+    expect(game.player.yaw).toBeGreaterThan(yawBefore);
+
+    game.dispose();
+  });
+});
