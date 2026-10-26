@@ -9,6 +9,8 @@ describe('composición del juego', () => {
     expect(game.arena.grid.seed).toBe(42);
     expect(game.player.health).toBeGreaterThan(0);
     expect(game.player.alive).toBe(true);
+    expect(game.enemies).toHaveLength(4);
+    expect(game.enemies.every((enemy) => enemy.alive)).toBe(true);
     game.dispose();
   });
 

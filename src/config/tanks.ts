@@ -15,6 +15,10 @@ export interface TankDefinition {
   /** Fracción de daño mitigada por el blindaje (0..1). */
   readonly armor: number;
   readonly shellSpeed: number;
+  readonly hullColor: string;
+  readonly turretColor: string;
+  readonly trackColor: string;
+  readonly barrelColor: string;
 }
 
 /** M4 Sherman: equilibrado, buena cadencia. */
@@ -29,6 +33,10 @@ export const PLAYER_TANK: TankDefinition = {
   damage: 40,
   armor: 0.1,
   shellSpeed: 80,
+  hullColor: '#5f6b4a',
+  turretColor: '#6d7956',
+  trackColor: '#33362c',
+  barrelColor: '#414738',
 };
 
 /** Panzer III: rápido y numeroso; aparece en la fase de IA. */
@@ -36,13 +44,17 @@ export const ENEMY_LIGHT_TANK: TankDefinition = {
   id: 'panzer-iii',
   label: 'Panzer III',
   faction: 'eje',
-  maxHealth: 60,
+  maxHealth: 100,
   speed: 4.5,
   turnSpeedDegrees: 70,
   reloadSeconds: 3,
   damage: 10,
   armor: 0,
   shellSpeed: 55,
+  hullColor: '#6b7060',
+  turretColor: '#7a7f6c',
+  trackColor: '#3a3d35',
+  barrelColor: '#4a4e44',
 };
 
 /** Tiger I: lento, duro y con mucho daño por impacto. */
@@ -55,6 +67,10 @@ export const ENEMY_HEAVY_TANK: TankDefinition = {
   turnSpeedDegrees: 50,
   reloadSeconds: 4,
   damage: 20,
-  armor: 0.15,
+  armor: 0.1,
   shellSpeed: 60,
+  hullColor: '#8a7a55',
+  turretColor: '#9a8a62',
+  trackColor: '#4a4233',
+  barrelColor: '#5a5242',
 };

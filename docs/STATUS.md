@@ -1,7 +1,7 @@
 # Estado del proyecto — BattleTank-DS
 
-> **Actualizado:** 2026-10-26 · **Fase actual:** 6 — Enemigos e IA
-> **Último commit:** `feat(combat): disparo, recarga, proyectiles e impactos`
+> **Actualizado:** 2026-10-26 · **Fase actual:** 7 — Pickups
+> **Último commit:** `feat(ai): enemigos con línea de visión y máquina de estados`
 >
 > Este fichero es el punto de entrada para retomar el proyecto, sea otra persona, otro chat u
 > otro modelo. Se actualiza en **cada commit**. La verdad sobre el alcance está en el plan.
@@ -16,6 +16,12 @@
 
 ## Hecho
 
+- [x] **Fase 6 — Enemigos e IA.** Panzer III y Tiger I con estado propio; percepción por muestreo
+      de 1 m (las coberturas intactas bloquean), alerta visual y por estampido a 60 m, avance con A*
+      rodeando muros, apuntado con giro limitado, disparo con dispersión y recarga, daño cruzado
+      con blindaje, modelo de tanque por cajas (casco/cadenas/torreta/cañón) con oclusión por el
+      painter, overlay de daño y pantalla provisional de destrucción. Ganchos `?seed=` y
+      `window.__BT__` para QA. Verificado con captura headless. 121 tests en verde.
 - [x] **Fase 5 — Combate.** Disparo con recarga de 2,4 s y flanco, proyectiles en subpasos con
       colisión contra coberturas y blancos, daño por material (madera 1 impacto, ladrillo 3,
       hormigón/acero inmunes), escombros que dejan pasar los proyectiles, retroceso de cámara,
@@ -43,9 +49,10 @@
 
 ## En curso
 
-- [ ] **Fase 6 — Enemigos e IA.** Tanques Panzer III/Tiger I, línea de visión por rejilla, A*, máquina
-      de estados de combate, proyectiles enemigos, daño al jugador y render de tanques (`src/entities/enemy.ts`,
-      `src/systems/ai.ts`, `src/world/los.ts`, `src/world/pathfind.ts`, `src/render/models.ts`).
+- [ ] **Fase 7 — Pickups.** Botiquín (cura +30 PV), mejora (+20 PV máx. y −10 % daño recibido) y
+      potencia (20 s de daño ×1,75 y recarga −35 %), con generación sobre celdas alcanzables,
+      recogida al pasar por encima y feedback en periscopio/HUD (`src/entities/pickup.ts`,
+      `src/systems/loot.ts`).
 
 ## Pendiente (por fases)
 
@@ -56,7 +63,8 @@
 | 3 | Mundo: rejilla, generación procedural validada, escena de prismas | Completada |
 | 4 | Jugador: movimiento solidario, colisión, cámara de periscopio | Completada |
 | 5 | Combate: disparo, recarga, proyectiles, impactos y escombros | Completada |
-| 6 | Enemigos: modelos, IA con LOS/A*, dificultad por parámetros | En curso |
+| 6 | Enemigos: modelos, IA con LOS/A*, dificultad por parámetros | Completada |
+| 7 | Pickups: cura, mejora y potencia | En curso |
 | 3 | Mundo: rejilla, generación procedural validada, escena de prismas | Pendiente |
 | 4 | Jugador: movimiento solidario, colisión, cámara de periscopio | Pendiente |
 | 5 | Combate: disparo, recarga, proyectiles, impactos y escombros | Pendiente |
@@ -69,15 +77,21 @@
 
 ## Deuda técnica registrada
 
-- Ninguna todavía. Las excepciones a las normas deberán anotarse aquí con fichero y motivo.
+- IA sin patrulla ni coordinación de flanqueo: los enemigos permanecen al acecho hasta ver u oír al
+  jugador. Suficiente para 0.1.0; ampliable tras la entrega.
+- Reparto provisional de tipos de enemigo (`3 ligeros + 1 pesado`); la fase 9 lo sustituirá por el
+  reparto de cada misión.
+- Pantalla de destrucción y texto de estado son provisionales (fases 8-9).
 
 ## Decisiones y notas operativas
 
+- **Flujo de trabajo acordado con el usuario:** pausa al cerrar cada fase para revisión/intervención. Se retoma con «continúa la fase N».
 - No hay `pnpm` instalado en la máquina; se usa **npm** (Node 24 / npm 11).
 - El audio se sintetiza con WebAudio: no habrá ficheros de audio ni assets externos.
 - La interfaz y la documentación van en español; los identificadores del código, en inglés.
-- `main.ts` ya arranca el juego real (`createGame`): se puede recorrer el escenario con WASD.
-  El HUD funcional y la IA de enemigos llegan en las fases 6-8; el texto de estado actual es temporal.
+- `main.ts` arranca el juego real (`createGame`): WASD/flechas para moverse, Espacio para disparar.
+  El HUD funcional y la pantalla de resultados llegan en las fases 8-9; el texto de estado actual es temporal.
+- Depuración: `?seed=42` reproduce un escenario; `window.__BT__` expone el estado del juego en consola.
 - `main.ts` dibuja todavía una pantalla de arranque; se sustituirá por el bucle real en la fase 1.
 
 ## Comandos de referencia

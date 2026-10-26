@@ -41,3 +41,18 @@ export const COMBAT = {
   bulletStepMeters: 0.5,
   recoilKickRadians: 0.055,
 } as const;
+
+/** Radio de colisión de los tanques enemigos (m). */
+export const ENEMY_RADIUS = 1.4;
+
+/** Ajustes base de la IA; las misiones los escalan en la fase 9. */
+export const AI_TUNING = {
+  detectionRange: 70,
+  attackRange: 34,
+  minAdvanceDistance: 10,
+  reactionSeconds: 1.1,
+  aimToleranceRadians: 0.1,
+  fireSpreadRadians: 0.05,
+  pathIntervalSeconds: 1.1,
+  moveSpeedFactor: 0.75,
+} as const;

@@ -8,7 +8,7 @@
 import { COMBAT } from '../config/balance';
 import type { MaterialId } from '../config/materials';
 import { createBullet } from '../entities/bullet';
-import type { Bullet } from '../entities/bullet';
+import type { Bullet, ProjectileOwner } from '../entities/bullet';
 import { playerForward } from '../entities/player';
 import type { PlayerState } from '../entities/player';
 import type { Vec3 } from '../core/math';
@@ -26,6 +26,7 @@ export interface ProjectileTarget {
   readonly id: string;
   readonly position: WorldPoint;
   readonly radius: number;
+  readonly faction: ProjectileOwner;
 }
 
 export interface ProjectileEvent {
@@ -35,6 +36,8 @@ export interface ProjectileEvent {
   readonly material: MaterialId | null;
   readonly destroyedCover: boolean;
   readonly targetId: string | null;
+  readonly damage: number;
+  readonly owner: ProjectileOwner;
 }
 
 export interface ProjectilesInput {
@@ -105,8 +108,9 @@ function findTargetHit(
   const point: WorldPoint = { x: position.x, z: position.z };
   return targets.find(
     (target) =>
+      target.faction !== bullet.owner &&
       planarDistanceSquared(point, target.position) <=
-      (target.radius + bullet.radius) * (target.radius + bullet.radius),
+        (target.radius + bullet.radius) * (target.radius + bullet.radius),
   );
 }
 
@@ -128,6 +132,8 @@ function hitCover(
     material,
     destroyedCover: destroyed,
     targetId: null,
+    damage: bullet.damage,
+    owner: bullet.owner,
   };
 }
 
@@ -159,6 +165,8 @@ function advanceBullet(bullet: Bullet, input: ProjectilesInput): ProjectileEvent
         material: null,
         destroyedCover: false,
         targetId: target.id,
+        damage: bullet.damage,
+        owner: bullet.owner,
       };
     }
 

@@ -1,28 +1,17 @@
 /**
- * Construcción de caras del mundo (coberturas) para el painter.
+ * Caras de mundo de las coberturas.
  *
- * Culling por distancia, backface culling, recorte de plano cercano, sombreado plano por normal y
- * niebla. Las coberturas intactas emiten sus caras; las destruidas, solo escombros bajos.
+ * Las coberturas intactas emiten solo sus caras exteriores (se omiten las que tocan otra cobertura
+ * intacta); las destruidas emiten unos escombros bajos que ya no ocultan la visión.
  */
 
-import { clamp, dot3, normalize3, scale3 } from '../core/math';
-import type { Vec3 } from '../core/math';
 import { RENDER_DEFAULTS } from '../config/balance';
 import { MATERIALS } from '../config/materials';
-import { PALETTE } from '../config/palette';
 import { isBlocked } from '../world/grid';
 import type { CellObstacle, WorldGrid } from '../world/types';
-import { createCameraFrame, projectCameraPoint, worldToCamera } from './camera';
-import type { CameraFrame } from './camera';
-import { clipPolygonNearPlane } from './clip';
-import { mixHexColors, shadeHexColor } from './color';
-import type { PerspectiveCamera, RenderFace, ScreenPoint, Viewport } from './types';
-
-interface WorldFace {
-  readonly points: readonly Vec3[];
-  readonly normal: Vec3;
-  readonly color: string;
-}
+import { projectWorldFaces } from './faces';
+import type { ProjectionOptions, WorldFace } from './faces';
+import type { PerspectiveCamera, RenderFace } from './types';
 
 interface CellBounds {
   readonly x0: number;
@@ -34,8 +23,8 @@ interface CellBounds {
 interface SideDefinition {
   readonly dx: number;
   readonly dz: number;
-  readonly normal: Vec3;
-  readonly corners: (bounds: CellBounds, height: number) => Vec3[];
+  readonly normal: WorldFace['normal'];
+  readonly corners: (bounds: CellBounds, height: number) => WorldFace['points'];
 }
 
 const SIDE_DEFINITIONS: readonly SideDefinition[] = [
@@ -85,25 +74,6 @@ const SIDE_DEFINITIONS: readonly SideDefinition[] = [
   },
 ];
 
-export interface WorldFacesOptions {
-  readonly grid: WorldGrid;
-  readonly camera: PerspectiveCamera;
-  readonly viewport: Viewport;
-  readonly maxDrawDistance?: number;
-  readonly fogStart?: number;
-  readonly fogEnd?: number;
-  readonly fogColor?: string;
-  readonly lightDirection?: Vec3;
-}
-
-interface ProjectionSettings {
-  readonly frame: CameraFrame;
-  readonly fogStart: number;
-  readonly fogEnd: number;
-  readonly fogColor: string;
-  readonly lightDirection: Vec3;
-}
-
 function cellBounds(grid: WorldGrid, x: number, z: number): CellBounds {
   const x0 = x * grid.cellSize;
   const z0 = z * grid.cellSize;
@@ -149,7 +119,6 @@ function wallFaces(options: WallFacesOptions): WorldFace[] {
   ).map((definition) => sideFace(definition, bounds, height, color));
 }
 
-/** Escombros bajos de una cobertura destruida: ya no ocultan la visión. */
 interface RubbleFacesOptions {
   readonly grid: WorldGrid;
   readonly x: number;
@@ -186,66 +155,8 @@ function obstacleFaces(
   return wallFaces({ grid, x, z, height: material.height, color: material.color });
 }
 
-function faceCenter(points: readonly Vec3[]): Vec3 {
-  const sum = points.reduce<Vec3>(
-    (total, point) => ({
-      x: total.x + point.x,
-      y: total.y + point.y,
-      z: total.z + point.z,
-    }),
-    { x: 0, y: 0, z: 0 },
-  );
-  return scale3(sum, 1 / Math.max(1, points.length));
-}
-
-function projectFace(face: WorldFace, settings: ProjectionSettings): RenderFace | null {
-  const { frame } = settings;
-  const camera = frame.camera;
-  const center = faceCenter(face.points);
-  const toFace: Vec3 = {
-    x: center.x - camera.position.x,
-    y: center.y - camera.position.y,
-    z: center.z - camera.position.z,
-  };
-  if (dot3(face.normal, toFace) >= 0) return null;
-
-  const cameraPoints = face.points.map((point) =>
-    worldToCamera(point, camera, frame.basis),
-  );
-  const clipped = clipPolygonNearPlane(cameraPoints, camera.near);
-  if (clipped.length < 3) return null;
-
-  const screenPoints: ScreenPoint[] = [];
-  let depthSum = 0;
-  for (const point of clipped) {
-    const projected = projectCameraPoint(point, camera, frame.viewport, frame.focal);
-    if (!projected) return null;
-    screenPoints.push(projected);
-    depthSum += point.z;
-  }
-
-  const depth = depthSum / clipped.length;
-  const fog = clamp(
-    (depth - settings.fogStart) / Math.max(1, settings.fogEnd - settings.fogStart),
-    0,
-    1,
-  );
-  const light = Math.max(0, dot3(face.normal, settings.lightDirection));
-  const lit = shadeHexColor(face.color, 0.58 + 0.42 * light);
-  return { points: screenPoints, depth, color: mixHexColors(lit, settings.fogColor, fog) };
-}
-
-function createProjectionSettings(options: WorldFacesOptions): ProjectionSettings {
-  return {
-    frame: createCameraFrame(options.camera, options.viewport),
-    fogStart: options.fogStart ?? RENDER_DEFAULTS.fogStart,
-    fogEnd: options.fogEnd ?? RENDER_DEFAULTS.fogEnd,
-    fogColor: options.fogColor ?? PALETTE.niebla,
-    lightDirection: normalize3(options.lightDirection ?? { x: 0.35, y: 0.85, z: 0.25 }),
-  };
-}
-
-function collectWorldFaces(
+/** Caras de mundo de todas las coberturas dentro de la distancia de dibujado. */
+export function buildWallWorldFaces(
   grid: WorldGrid,
   camera: PerspectiveCamera,
   maxDrawDistance: number,
@@ -265,21 +176,17 @@ function collectWorldFaces(
   return worldFaces;
 }
 
-function projectWorldFaces(
-  worldFaces: readonly WorldFace[],
-  settings: ProjectionSettings,
-): RenderFace[] {
-  const projected: RenderFace[] = [];
-  for (const face of worldFaces) {
-    const rendered = projectFace(face, settings);
-    if (rendered) projected.push(rendered);
-  }
-  return projected;
+export interface WorldFacesOptions extends ProjectionOptions {
+  readonly grid: WorldGrid;
+  readonly maxDrawDistance?: number;
 }
 
-/** Caras visibles del mundo, listas para el painter (sin ordenar). */
+/** Atajo: caras de coberturas ya proyectadas y listas para el painter. */
 export function buildWorldFaces(options: WorldFacesOptions): RenderFace[] {
-  const maxDrawDistance = options.maxDrawDistance ?? RENDER_DEFAULTS.maxDrawDistance;
-  const worldFaces = collectWorldFaces(options.grid, options.camera, maxDrawDistance);
-  return projectWorldFaces(worldFaces, createProjectionSettings(options));
+  const wallFaces = buildWallWorldFaces(
+    options.grid,
+    options.camera,
+    options.maxDrawDistance ?? RENDER_DEFAULTS.maxDrawDistance,
+  );
+  return projectWorldFaces(wallFaces, options);
 }

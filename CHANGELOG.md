@@ -9,6 +9,9 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 ### Añadido
 
+- Enemigos Panzer III y Tiger I con IA (percepción, alerta por visión o estampido, avance con A*,
+  apuntado, disparo y recarga), línea de visión, daño cruzado con blindaje, modelos de tanque en
+  polígonos con oclusión y ganchos de depuración `?seed=` y `window.__BT__`.
 - Combate del jugador: recarga, proyectiles balísticos en subpasos, impactos contra coberturas
   destructibles e indestructibles, retroceso de cámara, fogonazo, marca de impacto y anillo de
   recarga; los escombros dejan pasar los proyectiles.

@@ -1,13 +1,16 @@
-/** Composición del frame: fondo, rejilla de suelo, caras del mundo y proyectiles. */
+/** Composición del frame: fondo, rejilla de suelo, coberturas, tanques y proyectiles. */
 
 import { LIGHT_DIRECTION, RENDER_DEFAULTS, VIEWPORT } from '../config/balance';
 import { PALETTE } from '../config/palette';
 import type { Bullet } from '../entities/bullet';
+import type { EnemyState } from '../entities/enemy';
 import { createCameraFrame } from './camera';
 import { drawBackground, drawGroundGrid } from './background';
 import { buildBulletFaces } from './bulletFaces';
+import { projectWorldFaces } from './faces';
+import { tankWorldFaces } from './models';
 import { paintFaces } from './painter';
-import { buildWorldFaces } from './worldFaces';
+import { buildWallWorldFaces } from './worldFaces';
 import type { PerspectiveCamera, RenderFace, Viewport } from './types';
 import type { WorldGrid } from '../world/types';
 
@@ -15,6 +18,7 @@ export interface WorldView {
   readonly grid: WorldGrid;
   readonly camera: PerspectiveCamera;
   readonly bullets?: readonly Bullet[];
+  readonly enemies?: readonly EnemyState[];
 }
 
 export interface RenderStats {
@@ -30,11 +34,20 @@ export function renderWorld(
   drawBackground(context, view.camera, frame);
   drawGroundGrid(context, view.grid, frame);
 
-  const faces: RenderFace[] = buildWorldFaces({
-    grid: view.grid,
+  const wallFaces = buildWallWorldFaces(
+    view.grid,
+    view.camera,
+    RENDER_DEFAULTS.maxDrawDistance,
+  );
+  const enemyFaces = (view.enemies ?? [])
+    .filter((enemy) => enemy.alive)
+    .flatMap((enemy) => tankWorldFaces(enemy));
+
+  const faces: RenderFace[] = projectWorldFaces([...wallFaces, ...enemyFaces], {
     camera: view.camera,
     viewport,
-    ...RENDER_DEFAULTS,
+    fogStart: RENDER_DEFAULTS.fogStart,
+    fogEnd: RENDER_DEFAULTS.fogEnd,
     fogColor: PALETTE.niebla,
     lightDirection: LIGHT_DIRECTION,
   });

@@ -121,12 +121,28 @@ describe('impactos de proyectiles', () => {
       bullets: [bullet],
       stepSeconds: 0.05,
       grid,
-      targets: [{ id: 'enemigo-1', position: { x: 10, z: 10 }, radius: 1 }],
+      targets: [{ id: 'enemigo-1', position: { x: 10, z: 10 }, radius: 1, faction: 'enemy' }],
     });
     expect(events).toHaveLength(1);
     expect(events[0]?.kind).toBe('target');
     expect(events[0]?.targetId).toBe('enemigo-1');
     expect(bullet.alive).toBe(false);
+  });
+
+  it('no impacta a un blanco de su misma facción', () => {
+    const grid = createEmptyGrid(10, 10, 4, 1);
+    const bullet = bulletAt(7.5);
+    const bullets = [bullet];
+    const events = updateProjectiles({
+      bullets,
+      stepSeconds: 0.05,
+      grid,
+      targets: [
+        { id: 'aliado', position: { x: 10, z: 10 }, radius: 1, faction: 'player' },
+      ],
+    });
+    expect(events).toHaveLength(0);
+    expect(bullets).toHaveLength(1);
   });
 
   it('caduca pasado el tiempo máximo de vuelo', () => {
