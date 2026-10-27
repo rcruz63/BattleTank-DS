@@ -15,10 +15,11 @@ técnica) en [`docs/STATUS.md`](docs/STATUS.md).
 ## Estado
 
 > **Versión objetivo: `0.1.0` (vertical slice jugable) — en desarrollo**, todavía no publicado.
-> Al redactarse este README las fases 0–6 y el bloque 6.5 (puntería con ratón) están cerradas; la
-> siguiente es la fase 7 (pickups). Ya hay un combate jugable: `WASD`/flechas mueven y giran el
-> tanque, el ratón apunta el cañón dentro de un cono (la cámara y el casco **no** giran con él), y
-> `Espacio` o el clic izquierdo disparan con 2,4 s de recarga. Las coberturas de madera y ladrillo se
+> Al redactarse este README las fases 0–6 y el bloque 6.5 (puntería con ratón) están cerradas. El
+> siguiente trabajo es el bloque 6.6 (corregir que el jugador atraviesa tanques), seguido de la
+> fase 7 (pickups) y el bloque 7.5 (blindaje direccional y flanqueo). Ya hay un combate jugable:
+> `WASD`/flechas mueven y giran el tanque, el ratón apunta el cañón dentro de un cono (la cámara y
+> el casco **no** giran con él), y `Espacio` o el clic izquierdo disparan con 2,4 s de recarga. Las coberturas de madera y ladrillo se
 > destruyen, los Panzer III y Tiger I esperan al acecho, detectan por línea de visión, avanzan con A*
 > y disparan (el estampido de tu cañón alerta a los cercanos); el daño respeta el blindaje y hay
 > overlay rojo al recibirlo y una pantalla provisional de tanque destruido. Faltan pickups, HUD
@@ -131,6 +132,18 @@ Se usa `localStorage` solo para dos datos: el **récord de puntos** y la **misi�
 desbloqueada**. No hay guardado a mitad de partida: al morir se pierden la partida y los pickups
 acumulados, y se reintenta desde el principio de la misión actual. Si el navegador bloquea el
 almacenamiento, el juego debe seguir funcionando sin persistencia (degradación silenciosa).
+
+## Limitaciones conocidas y siguiente paso
+
+- **`BUG-001` (prioridad alta):** el jugador puede atravesar tanques enemigos porque el movimiento
+  solo colisiona contra la rejilla. Arreglo planificado en el bloque 6.6: colisión entre tanques,
+  separación de seguridad y tests de regresión. Detalle y reproducción en
+  [`docs/STATUS.md`](docs/STATUS.md).
+- **Blindaje direccional (aprobado, bloque 7.5):** daño ×0,5 frontal, ×1,0 lateral y ×1,5 trasero,
+  con arco de fuego enemigo de ±15° y ventanas de flanqueo. Hoy no está implementado: todos los
+  impactos se tratan igual y la IA acaba encarando al jugador. Diseño en
+  [`docs/GAME_DESIGN.md`](docs/GAME_DESIGN.md) §8/§13 y [`docs/DECISIONS.md`](docs/DECISIONS.md)
+  ADR-009.
 
 ## Documentación
 

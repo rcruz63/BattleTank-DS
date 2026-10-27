@@ -48,6 +48,8 @@ Bucle de una partida:
    progreso (solo porcentaje, nunca número de enemigos restantes).
 3. **Combate:** los enemigos patrullan, toman línea de visión y disparan. Las coberturas bloquean
    visión y proyectiles; las destructibles se derriban a cañonazos y abren nuevas líneas de tiro.
+   El blindaje premia maniobrar: el frontal reduce el daño a la mitad, el lateral es neutro y la
+   espalda es vulnerable (bloque 7.5).
 4. **Gestión de recursos:** recoger botiquín, mejora y potencia; administrar la recarga y el daño
    recibido.
 5. Al destruir a todos los enemigos, **victoria de misión**: resumen de puntos, precisión, tiempo y
@@ -79,7 +81,8 @@ los resúmenes. No hay guardado a mitad de partida.
 
 No hay free-look ni apuntado fuera del cono, ni torreta independiente, ni strafe, ni gamepad, ni
 controles táctiles en 0.1.0. El cursor del sistema se oculta sobre el canvas. Mientras no exista el
-HUD, la pantalla muestra un texto temporal con semilla, teclas y vida.
+HUD, la pantalla muestra un texto temporal con semilla, teclas y vida. **El arco de fuego enemigo
+replicará este límite de ±15°** (bloque 7.5): si el jugador no puede disparar de lado, ellos tampoco.
 
 ## 4. HUD y capas
 
@@ -96,6 +99,8 @@ HUD, la pantalla muestra un texto temporal con semilla, teclas y vida.
   mientras recarga; un destello indica que el arma está lista.
 - **Efectos temporales:** iconos de potencia y de mejora activa con cuenta atrás.
 - **Avisos de estado:** mensajes breves (objetivo cumplido, daño crítico, recarga completada).
+- **Zona de impacto:** aviso breve «FRONTAL / LATERAL / TRASERA» con el daño aplicado, ligado al
+  blindaje direccional (fase 8, bloque 7.5).
 - **Rumbo:** indicador discreto de orientación (brújula) para mitigar la desorientación en primera
   persona; previsto, se fija en la fase 8.
 - **Pantallas:** menú, briefing, pausa, resumen de misión y derrota/final de campaña.
@@ -214,6 +219,8 @@ cobertura con material, altura y vida.
 - El HUD muestra icono y cuenta atrás de los efectos temporales.
 - La mejora acumulable ×3 implica hasta −30 % extra de daño recibido; cómo se combina con la
   reducción base del Sherman (aditiva o multiplicativa) está pendiente (ver §12).
+- La reducción de la mejora se combinará con el multiplicador de zona de blindaje (bloque 7.5); el
+  orden definitivo se fijará en la fase 9.
 
 ## 8. Enemigos e IA
 
@@ -250,7 +257,29 @@ Reglas de justicia y comportamiento:
 - **Sin coordinación avanzada:** no hay flanqueo coordinado, reposición táctica ni uso inteligente de
   coberturas; solo A* básico y colisión. Es deuda planificada, no un fallo.
 - **Daño mutuo con blindaje:** el daño base se reduce según `armor` del tanque (jugador y enemigos);
-  el Panzer III cae en 3 impactos y el Tiger I en 4 con el cañón del Sherman.
+  con el cañón del Sherman, el Panzer III cae en **3 impactos laterales** y el Tiger I en **4
+  laterales**. Los impactos frontales y traseros llegarán con el blindaje direccional (bloque 7.5).
+
+### Blindaje direccional y flanqueo (aprobado 2026-10-27 · bloque 7.5)
+
+**Motivación:** hoy la IA gira el casco hacia el jugador y el combate es frontal; el jugador no puede
+disparar por los lados (cono del cañón) y los enemigos tampoco deberían. El objetivo es que maniobrar
+tenga valor y que atacar por el flanco o la espalda sea la forma eficiente de matar.
+
+- **Zonas de impacto:** se calculan con el ángulo entre el rumbo del blanco y la dirección desde la
+  que llega el proyectil. Frontal ±60°, lateral 60–120°, trasera >120°.
+- **Multiplicadores de daño** (después de `armor`): frontal ×0,5, lateral ×1,0, trasera ×1,5.
+  Simétrico para jugador y enemigos. Datos previstos en `src/config/balance.ts`.
+- **Arco de fuego:** el jugador ya está limitado por el cono de ±15°; los enemigos solo disparan si
+  el jugador está dentro de ±15° de su rumbo. Para apuntar deben girar el casco a velocidad limitada.
+- **Ventanas de flanqueo:** mientras recargan no corrigen el rumbo; el giro limitado y la pausa de
+  seguimiento permiten al jugador ganar el lado o la espalda. A validar con simulación.
+- **Legibilidad:** marcas de orientación en el modelo (frontal vs trasera) y aviso de zona en el HUD
+  (fase 8). Sin ellas el multiplicador sería invisible e injusto.
+- **Balance previsto:** Sherman vs Panzer III **5/3/2** y vs Tiger I **8/4/3** (frontal/lateral/
+  trasera), a recalibrar en la fase 9 con simulación headless.
+- **Pruebas:** clasificación de zona pura, multiplicadores por zona, arco de fuego enemigo, IA que no
+  dispara fuera del arco, simulación de flanqueo y feedback de HUD.
 
 ## 9. Misiones y dificultad
 
@@ -317,9 +346,14 @@ Todo el sonido se **sintetiza con WebAudio**; no hay ficheros de audio ni músic
 
 ## 12. Pendientes de diseño para el Lead
 
-- **Impactos y balance (resuelto):** con los valores actuales de `src/config/tanks.ts` el Sherman
-  hace **3 impactos al Panzer III** (100 PV) y **4 al Tiger I** (140 PV y 10 % de blindaje), que es
-  lo que fija el plan. Cualquier ajuste de balance se hace en `tanks.ts` y se refleja aquí.
+- **Colisión entre tanques (BUG-001, bloque 6.6):** hoy el jugador puede atravesar a un enemigo
+  porque el movimiento solo colisiona contra la rejilla. Arreglo planificado: bloqueadores
+  dinámicos y separación de seguridad; ver `STATUS.md`.
+- **Impactos y balance (resuelto para el lateral):** con los valores actuales de
+  `src/config/tanks.ts` el Sherman hace **3 impactos laterales al Panzer III** (100 PV) y **4
+  laterales al Tiger I** (140 PV y 10 % de blindaje), que es lo que fija el plan. Con el blindaje
+  direccional (bloque 7.5) el frontal y la espalda cambian: 5/2 y 8/3 respectivamente. Cualquier
+  ajuste de balance se hace en `tanks.ts` y se refleja aquí.
 - **Fórmula de la bonificación por vida restante:** no definida; proponer una lineal sobre la vida
   máxima del jugador (definida en `src/config/tanks.ts`) y fijarla en `config/balance.ts`.
 - **Combinación de reducciones de daño:** reducción base del Sherman (10 %) + mejoras (−10 % ×3);
@@ -343,15 +377,17 @@ Todo el sonido se **sintetiza con WebAudio**; no hay ficheros de audio ni músic
   mecanismo de fuera de límites (poco probable en 0.1.0).
 - **Claves de `localStorage`:** sin fijar; decisión de la fase 9.
 - **Reposición y coordinación de la IA:** la máquina actual es `idle/advance/attack`; el estado de
-  reposición y el flanqueo del plan quedan como deuda posterior (no bloquean 0.1.0).
+  reposición y la coordinación de flanqueo de la IA quedan como deuda posterior. El flanqueo **del
+  jugador** sí entra en 0.1.0 con el bloque 7.5.
 - **Sacudida de cámara al recibir daño:** hoy se usa tinte rojo; la sacudida queda como deuda de
   feedback.
 - **Balance definitivo:** ajuste de dificultad previsto para la fase 9 sobre los valores de
   `tanks.ts` y `AI_TUNING`.
 - **Sensibilidad del ratón:** el mapeo actual es lineal contra todo el canvas; no hay curvas,
   aceleración ni ajuste de sensibilidad. Si el QA lo pide, se convierte en opción de datos.
-- **Modelo de impacto de tanque:** cilindro de 2,2 m de alto y radio del tanque; no hay zonas
-  (oruga, torreta, lateral) ni daño direccional. Queda como deuda de profundidad de combate.
+- **Zonas de blindaje (planificado, bloque 7.5):** el cilindro de impacto de 2,2 m se mantiene; se
+  añaden zonas frontal/lateral/trasera con multiplicadores ×0,5/×1,0/×1,5. No hay zonas por oruga
+  ni torreta, ni daño direccional dentro de una misma cara.
 - **Alineación fina retícula-cañón:** comprobada con QA visual headless; si aparecen desajustes en
   resoluciones escaladas, revisar el mapeo canvas→píxeles en `bindMouseInput`.
 
@@ -370,11 +406,22 @@ impactos, no sustituye al fichero. Los daños enemigos son **base**: el multipli
 
 Balance actual de referencia (leer siempre `tanks.ts` antes de ajustar):
 
-- Panzer III: **100 PV**, daño 10, recarga 3 s. Con el Sherman (40 de daño) cae en **3 impactos**,
-  como fija el plan.
+- Panzer III: **100 PV**, daño 10, recarga 3 s. Con el Sherman (40 de daño) cae en **3 impactos
+  laterales**; con el bloque 7.5 serán 5 frontales y 2 traseros.
 - Tiger I: **140 PV**, blindaje 10 %, daño 20, recarga 4 s. Con el blindaje, el Sherman necesita
-  **4 impactos**.
+  **4 impactos laterales**; 8 frontales y 3 traseros con el bloque 7.5.
 - El blindaje se aplica como reducción de daño recibido: `daño × (1 − armor)`.
+- **Blindaje direccional (aprobado, bloque 7.5):** después de `armor` se aplica el multiplicador
+  de zona; el daño final es `daño × multiplicadorZona × (1 − armor)`.
+
+| Zona | Ángulo desde el frente | Multiplicador | Impactos Sherman vs Panzer III | vs Tiger I |
+|---|---|---|---|---|
+| Frontal | ±60° | ×0,5 | 5 | 8 |
+| Lateral | 60°–120° | ×1,0 | 3 | 4 |
+| Trasera | >120° | ×1,5 | 2 | 3 |
+
+Umbrales y multiplicadores irán en `src/config/balance.ts`; los impactos son previsión inicial y
+se recalibran en la fase 9.
 
 Criterios de diseño:
 
@@ -392,8 +439,8 @@ No se implementa en esta entrega (deuda planificada, no olvido):
 - Editor de escenarios, mapas manuales, más de 3 misiones o campaña larga.
 - Guardado a mitad de partida, tabla de clasificación en red, localización a otros idiomas.
 - Efectos avanzados: sombras dinámicas, partículas GPU, post-proceso.
-- Pathfinding táctico avanzado (flanqueo coordinado, uso inteligente de coberturas) más allá de A*
-  básico.
+- Pathfinding táctico avanzado y **coordinación de flanqueo de la IA** más allá de A* básico. El
+  flanqueo del jugador y el blindaje direccional sí entran (bloque 7.5).
 - Vista libre o torreta independiente. La puntería con ratón dentro del cono **sí** está incluida (bloque 6.5).
 
 Supuestos de alcance: una sola facción jugable (aliada), 3 misiones, título provisional y

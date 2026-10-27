@@ -150,3 +150,30 @@ implementación no van aquí, solo las decisiones.
   - (−) Sin público móvil ni mandos; una futura adaptación requerirá abstracción de entrada, UI
     táctil y un ADR propio.
   - Revisar después de 0.1.0 si se decide ampliar plataformas.
+
+
+## ADR-009 — Blindaje direccional y arco de fuego simétrico (aprobado, pendiente)
+
+- **Estado:** aceptada · **Fecha:** 2026-10-27 · **Fuente:** petición del usuario; PLAN §2, §7.3,
+  §7.4 y §12
+- **Contexto:** la IA gira el casco hacia el jugador y el combate acaba siendo siempre frontal. El
+  jugador no puede disparar fuera de su cono de ±15°, así que los enemigos tampoco deberían poder
+  hacerlo. Sin zonas de blindaje, maniobrar no aporta ventaja y la sensación es que todos los
+  tanques «están de frente».
+- **Decisión:**
+  - Daño por zona respecto al rumbo del blanco, después de `armor`: frontal ×0,5, lateral ×1,0 y
+    trasera ×1,5; umbrales ±60°/120°. Simétrico para jugador y enemigos.
+  - Arco de fuego enemigo de ±15° respecto a su rumbo: no disparan por los lados ni por detrás.
+  - Mientras recargan no corrigen el rumbo (ventana de flanqueo), además del giro limitado.
+  - Marcas de orientación en el modelo enemigo y feedback de zona de impacto en el HUD (fase 8).
+  - Implementación en el bloque 7.5, después de `BUG-001` (6.6) y de pickups (7).
+- **Consecuencias:**
+  - (+) El flanqueo pasa a ser la respuesta eficiente al frontal; el combate gana profundidad y la
+    IA deja de ser un tirador que siempre encara.
+  - (+) Los valores quedan como datos (`balance.ts`), por lo que el ajuste no toca la lógica.
+  - (−) El daño frontal combinado con `armor` alarga los duelos; hay que recalibrar en la fase 9 con
+    simulación headless.
+  - (−) La IA expuesta mientras recarga puede resultar demasiado fácil; se valida con simulación y se
+    ajusta la ventana si hace falta.
+- **Valores abiertos:** multiplicadores, umbrales y duración de la pausa de seguimiento son
+  configurables; el balance definitivo es de la fase 9.

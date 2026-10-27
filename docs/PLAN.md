@@ -33,10 +33,15 @@ Entrega `0.1.0`: **vertical slice jugable completo** con 3 misiones encadenadas.
 | Audio | Efectos sintetizados con WebAudio (sin ficheros de audio) |
 | Assets | Cero assets externos: geometría, tipografía e iconos procedurales/CSS |
 | Persistencia | `localStorage` solo para récord de puntos y misión máxima desbloqueada; sin guardado a mitad de partida |
+| Blindaje direccional (aprobado 2026-10-27) | Daño por zona: frontal ×0,5, lateral ×1,0 y trasero ×1,5; arco de fuego ±15° para jugador y enemigos; el flanqueo es la respuesta al frontal. Bloque 7.5. |
 
 **Supuestos** (corregibles sin tocar la arquitectura): título provisional
 «BATTLE TANK — PERISCOPIO»; 3 misiones en 0.1.0; una sola facción jugable (aliada);
 sin soporte móvil ni multijugador en 0.1.0; navegadores modernos de escritorio.
+
+**Cambios aprobados después del plan inicial (2026-10-27):** corrección del bug de colisión entre
+tanques (bloque 6.6) y blindaje direccional con arco de fuego simétrico (bloque 7.5). No alteran el
+resto del alcance; se insertan en el orden de fases de §12.
 
 ---
 
@@ -47,7 +52,8 @@ sin soporte móvil ni multijugador en 0.1.0; navegadores modernos de escritorio.
    y barra de progreso.
 3. Enemigos patrullan, toman línea de visión y disparan; las coberturas bloquean la visión
    y los proyectiles. Las coberturas destructibles se derriban a cañonazos y abren nuevas
-   líneas de tiro.
+   líneas de tiro. El blindaje direccional premia el flanqueo: de frente el daño se reduce a la
+   mitad y los enemigos solo pueden responder dentro de su arco frontal.
 4. El jugador recoge **botiquín**, **mejora** y **potencia**, administra la recarga y elimina
    a todos los enemigos.
 5. Al completar la misión: resumen de puntuación y paso a la siguiente, con más enemigos
@@ -72,6 +78,9 @@ sin soporte móvil ni multijugador en 0.1.0; navegadores modernos de escritorio.
   puntuación.
 - Enemigos: 2 tipos (ligero y pesado), línea de visión, máquina de estados, disparo con
   precisión escalada y evitación básica de obstáculos.
+- Tanques sólidos: colisión jugador↔enemigo y enemigo↔enemigo sin atravesarse (bloque 6.6).
+- Blindaje direccional y flanqueo: multiplicadores frontal/lateral/trasero, arco de fuego
+  simétrico y ventanas de flanqueo de la IA (bloque 7.5).
 - Pickups: curación, mejora (blindaje/HP máximo) y potencia (daño y recarga temporales).
 - HUD: vida, barra de progreso del escenario (% sin detalle), puntuación, radar circular,
   indicador de recarga (anillo + segundos) y avisos de estado.
@@ -113,6 +122,9 @@ npm run check      # typecheck + lint + test + build (puerta de calidad)
 
 ### 5.2 Estructura de carpetas
 
+> Estructura objetivo inicial; el mapa real y actualizado de módulos está en
+> [`ARCHITECTURE.md`](ARCHITECTURE.md) §3. Los módulos marcados «previsto» se añaden en su bloque.
+
 ```
 BattleTank-DS/
 ├── index.html
@@ -150,6 +162,7 @@ BattleTank-DS/
 │   │   ├── generate.ts
 │   │   ├── grid.ts
 │   │   ├── collision.ts
+│   │   ├── entityCollision.ts # (previsto 6.6) bloqueadores dinámicos entre tanques
 │   │   ├── los.ts
 │   │   └── pathfind.ts
 │   ├── render/                # pipeline gráfico
@@ -169,6 +182,7 @@ BattleTank-DS/
 │   │   ├── input.ts
 │   │   ├── combat.ts
 │   │   ├── ai.ts
+│   │   ├── armor.ts          # (previsto 7.5) zonas de blindaje y multiplicadores
 │   │   ├── loot.ts
 │   │   ├── mission.ts
 │   │   ├── score.ts
@@ -282,6 +296,9 @@ geometría; el diseño evita intersecciones (celdas disjuntas) y lo asume como d
 - Física 2D en el plano: el tanque avanza/retrocede a lo largo de su rumbo; `A/D` giran casco
   y mira a la vez (sin torreta independiente, fiel a «solidario con la mira»).
 - Colisión círculo vs. celdas con **deslizamiento** por ejes; sin atravesar coberturas.
+- **Colisión entre tanques (prevista, bloque 6.6):** los círculos del jugador y de los enemigos se
+  tratan como bloqueadores dinámicos; el movimiento no puede atravesarlos y se aplica separación de
+  seguridad al aparecer. Corrige la incidencia `BUG-001` registrada en `STATUS.md`.
 - Límites del escenario cerrados. Inercia ligera y aceleración corta para dar peso.
 - Cámara con pequeña inercia visual; nada que rompa la solidaridad lógica.
 
@@ -294,9 +311,15 @@ geometría; el diseño evita intersecciones (celdas disjuntas) y lo asume como d
 - **Puntería con ratón (bloque 6.5):** el cañón pivota sobre la mazorca dentro de un cono de
   ±15° horizontal y ±4° vertical; la retícula sigue al puntero, el disparo sale en esa dirección
   (balística 3D con impacto en suelo y altura de blancos) y el casco/cámara no giran con el ratón.
-- Daño del jugador: 40 por impacto (3 impactos a un ligero, 4 a un pesado con blindaje).
+- Daño del jugador: 40 por impacto base (3 impactos **laterales** a un ligero, 4 **laterales** a un
+  pesado; con blindaje direccional los frontales y traseros cambian, ver bloque 7.5).
+- **Blindaje direccional (aprobado, bloque 7.5):** el daño depende del ángulo de impacto respecto al
+  rumbo del blanco: frontal ×0,5, lateral ×1,0 y trasero ×1,5 (configurable), aplicado después de
+  `armor`. Es simétrico para jugador y enemigos. El HUD mostrará la zona del impacto (fase 8).
+- **Arco de fuego simétrico:** el jugador ya está limitado por el cono de ±15°; los enemigos solo
+  podrán disparar si el jugador está dentro de ±15° de su rumbo, nunca por los lados ni por detrás.
 - Feedback: fogonazo, retroceso de cámara, sacudida, marca de impacto, números flotantes de
-  daño/puntos, escombros al destruir una cobertura.
+  daño/puntos, zona de impacto (frontal/lateral/trasera) y escombros al destruir una cobertura.
 - La barra de progreso sube con enemigos destruidos; jamás muestra cuántos quedan.
 
 ### 7.4 Enemigos e IA
@@ -309,6 +332,12 @@ geometría; el diseño evita intersecciones (celdas disjuntas) y lo asume como d
   evitación local entre enemigos.
 - Precisión, tiempo de reacción y cadencia escalan por misión. No hay *aimbot*: dispersión
   dependiente de la distancia y del tiempo de apuntado.
+- **Arco de fuego frontal (bloque 7.5):** los enemigos solo disparan si el jugador está dentro de
+  ±15° de su rumbo (el mismo límite que el cañón del jugador); no disparan por los lados ni por
+  detrás. Para encarar deben girar el casco a velocidad limitada.
+- **Ventanas de flanqueo (bloque 7.5):** mientras recargan no corrigen el rumbo y mantienen su
+  heading; combinado con su giro limitado, el jugador puede ganar el flanco o la espalda. Es una
+  decisión de jugabilidad a validar con simulación; ver `DECISIONS.md` ADR-009.
 
 ### 7.5 Pickups
 
@@ -366,8 +395,21 @@ Campaña de 3 misiones generadas con parámetros escalados (en `src/config/missi
 | Unidad | Bando | PV | Velocidad | Giro | Recarga | Daño | Notas |
 |---|---|---|---|---|---|---|---|
 | M4 Sherman (jugador) | Aliado | 100 | 6 m/s | 90°/s | 2,4 s | 40 | 10 % de reducción de daño base |
-| Panzer III (ligero) | Eje | 60 | 4,5 m/s | 70°/s | 3,0 s | 10 | Más numeroso |
-| Tiger I (pesado) | Eje | 140 | 3,2 m/s | 50°/s | 4,0 s | 20 | Poca cadencia, mucho daño |
+| Panzer III (ligero) | Eje | 100 | 4,5 m/s | 70°/s | 3,0 s | 10 | Más numeroso |
+| Tiger I (pesado) | Eje | 140 | 3,2 m/s | 50°/s | 4,0 s | 20 | 10 % de blindaje; poca cadencia |
+
+**Blindaje direccional (aprobado 2026-10-27, bloque 7.5):** el daño depende de la zona de impacto
+respecto al rumbo del blanco, después de aplicar el blindaje del tanque:
+
+| Zona | Ángulo desde el frente | Multiplicador de daño |
+|---|---|---|
+| Frontal | ±60° | ×0,5 |
+| Lateral | 60°–120° | ×1,0 |
+| Trasera | >120° | ×1,5 |
+
+Impactos previstos con el cañón del Sherman (a validar en la fase 9): Panzer III **5 / 3 / 2**
+(frontal/lateral/trasero) y Tiger I **8 / 4 / 3**. Los multiplicadores y umbrales vivirán en
+`src/config/balance.ts` y serán ajustables.
 
 - Puntuación: 100 por ligero, 250 por pesado, +500 por misión, bonificación por vida restante.
 - Valores centralizados en `src/config/tanks.ts` y `src/config/balance.ts` para ajuste rápido.
@@ -471,19 +513,26 @@ Cada fase termina con `npm run check`, changelog + estado actualizados y **commi
 | 4 | Jugador | Movimiento solidario, colisión con deslizamiento, cámara de periscopio | `feat(player): movimiento solidario, colisión y cámara de periscopio` |
 | 5 | Combate | Disparo, recarga, proyectiles, impactos, daño y escombros | `feat(combat): disparo, recarga, proyectiles e impactos` |
 | 6 | Enemigos | Modelos, IA con LOS y A*, dificultad por parámetros | `feat(ai): enemigos con línea de visión y máquina de estados` |
+| 6.5 | Puntería con ratón | Cono de cañón, balística 3D, retícula y cañón orientables | `feat(aim): puntería con ratón y cañón cónico` |
+| 6.6 | Colisión entre tanques | Bloqueadores dinámicos jugador↔enemigo y enemigo↔enemigo; tests de regresión (`BUG-001`) | `fix(collision): bloquear el paso entre tanques` |
 | 7 | Pickups | Cura, mejora y potencia con efectos y feedback | `feat(loot): pickups de cura, mejora y potencia` |
+| 7.5 | Blindaje direccional y flanqueo | Zonas frontal/lateral/trasera, arco de fuego ±15°, ventanas de flanqueo de la IA y feedback de zona | `feat(armor): blindaje direccional y flanqueo` |
 | 8 | HUD | Vida, progreso, puntuación, radar, recarga, pantallas y viñeta | `feat(hud): vida, progreso, puntuación, radar y recarga` |
 | 9 | Misiones | Campaña de 3 misiones, escalado, victoria/derrota y persistencia | `feat(mission): misiones escaladas y progresión de campaña` |
 | 10 | Audio | Efectos sintetizados, volumen y mute | `feat(audio): efectos sintetizados con WebAudio` |
 | 11 | Pulido y handoff | QA, rendimiento, documentación final, tag | `docs: documentación de handoff y guía de desarrollo` · `chore(release): 0.1.0` |
 
-Dependencias: 0→1→2→3→4→5→6→7→8→9→10→11. La documentación (GAME_DESIGN, ARCHITECTURE,
-STATUS, CHANGELOG) se redacta en paralelo desde la fase 1; las pruebas independientes de QA
-se incorporan desde la fase 4.
+Dependencias: 0→1→2→3→4→5→6→6.5→6.6→7→7.5→8→9→10→11. La documentación (GAME_DESIGN,
+ARCHITECTURE, STATUS, CHANGELOG) se redacta en paralelo desde la fase 1; las pruebas
+independientes de QA se incorporan desde la fase 4.
+
+El bloque 6.6 va antes de pickups porque el fallo rompe el combate; el bloque 7.5 va después de
+pickups y antes de HUD (para poder mostrar la zona de impacto) y de misiones (para calibrar la
+dificultad con el nuevo daño).
 
 **Checkpoints de demo jugable:** fin de fase 4 (te mueves por el escenario), fin de fase 5
-(disparas y destruyes), fin de fase 7 (bucle de combate con mejoras), fin de fase 9 (campaña
-completa), fin de fase 11 (entrega).
+(disparas y destruyes), fin de fase 7 (bucle de combate con mejoras), fin de fase 7.5 (flanqueo y
+blindaje direccional), fin de fase 9 (campaña completa), fin de fase 11 (entrega).
 
 ---
 
@@ -501,6 +550,10 @@ completa), fin de fase 11 (entrega).
 8. Hay efectos de sonido sintetizados, volumen y silencio.
 9. Documentación completa y `docs/STATUS.md` exacto en el momento de la entrega.
 10. Historial de commits convencionales, limpio y con changelog coherente; etiqueta `v0.1.0`.
+11. El jugador no atraviesa tanques enemigos ni queda dentro de su modelo; la separación se
+    mantiene a velocidad máxima (BUG-001 resuelto).
+12. El daño depende de la zona de impacto (frontal ×0,5, lateral ×1,0, trasera ×1,5) y los
+    enemigos no disparan fuera de su arco frontal de ±15°.
 
 ---
 
@@ -515,11 +568,15 @@ completa), fin de fase 11 (entrega).
 | Dificultad mal calibrada | Datos centralizados, simulación headless para comparar y ajuste rápido |
 | Scope creep | Alcance cerrado de 0.1.0 y lista explícita de lo que queda fuera |
 | «No ver a través» percibido como injusto | Enemigos también respetan LOS; coberturas destructibles y radar compensan |
+| **Bug:** el jugador atraviesa tanques (`BUG-001`) | Bloque 6.6: colisión entre entidades, separación y tests de regresión; se prioriza antes de pickups |
+| Blindaje direccional desequilibra la dificultad | Multiplicadores/umbrales en `balance.ts`, simulación headless y ajuste en fase 9 |
+| IA demasiado precisa encarando al jugador | Arco de fuego ±15°, giro limitado y pausa de seguimiento durante la recarga (bloque 7.5) |
 | Audio bloqueado por el navegador | Desbloqueo en el primer input; degradación silenciosa si no hay WebAudio |
 
 **Deuda técnica anunciada:** sin E2E de navegador, sin música, sin soporte móvil ni gamepad,
-sin guardado a mitad de partida, sin localización, artefactos cosméticos del painter, IA sin
-coordinación de flanqueo, sin editor de mapas.
+sin guardado a mitad de partida, sin localización, artefactos cosméticos del painter, coordinación
+de flanqueo de la IA, sin editor de mapas. El bug `BUG-001` (colisión entre tanques) está
+planificado como bloque 6.6 y no se considera deuda aceptada.
 
 ---
 
@@ -550,7 +607,11 @@ coordinación de flanqueo, sin editor de mapas.
 | ¿Récord y desbloqueo persistente? | Sí, en `localStorage`, sin guardado a mitad de partida |
 | ¿Soporte móvil/gamepad? | Fuera de 0.1.0 |
 | ¿Idioma del código? | Identificadores en inglés; comentarios, UI y docs en español |
+| ¿Multiplicadores de blindaje direccional? | Frontal ×0,5, lateral ×1,0, trasero ×1,5; umbrales ±60°/120°; configurables y revisables en la fase 9 |
+| ¿Ventana de flanqueo de la IA? | Mientras recarga no corrige el rumbo; giro limitado; se valida con simulación en el bloque 7.5 |
+| ¿Colisión entre tanques? | Bloqueo por círculos sólidos + separación de seguridad; sin empuje físico ni física de masas |
 
 ---
 
 *Plan aprobado el: ________ · Aprobado por: ________*
+*Actualizado el 2026-10-27 con `BUG-001` (bloque 6.6) y blindaje direccional/arco de fuego (bloque 7.5).*

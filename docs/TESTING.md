@@ -137,7 +137,7 @@ avanzan como en el juego real y se afirman invariantes. Escenarios mínimos:
 | Proyectil e impacto | Un proyectil avanza en subpasos, impacta en una cobertura y le aplica daño; madera cae al primer impacto y ladrillo al tercero; la cobertura destruida deja de bloquear el paso y los proyectiles pasan por encima de los escombros. |
 | Caducidad | Un proyectil que no impacta desaparece al superar su vida útil y no se simula para siempre. |
 | IA: percepción y ataque | Un enemigo con LOS, encarado y recargado dispara; sin LOS avanza con A*; no dispara a través de cobertura intacta; el estampido alerta solo a los enemigos a ≤ 60 m. |
-| Daño y blindaje | Con los valores de `tanks.ts`, el Sherman destruye un Panzer III en 3 impactos y un Tiger I en 4; el blindaje reduce el daño recibido; al llegar a 0 el tanque muere y deja de simularse. |
+| Daño y blindaje | Con los valores de `tanks.ts`, el Sherman destruye un Panzer III en 3 impactos laterales y un Tiger I en 4; el blindaje reduce el daño recibido; al llegar a 0 el tanque muere y deja de simularse. Las zonas frontal/trasera se añadirán en el bloque 7.5. |
 | Determinismo | Misma semilla + misma secuencia de intenciones ⇒ mismo estado final, sin depender del reloj real. |
 | Victoria, derrota y pickups (fases 7-9) | Destruir enemigos sube el progreso; al 100 % victoria; vida a 0 derrota y reintento; pickups aplican efecto y caducan. |
 
@@ -250,7 +250,7 @@ Marcar cada punto en el navegador; anotar semilla, fase y navegador usado. Los p
 - [ ] Sin línea de visión avanzan con A* rodeando coberturas y no se quedan atascados.
 - [ ] No disparan a través de coberturas intactas; los escombros sí dejan pasar.
 - [ ] Se ven con su modelo de cajas (casco, cadenas, torreta y cañón) y con la oclusión correcta.
-- [ ] El balance de `config/tanks.ts` se siente justo (3 impactos al ligero, 4 al pesado).
+- [ ] El balance de `config/tanks.ts` se siente justo (3 impactos laterales al ligero, 4 al pesado; frontal/trasero con el bloque 7.5).
 - [ ] No hay comportamientos absurdos (aimbot perfecto, disparos a través de muros, temblores).
 - [ ] La dificultad escalada por misión y el estado de reposición **(fases 9/deuda)**.
 
@@ -282,7 +282,7 @@ Marcar cada punto en el navegador; anotar semilla, fase y navegador usado. Los p
 
 ## 8. Criterios de aceptación de 0.1.0
 
-La entrega se acepta cuando se cumplen los diez criterios del plan
+La entrega se acepta cuando se cumplen los doce criterios del plan
 ([`PLAN.md`](PLAN.md) §13); resumen y verificación:
 
 | # | Criterio | Verificación |
@@ -297,6 +297,8 @@ La entrega se acepta cuando se cumplen los diez criterios del plan
 | 8 | Efectos de sonido sintetizados, volumen y silencio. | Tests del adaptador + QA manual. |
 | 9 | Documentación completa y `docs/STATUS.md` exacto en la entrega. | Revisión del Lead sobre la documentación. |
 | 10 | Historial de commits convencionales y changelog coherente; etiqueta `v0.1.0`. | Revisión de `git log`, `CHANGELOG.md` y el tag. |
+| 11 | El jugador no atraviesa tanques enemigos ni queda dentro de su modelo (`BUG-001`). | Tests de colisión entre entidades + QA manual. |
+| 12 | Daño por zona (frontal ×0,5, lateral ×1,0, trasera ×1,5) y enemigos sin disparar fuera de su arco de ±15°. | Tests de `systems/armor` y de arco de fuego en `systems/ai` + QA. |
 
 ## 9. Deuda conocida en pruebas (0.1.0)
 
@@ -327,3 +329,17 @@ La entrega se acepta cuando se cumplen los diez criterios del plan
 
 Las decisiones pendientes que afectan a pruebas (umbral de cobertura, CI, herramienta E2E futura) se
 anotan en [`DEVELOPMENT.md`](DEVELOPMENT.md#13-pendientes-y-supuestos-detectados-para-el-lead).
+
+
+## 10. Pruebas previstas para `BUG-001` (6.6) y blindaje direccional (7.5)
+
+- **Colisión entre tanques:** el jugador no puede atravesar a un enemigo a 6 m/s y 60 Hz; distancia
+  final ≥ suma de radios; la cámara no queda dentro del modelo; los enemigos tampoco se solapan entre
+  sí; separación de seguridad en spawns y al empujar.
+- **Blindaje direccional:** clasificación pura por ángulo (frontal/lateral/trasera), multiplicadores
+  ×0,5/×1,0/×1,5, aplicación después de `armor`, simetría jugador/enemigos y valores límite ±60°/120°.
+- **Arco de fuego enemigo:** no dispara si el jugador está a 90° o 180° de su rumbo; sí dentro de
+  ±15°; la pausa de seguimiento durante la recarga se comporta como está documentada.
+- **Integración de flanqueo:** un impacto trasero hace más daño que uno frontal contra el mismo
+  tanque; la IA tarda en reencarar y el jugador puede ganar el flanco en una simulación headless.
+- **HUD (fase 8):** la zona de impacto se muestra con el daño correcto y no solo por color.

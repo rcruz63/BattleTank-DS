@@ -353,3 +353,16 @@ Herramientas de desarrollo y QA; no forman parte de la API del juego ni deben us
 - Para tests automáticos, usa las APIs inyectables: semilla en `createGame({ seed })` e `InputState`
   propio; no dependas de la URL ni de `window`.
 - Sigue prohibido el `console.log` de depuración permanente: estos dos ganchos son la vía sancionada.
+
+
+## 15. Registro de incidencias (bugs)
+
+- Todo fallo confirmado recibe un identificador `BUG-NNN` y se documenta en
+  [`STATUS.md`](STATUS.md) con: síntoma, reproducción, causa raíz, arreglo propuesto, criterios de
+  aceptación y bloque/fase donde se resuelve.
+- La corrección se hace con un commit `fix(scope): ...`, incluye un test de regresión que falla antes
+  y pasa después, actualiza `CHANGELOG.md` (sección `Corregido`) y `STATUS.md`.
+- La incidencia no se borra al cerrarla: se marca como resuelta con el hash del commit, para que
+  quede trazabilidad de lo que pasó.
+- Si el arreglo cambia un contrato de capas o una decisión de diseño, se actualizan
+  `ARCHITECTURE.md`/`DECISIONS.md` y se avisa al Lead.

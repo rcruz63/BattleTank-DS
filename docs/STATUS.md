@@ -1,7 +1,7 @@
 # Estado del proyecto — BattleTank-DS
 
-> **Actualizado:** 2026-10-27 · **Fase actual:** pausa de revisión antes de 7 — Pickups
-> **Último commit:** `feat(aim): puntería con ratón y cañón cónico`
+> **Actualizado:** 2026-10-27 · **Fase actual:** pausa de revisión; siguiente bloque 6.6 (corrección)
+> **Último commit:** `docs: registrar BUG-001 y planificar blindaje direccional`
 >
 > Este fichero es el punto de entrada para retomar el proyecto, sea otra persona, otro chat u
 > otro modelo. Se actualiza en **cada commit**. La verdad sobre el alcance está en el plan.
@@ -11,8 +11,10 @@
 1. Lee [`docs/PLAN.md`](PLAN.md) (alcance y fases) y este estado.
 2. `npm install` y `npm run check` para confirmar que la base está sana.
 3. `npm run dev` y abre `http://localhost:5173`.
-4. Elige la primera tarea pendiente de la sección «Pendiente» y sigue el flujo de
-   [`docs/DEVELOPMENT.md`](DEVELOPMENT.md): tests → `npm run check` → changelog → estado → commit.
+4. Lee «Incidencias conocidas» y la «Feature aprobada» antes de elegir tarea: el orden previsto es
+   `BUG-001` (6.6) → pickups (7) → blindaje direccional (7.5).
+5. Sigue el flujo de [`docs/DEVELOPMENT.md`](DEVELOPMENT.md): tests → `npm run check` → changelog
+   → estado → commit.
 
 ## Hecho
 
@@ -57,7 +59,41 @@
 
 ## En curso
 
-- Ninguna tarea en curso: **pausa acordada** para revisión antes de la fase 7.
+- Ninguna tarea en curso: **pausa acordada**. Próximo trabajo: **bloque 6.6** (corregir
+  `BUG-001`); después, fase 7 (pickups) y bloque 7.5 (blindaje direccional).
+
+## Incidencias conocidas
+
+### BUG-001 — El jugador atraviesa tanques enemigos (prioridad alta · bloque 6.6)
+
+- **Síntoma:** al avanzar contra un Panzer III o un Tiger I se atraviesa su modelo; la cámara queda
+  dentro, el tanque desaparece un instante y reaparece detrás.
+- **Reproducción:** `?seed=42`, localizar un enemigo y avanzar hasta contacto sin disparar.
+- **Causa raíz:** `systems/movement.ts` (jugador) y `systems/ai.ts` (enemigos) usan `moveCircle`
+  solo contra la rejilla; no existe colisión círculo-círculo ni separación entre tanques.
+- **Arreglo propuesto:** `world/entityCollision.ts` con bloqueadores dinámicos integrado en el
+  movimiento del jugador y de la IA; separación de seguridad y tests de regresión.
+- **Criterios de aceptación:** a 6 m/s y 60 Hz no se cruza un enemigo; distancia final ≥ suma de
+  radios; no se puede quedar la cámara dentro del modelo; los enemigos tampoco se solapan entre sí.
+- **Estado:** pendiente, bloque 6.6 (antes de pickups, porque rompe el combate).
+
+## Feature aprobada — Bloque 7.5: blindaje direccional y flanqueo
+
+Aprobada el 2026-10-27. El combate frontal actual no premia maniobrar y la IA siempre acaba
+encarando al jugador. Se implementará después de pickups y antes de HUD/misiones:
+
+- **Daño por zona** respecto al rumbo del blanco, después del blindaje: frontal ×0,5, lateral ×1,0,
+  trasero ×1,5 (umbrales ±60°/120°; datos en `balance.ts`).
+- **Simetría:** se aplica igual al jugador y a los enemigos.
+- **Arco de fuego:** los enemigos solo disparan si el jugador está dentro de ±15° de su rumbo, el
+  mismo límite que el cañón del jugador; ni por los lados ni por detrás.
+- **Flanqueo viable:** giro limitado + mientras recargan no corrigen el rumbo (ventana táctica); se
+  valida con simulación.
+- **Legibilidad:** marcas de orientación en el modelo enemigo y feedback de zona de impacto en el HUD
+  (fase 8).
+- **Balance previsto (a validar en fase 9):** Sherman vs Panzer III 5/3/2 y vs Tiger I 8/4/3
+  impactos frontal/lateral/trasero.
+- **Diseño completo:** PLAN §7.3, §7.4, §8; GAME_DESIGN §8/§13; decisión en DECISIONS ADR-009.
 
 ## Pendiente (por fases)
 
@@ -70,12 +106,9 @@
 | 5 | Combate: disparo, recarga, proyectiles, impactos y escombros | Completada |
 | 6 | Enemigos: modelos, IA con LOS/A*, dificultad por parámetros | Completada |
 | 6.5 | Puntería con ratón (cañón cónico, balística 3D) | Completada |
+| 6.6 | Colisión entre tanques (`BUG-001`) | **Pendiente (siguiente)** |
 | 7 | Pickups: cura, mejora y potencia | Pendiente |
-| 3 | Mundo: rejilla, generación procedural validada, escena de prismas | Pendiente |
-| 4 | Jugador: movimiento solidario, colisión, cámara de periscopio | Pendiente |
-| 5 | Combate: disparo, recarga, proyectiles, impactos y escombros | Pendiente |
-| 6 | Enemigos: modelos, IA con LOS/A*, dificultad por parámetros | Pendiente |
-| 7 | Pickups: cura, mejora y potencia | Pendiente |
+| 7.5 | Blindaje direccional y flanqueo | Pendiente |
 | 8 | HUD: vida, progreso, puntuación, radar, recarga y pantallas | Pendiente |
 | 9 | Misiones: campaña de 3, escalado, victoria/derrota y persistencia | Pendiente |
 | 10 | Audio: efectos sintetizados WebAudio, volumen y mute | Pendiente |
@@ -83,6 +116,9 @@
 
 ## Deuda técnica registrada
 
+- **Colisión entre tanques inexistente (BUG-001)**: mitigación planificada en el bloque 6.6.
+- **Sin blindaje direccional ni arco de fuego enemigo** hasta el bloque 7.5; la IA encara siempre
+  al jugador mientras tenga línea de visión.
 - IA sin patrulla ni coordinación de flanqueo: los enemigos permanecen al acecho hasta ver u oír al
   jugador. Suficiente para 0.1.0; ampliable tras la entrega.
 - Reparto provisional de tipos de enemigo (`3 ligeros + 1 pesado`); la fase 9 lo sustituirá por el
@@ -93,16 +129,17 @@
 
 ## Decisiones y notas operativas
 
-- **Flujo de trabajo acordado con el usuario:** pausa al cerrar cada fase para revisión/intervención. Se retoma con «continúa la fase N».
+- **Flujo de trabajo acordado con el usuario:** pausa al cerrar cada fase para revisión/intervención. Se retoma con «continúa la fase N» o «continúa el bloque N».
+- **Cambios aprobados 2026-10-27:** corregir `BUG-001` (6.6) y añadir blindaje direccional/flanqueo (7.5). Registrados en `PLAN.md` §2/§12 y `DECISIONS.md` ADR-009.
 - No hay `pnpm` instalado en la máquina; se usa **npm** (Node 24 / npm 11).
 - El audio se sintetiza con WebAudio: no habrá ficheros de audio ni assets externos.
 - La interfaz y la documentación van en español; los identificadores del código, en inglés.
-- `main.ts` arranca el juego real (`createGame`): WASD/flechas para moverse, Espacio para disparar.
-  El HUD funcional y la pantalla de resultados llegan en las fases 8-9; el texto de estado actual es temporal.
+- `main.ts` arranca el juego real (`createGame`): WASD/flechas para moverse, ratón para apuntar,
+  clic o Espacio para disparar. El HUD funcional y la pantalla de resultados llegan en las fases
+  8-9; el texto de estado actual es temporal.
 - Depuración: `?seed=42` reproduce un escenario; `window.__BT__` expone el estado del juego en consola.
 - Controles: W/S avanzar/retroceder, A/D girar tanque y vista, ratón para apuntar en el cono,
   clic izquierdo o Espacio disparar.
-- `main.ts` dibuja todavía una pantalla de arranque; se sustituirá por el bucle real en la fase 1.
 
 ## Comandos de referencia
 

@@ -74,6 +74,7 @@ BattleTank-DS/
 │   │   ├── generate.ts     #   generación procedural validada
 │   │   ├── spawns.ts       #   colocación de enemigos y pickups
 │   │   ├── collision.ts    #   círculo vs rejilla con deslizamiento y subpasos
+│   │   ├── entityCollision.ts # (previsto 6.6) bloqueadores dinámicos entre tanques
 │   │   ├── los.ts          #   línea de visión por muestreo (coberturas intactas bloquean)
 │   │   └── pathfind.ts     #   A* de 4 direcciones con lista abierta ordenada
 │   ├── render/             # pipeline pseudo-3D, sin mutar el estado
@@ -100,7 +101,8 @@ BattleTank-DS/
 │   │   ├── aim.ts          #   puntero normalizado → cono de cañón y punto de retícula
 │   │   ├── movement.ts     #   giro solidario y avance con colisión
 │   │   ├── combat.ts       #   recarga, disparo, proyectiles 3D, impactos y daño
-│   │   └── ai.ts           #   percepción, alerta, avance con A*, apuntado y disparo enemigo
+│   │   ├── ai.ts           #   percepción, alerta, avance con A*, apuntado y disparo enemigo
+│   │   └── armor.ts        #   (previsto 7.5) zonas de blindaje y multiplicadores
 │   ├── ui/
 │   │   └── styles.css      #   estilos base del shell y el HUD
 │   └── game/
@@ -108,7 +110,8 @@ BattleTank-DS/
 │
 │   (previstos: config/missions.ts, entities/pickup.ts, systems/loot.ts, systems/mission.ts,
 │    systems/score.ts, systems/progression.ts, ui/hud.ts, ui/radar.ts, ui/screens.ts,
-│    audio/synth.ts, audio/audio.ts, game/state.ts)
+│    audio/synth.ts, audio/audio.ts, game/state.ts, systems/armor.ts (7.5),
+│    world/entityCollision.ts (6.6))
 ├── tests/                  # espejo de src/ (24 ficheros, 132 tests) + integración headless
 ├── docs/
 └── dist/                   # build generado (no versionado)
@@ -122,7 +125,8 @@ ordene y pinte. `buildWorldFaces` sigue existiendo como atajo para tests de proy
 A fecha de redacción las fases 0–6 y el bloque 6.5 están cerrados: el jugador se mueve, apunta el
 cañón con el ratón dentro de un cono y dispara con el clic o `Espacio`; las coberturas se destruyen,
 los enemigos esperan/avanzan/atacan con LOS y A*, el daño respeta el blindaje y hay feedback de
-impacto/daño. La siguiente fase es pickups.
+impacto/daño. El siguiente trabajo es el **bloque 6.6** (colisión entre tanques, `BUG-001`); después
+pickups (7) y blindaje direccional (7.5).
 
 ### Responsabilidades por módulo
 
@@ -306,7 +310,9 @@ hay z-buffer. Los empates de profundidad conservan el orden de entrada (el `sort
 - **Colisión del tanque:** círculo de radio propio (jugador 1,35 m; enemigos 1,4 m) contra celdas:
   `canCircleOccupy` comprueba la ocupación y `moveCircle` mueve por ejes separados con subpasos de
   0,25 m como máximo, con deslizamiento y detección de bloqueo. Enemigos y jugador usan la misma
-  función.
+  función. **Limitación actual (`BUG-001`):** no hay colisión entre tanques; el jugador puede
+  atravesar a un enemigo y la cámara quedar dentro de su modelo. Se corrige en el bloque 6.6 con
+  `world/entityCollision.ts` (bloqueadores dinámicos + separación de seguridad).
 - **Línea de visión:** `hasLineOfSight` muestrea el segmento cada **1 m** (suficiente para celdas de
   4 m), devuelve `false` si sale del mapa o si encuentra una celda bloqueada. Los escombros no
   bloquean; las coberturas intactas sí.
@@ -321,6 +327,10 @@ hay z-buffer. Los empates de profundidad conservan el orden de entrada (el `sort
   torreta (1,55 m de alto, 1,1 m al frente) más 2,2 m de tubo, en la dirección de la mira. Los
   impactos pueden ser contra cobertura, contra tanque (cilindro de 2,2 m de alto) o contra el suelo;
   un disparo elevado puede pasar por encima de un tanque. La dirección de la cámara no interviene.
+- **Blindaje direccional (previsto 7.5):** el evento de impacto llevará la dirección del proyectil
+  y el juego clasificará la zona (frontal/lateral/trasera) con `systems/armor.ts` puro, aplicando
+  ×0,5/×1,0/×1,5 después de `armor`. El arco de fuego enemigo (±15°) y la pausa de seguimiento
+  durante la recarga viven en `systems/ai.ts`; los valores, en `config/balance.ts`.
 - **Limitación:** sin verticalidad real (rampas, puentes, tejados, voladizos), agua ni
   transparencias; requiere cambiar el contrato de mundo y un ADR.
 
@@ -410,7 +420,10 @@ colisión se dividen en funciones pequeñas; si una regla no cabe sin anidar, se
 | Tracers mal ordenados respecto a coberturas/tanques | Comparten la lista de caras y la profundidad del painter | Mitigado |
 | LOS imprecisa en esquinas por muestreo de 1 m | Suficiente para celdas de 4 m; si aparecen fallos, DDA exacto | Aceptado (revisar con QA) |
 | IA que se engancha en esquinas | A* + deslizamiento + recálculo de ruta al chocar; test de avance con obstáculo | Parcial (fase 6) |
-| IA sin estado de reposición/coordinación | Máquina `idle/advance/attack`; reposicionar y flanqueo quedan como deuda | Deuda planificada |
+| IA sin estado de reposición/coordinación | Máquina `idle/advance/attack`; reposicionar y flanqueo coordinado quedan como deuda | Deuda planificada |
+| **Bug:** jugador atraviesa tanques (`BUG-001`) | Bloqueadores dinámicos + separación y tests de regresión en el bloque 6.6 | Pendiente (prioridad alta) |
+| Blindaje direccional desequilibra la dificultad | Multiplicadores/umbrales en `balance.ts`; simulación headless y ajuste en fase 9 | Previsto (7.5) |
+| IA demasiado precisa encarando al jugador | Arco de fuego ±15°, giro limitado y pausa de seguimiento al recargar | Previsto (7.5) |
 | Dificultad mal calibrada | Balance en `config/tanks.ts`, IA en `balance.ts`, simulación headless y `?seed=` | Parcial (ajuste fase 9) |
 | Oclusión percibida como injusta | Enemigos con la misma LOS; coberturas destructibles y radar (fase 8) | Diseño |
 | Retícula/puntería descuadrada respecto al cañón | `resolveAim` unitario + cañón visual derivado del mismo punto de retícula; QA visual | Mitigado (bloque 6.5) |
@@ -439,8 +452,9 @@ colisión se dividen en funciones pequeñas; si una regla no cabe sin anidar, se
 - **Bloque 6.5:** puntería con ratón cerrada — `systems/aim`, puntero en `InputState`, cableado de
   entrada en `main.ts`, proyectiles con dirección 3D, impactos en suelo, cañón orientable y retícula
   móvil en el periscopio, cámara con pitch base 0° y cursor oculto. **132 tests en 24 ficheros.**
-- **Fase 7 (pickups):** siguiente. Después: HUD/radar, misiones/persistencia, audio y pulido
-  (fases 8–11).
+- **Siguiente trabajo (bloque 6.6):** colisión entre tanques (`BUG-001`) antes de pickups. Después:
+  fase 7 (pickups), bloque 7.5 (blindaje direccional/flanqueo), HUD/radar, misiones/persistencia,
+  audio y pulido (fases 8–11).
 
 El inventario real, commit a commit, está en [`STATUS.md`](STATUS.md); el orden y entregables de
 cada fase, en [`PLAN.md`](PLAN.md) §12.
