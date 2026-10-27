@@ -152,10 +152,10 @@ implementación no van aquí, solo las decisiones.
   - Revisar después de 0.1.0 si se decide ampliar plataformas.
 
 
-## ADR-009 — Blindaje direccional y arco de fuego simétrico (aprobado, pendiente)
+## ADR-009 — Blindaje direccional y arco de fuego simétrico (implementada en el bloque 7.5)
 
-- **Estado:** aceptada · **Fecha:** 2026-10-27 · **Fuente:** petición del usuario; PLAN §2, §7.3,
-  §7.4 y §12
+- **Estado:** aceptada e implementada en el bloque 7.5 (2026-10-27) · **Fecha:** 2026-10-27 ·
+  **Fuente:** petición del usuario; PLAN §2, §7.3, §7.4 y §12
 - **Contexto:** la IA gira el casco hacia el jugador y el combate acaba siendo siempre frontal. El
   jugador no puede disparar fuera de su cono de ±15°, así que los enemigos tampoco deberían poder
   hacerlo. Sin zonas de blindaje, maniobrar no aporta ventaja y la sensación es que todos los

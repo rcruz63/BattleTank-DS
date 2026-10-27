@@ -12,6 +12,7 @@ import {
   updatePlayerWeapon,
   updateProjectiles,
 } from '../../src/systems/combat';
+import type { ProjectileTarget } from '../../src/systems/combat';
 import {
   createEmptyGrid,
   damageObstacle,
@@ -134,6 +135,7 @@ describe('multiplicadores de potencia y objetivos', () => {
     const targets = buildProjectileTargets(player, [enemy, dead]);
     expect(targets.map((target) => target.id)).toEqual(['player', 'enemigo-1']);
     expect(targets.map((target) => target.faction)).toEqual(['player', 'enemy']);
+    expect(targets.map((target) => target.heading)).toEqual([player.yaw, enemy.yaw]);
 
     player.alive = false;
     expect(buildProjectileTargets(player, [enemy]).map((target) => target.id)).toEqual([
@@ -190,13 +192,54 @@ describe('impactos de proyectiles', () => {
       stepSeconds: 0.05,
       grid,
       targets: [
-        { id: 'enemigo-1', position: { x: 10, z: 10 }, radius: 1, height: 2.2, faction: 'enemy' },
+        { id: 'enemigo-1', position: { x: 10, z: 10 }, radius: 1, height: 2.2, faction: 'enemy', heading: 0 },
       ],
     });
     expect(events).toHaveLength(1);
     expect(events[0]?.kind).toBe('target');
     expect(events[0]?.targetId).toBe('enemigo-1');
     expect(bullet.alive).toBe(false);
+  });
+
+  it('clasifica la zona del impacto respecto al rumbo del blanco', () => {
+    const grid = createEmptyGrid(10, 10, 4, 1);
+    const target: ProjectileTarget = {
+      id: 'enemigo-1',
+      position: { x: 10, z: 10 },
+      radius: 1,
+      height: 2.2,
+      faction: 'enemy',
+      heading: 0,
+    };
+    const frontBullet = createBullet({
+      position: { x: 10, y: 1.25, z: 13 },
+      direction: { x: 0, y: 0, z: -1 },
+      speed: 80,
+      damage: 40,
+      owner: 'player',
+    });
+    const front = updateProjectiles({
+      bullets: [frontBullet],
+      stepSeconds: 0.05,
+      grid,
+      targets: [target],
+    });
+    expect(front[0]?.zone).toBe('front');
+
+    const rearBullet = createBullet({
+      position: { x: 10, y: 1.25, z: 7 },
+      direction: { x: 0, y: 0, z: 1 },
+      speed: 80,
+      damage: 40,
+      owner: 'player',
+    });
+    const rear = updateProjectiles({
+      bullets: [rearBullet],
+      stepSeconds: 0.05,
+      grid,
+      targets: [target],
+    });
+    expect(rear[0]?.zone).toBe('rear');
   });
 
   it('no impacta a un blanco de su misma facción', () => {
@@ -208,7 +251,7 @@ describe('impactos de proyectiles', () => {
       stepSeconds: 0.05,
       grid,
       targets: [
-        { id: 'aliado', position: { x: 10, z: 10 }, radius: 1, height: 2.2, faction: 'player' },
+        { id: 'aliado', position: { x: 10, z: 10 }, radius: 1, height: 2.2, faction: 'player', heading: 0 },
       ],
     });
     expect(events).toHaveLength(0);
@@ -245,7 +288,7 @@ describe('impactos de proyectiles', () => {
       stepSeconds: 0.05,
       grid,
       targets: [
-        { id: 'enemigo-1', position: { x: 10, z: 10 }, radius: 1, height: 2.2, faction: 'enemy' },
+        { id: 'enemigo-1', position: { x: 10, z: 10 }, radius: 1, height: 2.2, faction: 'enemy', heading: 0 },
       ],
     });
     expect(events).toHaveLength(0);

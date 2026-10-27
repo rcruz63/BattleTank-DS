@@ -156,6 +156,62 @@ describe('composición del juego', () => {
     game.dispose();
   });
 
+  it('el daño depende de la zona del impacto (simetría jugador/enemigo)', () => {
+    const input = createInputState();
+    const game = createGame({ seed: 42, input });
+    const enemy = game.enemies[0];
+    if (!enemy) throw new Error('La arena de prueba debe tener enemigos.');
+    const grid = game.arena.grid;
+    const origin = game.player.position;
+    const distanceToEnemy = 6;
+    let placed = false;
+
+    for (let quarter = 0; quarter < 4 && !placed; quarter += 1) {
+      const yaw = (quarter * Math.PI) / 2;
+      const forward = { x: Math.sin(yaw), z: Math.cos(yaw) };
+      const target = {
+        x: origin.x + forward.x * distanceToEnemy,
+        z: origin.z + forward.z * distanceToEnemy,
+      };
+      const pathClear = [1, 2, 3, 4, 5, 6].every((distance) =>
+        canCircleOccupy(
+          grid,
+          { x: origin.x + forward.x * distance, z: origin.z + forward.z * distance },
+          game.player.radius,
+        ),
+      );
+      if (!pathClear || !canCircleOccupy(grid, target, enemy.radius)) continue;
+      game.player.yaw = yaw;
+      game.player.reloadRemaining = 0;
+      enemy.position = target;
+      enemy.alerted = true;
+      enemy.reactionTimer = 0;
+      enemy.reloadRemaining = 999;
+      enemy.yaw = yaw;
+      placed = true;
+    }
+
+    expect(placed).toBe(true);
+
+    const startHealth = enemy.health;
+    input.requestFire();
+    for (let step = 0; step < 30; step += 1) game.update(1 / 60);
+    const rearDamage = startHealth - enemy.health;
+    expect(rearDamage).toBeCloseTo(game.player.damage * 1.5, 6);
+
+    enemy.yaw = game.player.yaw + Math.PI;
+    game.player.reloadRemaining = 0;
+    game.player.reloadDuration = game.player.reloadSeconds;
+    const healthBeforeFront = enemy.health;
+    input.requestFire();
+    for (let step = 0; step < 30; step += 1) game.update(1 / 60);
+    const frontDamage = healthBeforeFront - enemy.health;
+    expect(frontDamage).toBeCloseTo(game.player.damage * 0.5, 6);
+    expect(rearDamage).toBeGreaterThan(frontDamage);
+
+    game.dispose();
+  });
+
   it('responde a la entrada de avance y giro', () => {
     const input = createInputState();
     const game = createGame({ seed: 42, input });

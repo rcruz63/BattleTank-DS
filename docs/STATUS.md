@@ -1,7 +1,7 @@
 # Estado del proyecto — BattleTank-DS
 
-> **Actualizado:** 2026-10-27 · **Fase actual:** pausa de revisión; siguiente bloque 7.5 (blindaje)
-> **Último commit:** `feat(loot): pickups de cura, mejora y potencia`
+> **Actualizado:** 2026-10-27 · **Fase actual:** pausa de revisión; siguiente fase 8 (HUD)
+> **Último commit:** `feat(armor): blindaje direccional y flanqueo`
 >
 > Este fichero es el punto de entrada para retomar el proyecto, sea otra persona, otro chat u
 > otro modelo. Se actualiza en **cada commit**. La verdad sobre el alcance está en el plan.
@@ -11,13 +11,21 @@
 1. Lee [`docs/PLAN.md`](PLAN.md) (alcance y fases) y este estado.
 2. `npm install` y `npm run check` para confirmar que la base está sana.
 3. `npm run dev` y abre `http://localhost:5173`.
-4. Lee «Incidencias conocidas» y la «Feature aprobada» antes de elegir tarea: el siguiente trabajo
-   es el blindaje direccional (7.5); pickups (7) y `BUG-001` (6.6) ya están cerrados.
+4. Lee «Incidencias conocidas» antes de elegir tarea: el siguiente trabajo es el HUD/radar (fase 8);
+   pickups (7), blindaje direccional (7.5) y `BUG-001` (6.6) ya están cerrados.
 5. Sigue el flujo de [`docs/DEVELOPMENT.md`](DEVELOPMENT.md): tests → `npm run check` → changelog
    → estado → commit.
 
 ## Hecho
 
+- [x] **Bloque 7.5 — Blindaje direccional y flanqueo.** El daño se clasifica por zona respecto al
+      rumbo del blanco (frontal ×0,5, lateral ×1,0, trasera ×1,5) y se aplica después del blindaje
+      base y de las mejoras, igual para jugador y enemigos; la IA solo dispara dentro de ±15° de su
+      rumbo y no corrige el heading mientras recarga (ventana de flanqueo); los modelos enemigos
+      llevan franja clara en el frente y roja en la espalda. `systems/armor.ts`, zona en
+      `ProjectileEvent`, aplicación en `systems/damage.ts`, datos en `balance.ts` e IA en
+      `systems/ai.ts`. 183 tests en 31 ficheros (15 nuevos) y QA en Chrome headless: trasero 60 /
+      frontal 20, sin disparo fuera del arco y rumbo congelado al recargar.
 - [x] **Fase 7 — Pickups.** Cuatro pickups por escenario (botiquín, mejora y potencia) repartidos de
       forma determinista en los spawns alcanzables; se recogen al pasar a menos de 2 m y aplican
       cura de +30 PV con tope, +20 de vida máxima con −10 % de daño recibido acumulable ×3, o daño
@@ -74,31 +82,13 @@
 
 ## En curso
 
-- Ninguna tarea en curso: **pausa acordada**. Próximo trabajo: **bloque 7.5** (blindaje direccional
-  y flanqueo).
+- Ninguna tarea en curso: **pausa acordada**. Próximo trabajo: **fase 8** (HUD, radar, avisos de
+  zona de impacto y pantallas).
 
 ## Incidencias conocidas
 
 - Ninguna abierta. `BUG-001` (el jugador atravesaba tanques enemigos) quedó resuelto en el bloque
   6.6: ver «Hecho» y [`ARCHITECTURE.md`](ARCHITECTURE.md) §8.
-
-## Feature aprobada — Bloque 7.5: blindaje direccional y flanqueo
-
-Aprobada el 2026-10-27. El combate frontal actual no premia maniobrar y la IA siempre acaba
-encarando al jugador. Se implementará después de pickups y antes de HUD/misiones:
-
-- **Daño por zona** respecto al rumbo del blanco, después del blindaje: frontal ×0,5, lateral ×1,0,
-  trasero ×1,5 (umbrales ±60°/120°; datos en `balance.ts`).
-- **Simetría:** se aplica igual al jugador y a los enemigos.
-- **Arco de fuego:** los enemigos solo disparan si el jugador está dentro de ±15° de su rumbo, el
-  mismo límite que el cañón del jugador; ni por los lados ni por detrás.
-- **Flanqueo viable:** giro limitado + mientras recargan no corrigen el rumbo (ventana táctica); se
-  valida con simulación.
-- **Legibilidad:** marcas de orientación en el modelo enemigo y feedback de zona de impacto en el HUD
-  (fase 8).
-- **Balance previsto (a validar en fase 9):** Sherman vs Panzer III 5/3/2 y vs Tiger I 8/4/3
-  impactos frontal/lateral/trasero.
-- **Diseño completo:** PLAN §7.3, §7.4, §8; GAME_DESIGN §8/§13; decisión en DECISIONS ADR-009.
 
 ## Pendiente (por fases)
 
@@ -113,8 +103,8 @@ encarando al jugador. Se implementará después de pickups y antes de HUD/mision
 | 6.5 | Puntería con ratón (cañón cónico, balística 3D) | Completada |
 | 6.6 | Colisión entre tanques (`BUG-001`) | Completada |
 | 7 | Pickups: cura, mejora y potencia | Completada |
-| 7.5 | Blindaje direccional y flanqueo | **Pendiente (siguiente)** |
-| 8 | HUD: vida, progreso, puntuación, radar, recarga y pantallas | Pendiente |
+| 7.5 | Blindaje direccional y flanqueo | Completada |
+| 8 | HUD: vida, progreso, puntuación, radar, recarga y pantallas | **Pendiente (siguiente)** |
 | 9 | Misiones: campaña de 3, escalado, victoria/derrota y persistencia | Pendiente |
 | 10 | Audio: efectos sintetizados WebAudio, volumen y mute | Pendiente |
 | 11 | Pulido, QA, rendimiento, documentación final y tag `v0.1.0` | Pendiente |
@@ -124,10 +114,12 @@ encarando al jugador. Se implementará después de pickups y antes de HUD/mision
 - **Supuestos de pickups pendientes de validar:** la mejora cura también los 20 PV al subir el
   máximo, las reducciones de daño son multiplicativas y recoger una mejora con el tope ×3 la consume
   sin efecto. Confirmar en la fase 9.
-- **Feedback de pickups provisional:** icono, aviso y temporizador viven en el canvas temporal hasta
-  el HUD de la fase 8.
-- **Sin blindaje direccional ni arco de fuego enemigo** hasta el bloque 7.5; la IA encara siempre
-  al jugador mientras tenga línea de visión.
+- **Feedback de pickups y de zona de impacto provisional:** el evento de impacto ya lleva la zona
+  (`front`/`side`/`rear`), pero los avisos viven en el canvas temporal hasta el HUD de la fase 8.
+- **Balance del blindaje pendiente de la fase 9:** multiplicadores y umbrales en `balance.ts`; hay
+  que validar 5/3/2 y 8/4/3 y si la ventana de recarga de la IA resulta demasiado generosa.
+- **IA sin corregir rumbo al recargar:** implementado como ventana de flanqueo; revisar en la fase 9
+  si hay que acortarla o mantenerla.
 - IA sin patrulla ni coordinación de flanqueo: los enemigos permanecen al acecho hasta ver u oír al
   jugador. Suficiente para 0.1.0; ampliable tras la entrega.
 - Reparto provisional de tipos de enemigo (`3 ligeros + 1 pesado`); la fase 9 lo sustituirá por el
@@ -139,9 +131,10 @@ encarando al jugador. Se implementará después de pickups y antes de HUD/mision
 ## Decisiones y notas operativas
 
 - **Flujo de trabajo acordado con el usuario:** pausa al cerrar cada fase para revisión/intervención. Se retoma con «continúa la fase N» o «continúa el bloque N».
-- **Cambios aprobados 2026-10-27:** corregir `BUG-001` (6.6) y añadir blindaje direccional/flanqueo (7.5). Registrados en `PLAN.md` §2/§12 y `DECISIONS.md` ADR-009. El bloque 6.6 ya está cerrado; queda el 7.5.
+- **Cambios aprobados 2026-10-27:** corregir `BUG-001` (6.6) y añadir blindaje direccional/flanqueo (7.5). Registrados en `PLAN.md` §2/§12 y `DECISIONS.md` ADR-009. Ambos bloques y la fase 7 están cerrados; el siguiente trabajo es el HUD (fase 8).
 - **QA del bloque 6.6:** además de los tests de regresión, se condujo el juego real en Chrome headless vía CDP (sin dependencias nuevas) para avanzar contra un enemigo: el jugador se detiene a 2,9 m (suma de radios 2,75 m + margen 0,15 m) y no lo cruza.
 - **QA de la fase 7:** se recogieron los tres pickups en Chrome headless vía CDP (botiquín de 40 a 70 PV, mejora de 100 a 120 de vida máxima, potencia con recarga de 1,56 s) y se verificaron con capturas el icono en el mundo, el aviso flotante y la línea de estado.
+- **QA del bloque 7.5:** en Chrome headless vía CDP, disparos al mismo Panzer III hicieron 60 de daño por la espalda y 20 de frente; la IA no disparó con el jugador a 90° del rumbo, mantuvo el heading durante 0,5 s de recarga y disparó al entrar en el arco de ±15°; se comprobaron las franjas de orientación (clara delante, roja detrás) con capturas.
 - No hay `pnpm` instalado en la máquina; se usa **npm** (Node 24 / npm 11).
 - El audio se sintetiza con WebAudio: no habrá ficheros de audio ni assets externos.
 - La interfaz y la documentación van en español; los identificadores del código, en inglés.

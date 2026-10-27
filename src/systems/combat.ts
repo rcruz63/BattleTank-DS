@@ -14,6 +14,8 @@ import type { Bullet, ProjectileOwner } from '../entities/bullet';
 import type { EnemyState } from '../entities/enemy';
 import { playerForward } from '../entities/player';
 import type { PlayerState } from '../entities/player';
+import { classifyArmorZone } from './armor';
+import type { ArmorZone } from './armor';
 import { planarDistanceSquared } from '../world/geometry';
 import {
   damageObstacle,
@@ -31,6 +33,8 @@ export interface ProjectileTarget {
   /** Altura del cilindro de impacto (m). */
   readonly height: number;
   readonly faction: ProjectileOwner;
+  /** Rumbo del blanco (radianes) para clasificar la zona de blindaje del impacto. */
+  readonly heading: number;
 }
 
 export interface ProjectileEvent {
@@ -42,6 +46,8 @@ export interface ProjectileEvent {
   readonly targetId: string | null;
   readonly damage: number;
   readonly owner: ProjectileOwner;
+  /** Zona de blindaje del impacto; null si no golpeó a un tanque. */
+  readonly zone: ArmorZone | null;
 }
 
 export interface ProjectilesInput {
@@ -74,6 +80,7 @@ export function buildProjectileTargets(
       radius: player.radius,
       height: TANK_TARGET_HEIGHT,
       faction: 'player',
+      heading: player.yaw,
     });
   }
   for (const enemy of enemies) {
@@ -84,6 +91,7 @@ export function buildProjectileTargets(
       radius: enemy.radius,
       height: TANK_TARGET_HEIGHT,
       faction: 'enemy',
+      heading: enemy.yaw,
     });
   }
   return targets;
@@ -174,6 +182,7 @@ function hitGround(bullet: Bullet, position: Vec3): ProjectileEvent {
     targetId: null,
     damage: bullet.damage,
     owner: bullet.owner,
+    zone: null,
   };
 }
 
@@ -197,6 +206,7 @@ function hitCover(
     targetId: null,
     damage: bullet.damage,
     owner: bullet.owner,
+    zone: null,
   };
 }
 
@@ -232,6 +242,7 @@ function advanceBullet(bullet: Bullet, input: ProjectilesInput): ProjectileEvent
         targetId: target.id,
         damage: bullet.damage,
         owner: bullet.owner,
+        zone: classifyArmorZone(target.heading, bullet.direction),
       };
     }
 

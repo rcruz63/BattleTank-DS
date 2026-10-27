@@ -2,9 +2,9 @@
 
 Documento de diseño del vertical slice **0.1.0**. Se deriva del plan aprobado
 ([`PLAN.md`](PLAN.md), fuente de verdad del alcance); si hay conflicto, manda el plan y se corrige
-este documento. Estado: fases 0–7 y los bloques 6.5 (puntería con ratón) y 6.6 (colisión entre
-tanques) cerrados; el siguiente es el bloque 7.5 (blindaje direccional). El detalle vivo está en
-[`STATUS.md`](STATUS.md).
+este documento. Estado: fases 0–7 y los bloques 6.5 (puntería con ratón), 6.6 (colisión entre
+tanques) y 7.5 (blindaje direccional) cerrados; el siguiente es el HUD (fase 8). El detalle vivo está
+en [`STATUS.md`](STATUS.md).
 
 **Balance de tanques:** los números concretos (PV, velocidad, giro, recarga, daño, blindaje y
 velocidad de proyectil) viven en **`src/config/tanks.ts`**, que es la fuente de verdad. Este
@@ -83,7 +83,7 @@ los resúmenes. No hay guardado a mitad de partida.
 No hay free-look ni apuntado fuera del cono, ni torreta independiente, ni strafe, ni gamepad, ni
 controles táctiles en 0.1.0. El cursor del sistema se oculta sobre el canvas. Mientras no exista el
 HUD, la pantalla muestra un texto temporal con semilla, teclas y vida. **El arco de fuego enemigo
-replicará este límite de ±15°** (bloque 7.5): si el jugador no puede disparar de lado, ellos tampoco.
+replica este límite de ±15°** (bloque 7.5): si el jugador no puede disparar de lado, ellos tampoco.
 
 ## 4. HUD y capas
 
@@ -101,7 +101,7 @@ replicará este límite de ±15°** (bloque 7.5): si el jugador no puede dispara
 - **Efectos temporales:** iconos de potencia y de mejora activa con cuenta atrás.
 - **Avisos de estado:** mensajes breves (objetivo cumplido, daño crítico, recarga completada).
 - **Zona de impacto:** aviso breve «FRONTAL / LATERAL / TRASERA» con el daño aplicado, ligado al
-  blindaje direccional (fase 8, bloque 7.5).
+  blindaje direccional ya implementado (fase 8).
 - **Rumbo:** indicador discreto de orientación (brújula) para mitigar la desorientación en primera
   persona; previsto, se fija en la fase 8.
 - **Pantallas:** menú, briefing, pausa, resumen de misión y derrota/final de campaña.
@@ -262,19 +262,23 @@ Reglas de justicia y comportamiento:
 - **Sin coordinación avanzada:** no hay flanqueo coordinado, reposición táctica ni uso inteligente de
   coberturas; solo A* básico y colisión. Es deuda planificada, no un fallo.
 - **Daño mutuo con blindaje:** el daño base se reduce según `armor` del tanque (jugador y enemigos);
-  con el cañón del Sherman, el Panzer III cae en **3 impactos laterales** y el Tiger I en **4
-  laterales**. Los impactos frontales y traseros llegarán con el blindaje direccional (bloque 7.5).
+  con el cañón del Sherman y el blindaje direccional ya implementado, el Panzer III cae en **5/3/2**
+  impactos y el Tiger I en **8/4/3** (frontal/lateral/trasero).
 
 ### Blindaje direccional y flanqueo (aprobado 2026-10-27 · bloque 7.5)
 
-**Motivación:** hoy la IA gira el casco hacia el jugador y el combate es frontal; el jugador no puede
-disparar por los lados (cono del cañón) y los enemigos tampoco deberían. El objetivo es que maniobrar
-tenga valor y que atacar por el flanco o la espalda sea la forma eficiente de matar.
+**Motivación:** antes del bloque 7.5 la IA giraba el casco hacia el jugador y el combate era
+siempre frontal; el jugador no puede disparar por los lados (cono del cañón) y los enemigos tampoco
+deberían. El objetivo es que maniobrar tenga valor y que atacar por el flanco o la espalda sea la
+forma eficiente de matar.
+
+**Estado: implementado en el bloque 7.5** (`systems/armor.ts`, zona en el evento de impacto,
+aplicación en `systems/damage.ts`, arco de fuego y pausa de recarga en `systems/ai.ts`).
 
 - **Zonas de impacto:** se calculan con el ángulo entre el rumbo del blanco y la dirección desde la
   que llega el proyectil. Frontal ±60°, lateral 60–120°, trasera >120°.
-- **Multiplicadores de daño** (después de `armor`): frontal ×0,5, lateral ×1,0, trasera ×1,5.
-  Simétrico para jugador y enemigos. Datos previstos en `src/config/balance.ts`.
+- **Multiplicadores de daño** (después de `armor` y de las mejoras): frontal ×0,5, lateral ×1,0,
+  trasera ×1,5. Simétrico para jugador y enemigos. Datos en `src/config/balance.ts`.
 - **Arco de fuego:** el jugador ya está limitado por el cono de ±15°; los enemigos solo disparan si
   el jugador está dentro de ±15° de su rumbo. Para apuntar deben girar el casco a velocidad limitada.
 - **Ventanas de flanqueo:** mientras recargan no corrigen el rumbo; el giro limitado y la pausa de
@@ -283,8 +287,9 @@ tenga valor y que atacar por el flanco o la espalda sea la forma eficiente de ma
   (fase 8). Sin ellas el multiplicador sería invisible e injusto.
 - **Balance previsto:** Sherman vs Panzer III **5/3/2** y vs Tiger I **8/4/3** (frontal/lateral/
   trasera), a recalibrar en la fase 9 con simulación headless.
-- **Pruebas:** clasificación de zona pura, multiplicadores por zona, arco de fuego enemigo, IA que no
-  dispara fuera del arco, simulación de flanqueo y feedback de HUD.
+- **Pruebas (implementadas):** clasificación de zona pura, multiplicadores por zona, arco de fuego
+  enemigo, IA que no dispara fuera del arco y no corrige rumbo al recargar, simetría jugador/enemigos
+  y balance 5/3/2 y 8/4/3; queda el feedback de zona en el HUD (fase 8).
 
 ## 9. Misiones y dificultad
 
@@ -359,15 +364,21 @@ Todo el sonido se **sintetiza con WebAudio**; no hay ficheros de audio ni músic
 - **Fórmula de la bonificación por vida restante:** no definida; proponer una lineal sobre la vida
   máxima del jugador (definida en `src/config/tanks.ts`) y fijarla en `config/balance.ts`.
 - **Combinación de reducciones de daño:** supuesto implementado: multiplicativas
-  (`(1 − armor) × 0,9^mejoras`); falta confirmarlo y decidir si hay tope con las mejoras.
+  (`(1 − armor) × 0,9^mejoras`) y la zona direccional se aplica después
+  (`× (1 − armor) × 0,9^mejoras × zona`); falta confirmarlo y decidir si hay tope con las mejoras.
+- **Ventana de flanqueo de la IA (resuelto, bloque 7.5):** la IA mantiene el heading y no corrige el
+  apuntado mientras recarga, y solo dispara dentro de ±15°; validar en la fase 9 si resulta demasiado
+  generosa.
+- **Feedback de zona de impacto (fase 8):** el evento ya lleva `zone` (frontal/lateral/trasera); falta
+  mostrarlo en el HUD con el daño aplicado.
 - **Cadencia escalada por misión:** el plan la menciona, pero la tabla de misiones no tiene
   parámetro; decidir si se añade columna/dato o se deja fuera de 0.1.0.
 - **Significado exacto de «densidad de coberturas»:** supuesto de trabajo, porcentaje de celdas
   interiores ocupadas por cobertura; la generación actual usa 14 % por defecto en `balance.ts` y la
   misión lo ajustará; confirmar la interpretación.
-- **Precisión IA (actualizada):** la IA usa tolerancia de apuntado, tiempo de reacción y
-  dispersión (`AI_TUNING`), no una probabilidad de acierto; la tabla de misiones traducirá su
-  «precisión %» a estos parámetros en la fase 9.
+- **Precisión IA (actualizada):** la IA usa arco de fuego (±15°), pausa de seguimiento al recargar,
+  tiempo de reacción y dispersión (`AI_TUNING`), no una probabilidad de acierto; la tabla de misiones
+  traducirá su «precisión %» a estos parámetros en la fase 9.
 - **Pickup de cura con vida al máximo:** supuesto implementado en la fase 7: se puede recoger y se
   desperdicia, sin superar el máximo.
 - **Cura de la mejora:** supuesto implementado: al subir +20 la vida máxima también se curan 20 PV
@@ -446,7 +457,7 @@ No se implementa en esta entrega (deuda planificada, no olvido):
 - Guardado a mitad de partida, tabla de clasificación en red, localización a otros idiomas.
 - Efectos avanzados: sombras dinámicas, partículas GPU, post-proceso.
 - Pathfinding táctico avanzado y **coordinación de flanqueo de la IA** más allá de A* básico. El
-  flanqueo del jugador y el blindaje direccional sí entran (bloque 7.5).
+  flanqueo del jugador y el blindaje direccional sí entran y ya están implementados (bloque 7.5).
 - Vista libre o torreta independiente. La puntería con ratón dentro del cono **sí** está incluida (bloque 6.5).
 
 Supuestos de alcance: una sola facción jugable (aliada), 3 misiones, título provisional y

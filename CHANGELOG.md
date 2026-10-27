@@ -9,6 +9,13 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 ### Añadido
 
+- Blindaje direccional y flanqueo: el daño depende de la zona de impacto respecto al rumbo del
+  blanco (frontal ×0,5, lateral ×1,0, trasera ×1,5) y se aplica después del blindaje base y de las
+  mejoras, simétrico para jugador y enemigos; la IA solo dispara dentro de un arco de ±15° y
+  mantiene el rumbo mientras recarga (ventana de flanqueo); los tanques enemigos llevan una franja
+  clara en el frente y roja en la espalda. Lógica en `systems/armor.ts`, zona en el evento de
+  impacto, aplicación en `systems/damage.ts`, IA en `systems/ai.ts` y datos en `config/balance.ts`;
+  183 tests.
 - Pickups de cura, mejora y potencia: 4 por escenario repartidos de forma determinista, recogida a
   2 m del jugador y efectos con feedback visual (caja e icono flotante, aviso «+30 PV»/«Mejora ×N»/
   «Potencia 20 s» y línea de estado temporal). El botiquín cura 30 PV sin superar el máximo, la
@@ -53,6 +60,8 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 - La aplicación de daño sale de `game.ts` a `systems/damage.ts` y los overlays temporales de canvas
   (panel de estado, aviso de pickup y pantalla de destrucción) a `render/statusOverlay.ts`; la
   geometría de cajas compartida se extrae a `render/boxes.ts`.
+- La IA enemiga limita su fuego a un arco frontal de ±15° y deja de corregir el rumbo mientras
+  recarga; `aimToleranceRadians` se sustituye por `fireArcDegrees`.
 
 ### Corregido
 

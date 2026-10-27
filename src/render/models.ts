@@ -1,5 +1,6 @@
 /** Modelos de tanques enemigos como cajas rotadas de polígonos planos. */
 
+import { PALETTE } from '../config/palette';
 import type { Vec3 } from '../core/math';
 import type { EnemyState } from '../entities/enemy';
 import { boxFaces } from './boxes';
@@ -22,7 +23,7 @@ function offsetPoint(spec: OffsetPointSpec): Vec3 {
   };
 }
 
-/** Silueta del enemigo: casco, dos cadenas, torreta y cañón. */
+/** Silueta del enemigo: casco, cadenas, torreta, cañón y marcas de orientación. */
 export function tankWorldFaces(enemy: EnemyState): WorldFace[] {
   const yaw = enemy.yaw;
   const { hullColor, turretColor, trackColor, barrelColor } = enemy.tank;
@@ -57,5 +58,19 @@ export function tankWorldFaces(enemy: EnemyState): WorldFace[] {
     color: barrelColor,
   });
 
-  return [...hull, ...tracks, ...turret, ...barrel];
+  // Marcas de orientación: franja clara en el frente y roja en la espalda (legibilidad del 7.5).
+  const frontMarker = boxFaces({
+    center: offsetPoint({ position: enemy.position, yaw, right: 0, forward: 2.16, y: 0.95 }),
+    size: { x: 1.15, y: 0.16, z: 0.08 },
+    yaw,
+    color: PALETTE.texto,
+  });
+  const rearMarker = boxFaces({
+    center: offsetPoint({ position: enemy.position, yaw, right: 0, forward: -2.16, y: 0.95 }),
+    size: { x: 1.15, y: 0.16, z: 0.08 },
+    yaw,
+    color: PALETTE.miraAviso,
+  });
+
+  return [...hull, ...tracks, ...turret, ...barrel, ...frontMarker, ...rearMarker];
 }

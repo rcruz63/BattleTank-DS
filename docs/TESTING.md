@@ -11,8 +11,8 @@ son reglas deterministas sobre estado, los constructores de caras (`worldFaces`,
 `bulletFaces`) producen datos, `faces` los proyecta y solo el pintor toca el contrato gráfico
 (`FaceCanvas`). La composición del frame vive en `render/renderer.ts`; **no hay una escena unificada
 (`render/scene.ts`)**. La UI y el audio son adaptadores finos que se sustituyen por dobles. Estado:
-**168 tests en 30 ficheros** con las fases 0–7 y los bloques 6.5 (puntería con ratón) y 6.6
-(colisión entre tanques) cerrados.
+**183 tests en 31 ficheros** con las fases 0–7 y los bloques 6.5 (puntería con ratón), 6.6
+(colisión entre tanques) y 7.5 (blindaje direccional) cerrados.
 
 | Nivel | Qué cubre | Herramienta | Cuándo |
 |---|---|---|---|
@@ -63,13 +63,13 @@ DOM o WebAudio, el diseño que se está probando no está separado: extrae la l�
 | `systems/aim` | `resolveAim`: centro → tiro horizontal y retícula en el centro; derecha → giro máximo y retícula a la derecha; elevación → cabeceo y retícula arriba; puntero fuera de rango se limita al cono; gira con el rumbo del tanque; dirección siempre normalizada. |
 | `systems/movement` | Avance en el sentido de la mira, retroceso más lento, giro del casco y la mira a la vez, sin entrada no cambia nada, se detiene ante cobertura, normalización del ángulo; no atraviesa enemigos a 6 m/s y 60 Hz ni al retroceder, la cámara no queda dentro del modelo y un enemigo destruido no bloquea (`BUG-001`). |
 | `systems/combat` | `isWeaponReady`/`reloadProgress`; recarga de 2,4 s y `reloadDuration` para la recarga acortada por potencia; multiplicadores de daño y recarga en el disparo; `buildProjectileTargets` con los vivos de cada facción; no dispara durante la recarga; el disparo sale del pivote de la torreta + 2,2 m de tubo, con la dirección 3D de la mira; los proyectiles avanzan en subpasos, impactan en coberturas por altura, en tanques (cilindro de 2,2 m) **y en el suelo**, aplican daño y destruyen madera (1 impacto) y ladrillo (3); un disparo alto pasa por encima de un tanque; caducidad; filtrado por facción. |
-| `systems/ai` | Dispara con LOS, encarado y tras recargar; no dispara a través de cobertura intacta; alertado sin LOS avanza con A*; se queda quieto si el jugador está destruido; `alertEnemiesNear` despierta solo a los cercanos al estampido; el avance no solapa con otro tanque. |
+| `systems/ai` | Dispara con LOS, dentro de su arco de ±15° y tras recargar; no dispara a 90° ni por la espalda; no corrige el rumbo mientras recarga (ventana de flanqueo); no dispara a través de cobertura intacta; alertado sin LOS avanza con A*; se queda quieto si el jugador está destruido; `alertEnemiesNear` despierta solo a los cercanos al estampido; el avance no solapa con otro tanque. |
 | `render/camera` | Transformación mundo→cámara con yaw/posición conocidos; proyección del centro; focal según FOV; puntos detrás de cámara. |
 | `render/faces` | `projectWorldFaces`: descarte de caras traseras, recorte de plano cercano, proyección, profundidad media, sombreado por normal y niebla; cubierto vía `worldFaces`, `models` y la prueba de oclusión. |
 | `render/clip` | Polígono delante sin cambios; parcialmente detrás recortado a `z ≥ 0,3`; totalmente detrás descartado; polígonos con varios vértices. |
 | `render/color` | Sombreado plano por normal, mezcla de colores y niebla; extremos de la mezcla. |
 | `render/worldFaces` | `buildWallWorldFaces`: caras de coberturas desde una rejilla fija, omisión de caras que tocan otra cobertura intacta, culling por distancia; cobertura destruida sin caras altas (solo escombros); `buildWorldFaces` como atajo de test. |
-| `render/models` | Caras de casco, cadenas, torreta y cañón del enemigo; todas las caras entre el suelo y la altura del tanque; orientación según el rumbo; colores de `tanks.ts`. La geometría de cajas compartida vive en `render/boxes`. |
+| `render/models` | Caras de casco, cadenas, torreta, cañón y franjas de orientación del enemigo (7 cajas, 35 caras); todas las caras entre el suelo y la altura del tanque; orientación según el rumbo; franja clara delante y roja detrás; colores de `tanks.ts`. La geometría de cajas compartida vive en `render/boxes`. |
 | `render/pickupFaces` | Caja, marca de suelo e icono flotante para los tres tipos; caras de cuatro puntos con coordenadas finitas y por encima del suelo; centrado sobre la posición y flotación; un pickup recogido no genera caras. |
 | `render/bulletFaces` | Tracers de proyectiles: descarte detrás del plano cercano, dos caras por proyectil (halo y núcleo), profundidad para el painter y radio visual mínimo. |
 | `render/background` | Fondo, horizonte y rejilla de suelo proyectada con una cámara fija. |
@@ -78,11 +78,12 @@ DOM o WebAudio, el diseño que se está probando no está separado: extrae la l�
 | `render/periscope` | Validación manual/visual (usa el contexto completo, no solo `FaceCanvas`): retícula y marcas en `aimScreenX/Y`, cañón orientable sin tapar la zona útil, marca de rumbo del casco, anillo de recarga, fogonazo y marca de impacto. La posición de la retícula se prueba por separado en `systems/aim`. |
 | `render/statusOverlay` | Validación manual/visual (contexto completo): panel temporal con semilla, vida, recarga y efectos; aviso flotante de pickup con desvanecimiento; pantalla provisional de destruido. |
 | `systems/loot` | Recogida solo a 2 m y una sola vez; cura 30 PV con tope; mejora +20 de vida máxima (y 20 PV) con reducción de daño multiplicativa acumulable ×3 y tope; potencia de 20 s que se renueva, con multiplicadores de daño ×1,75 y recarga ×0,65 y reversión al agotarse; texto del aviso; un jugador destruido no recoge. |
-| `systems/damage` | Impacto al jugador con blindaje base y mejoras acumuladas; impacto a enemigos con su blindaje; muerte al llegar a 0; objetivos desconocidos o ya destruidos se ignoran. |
+| `systems/damage` | Impacto al jugador con blindaje base, mejoras acumuladas y zona direccional; impacto a enemigos con su blindaje y zona; balance 5/3/2 (Panzer III) y 8/4/3 (Tiger I) por frontal/lateral/trasero; muerte al llegar a 0; objetivos desconocidos o ya destruidos se ignoran. |
+| `systems/armor` | Clasificación frontal/lateral/trasera con umbrales inclusivos ±60°/120°, giro con el rumbo del blanco y multiplicadores ×0,5/×1,0/×1,5; el arco de fuego enemigo coincide con el cono del jugador (`AIM_LIMITS`). |
 | `systems/mission` / `systems/score` / `systems/progression` (fase 9) | Validación de misiones, progreso, victoria/derrota, puntuación y persistencia con almacenamiento falso. |
 | `ui` (parte pura, fase 8) | Formateo de segundos/puntos/porcentajes, umbrales de color de vida, matemática del radar, cuenta atrás de efectos. El DOM real no se prueba en unitarias. |
 | `audio` (fase 10) | Con un doble de `AudioBus`: mapeo de eventos a efectos, mute/volumen, no lanzar si no hay WebAudio. |
-| `game` | `createGame` con semilla e `InputState` inyectado: expone arena, jugador, enemigos, pickups, loot y proyectiles; `update` responde a avance/giro y resuelve la puntería con el puntero; el disparo sale con la dirección 3D del cañón (el ratón orienta el tiro); mueve la IA; el jugador no atraviesa a un enemigo colocado delante (`BUG-001`); recoge pickups con su efecto (cura, vida máxima/reducción y potencia con recarga acortada), que no reaparecen; `dispose` limpia la entrada. En fases posteriores: máquina de estados, pausa y reinicio. |
+| `game` | `createGame` con semilla e `InputState` inyectado: expone arena, jugador, enemigos, pickups, loot y proyectiles; `update` responde a avance/giro y resuelve la puntería con el puntero; el disparo sale con la dirección 3D del cañón (el ratón orienta el tiro); mueve la IA; el jugador no atraviesa a un enemigo colocado delante (`BUG-001`); recoge pickups con su efecto (cura, vida máxima/reducción y potencia con recarga acortada), que no reaparecen; el mismo disparo hace 60 por la espalda y 20 de frente a un Panzer III (zona + blindaje); `dispose` limpia la entrada. En fases posteriores: máquina de estados, pausa y reinicio. |
 
 ## 4. Renderer con contexto simulado
 
@@ -145,7 +146,8 @@ avanzan como en el juego real y se afirman invariantes. Escenarios mínimos:
 | Proyectil e impacto | Un proyectil avanza en subpasos, impacta en una cobertura y le aplica daño; madera cae al primer impacto y ladrillo al tercero; la cobertura destruida deja de bloquear el paso y los proyectiles pasan por encima de los escombros. |
 | Caducidad | Un proyectil que no impacta desaparece al superar su vida útil y no se simula para siempre. |
 | IA: percepción y ataque | Un enemigo con LOS, encarado y recargado dispara; sin LOS avanza con A*; no dispara a través de cobertura intacta; el estampido alerta solo a los enemigos a ≤ 60 m. |
-| Daño y blindaje | Con los valores de `tanks.ts`, el Sherman destruye un Panzer III en 3 impactos laterales y un Tiger I en 4; el blindaje reduce el daño recibido; al llegar a 0 el tanque muere y deja de simularse. Las zonas frontal/trasera se añadirán en el bloque 7.5. |
+| Daño, zona y blindaje | Con los valores de `tanks.ts`, el Sherman destruye un Panzer III en 5/3/2 y un Tiger I en 8/4/3 (frontal/lateral/trasero); el blindaje base y las mejoras reducen el daño y la zona se aplica después; al llegar a 0 el tanque muere y deja de simularse. |
+| Arco de fuego y flanqueo (7.5) | La IA no dispara con el jugador a 90° ni por la espalda, sí dentro de ±15°; mantiene el rumbo mientras recarga y el jugador puede ganar el flanco; los disparos reales del juego hacen 60 por la espalda y 20 de frente. |
 | Determinismo | Misma semilla + misma secuencia de intenciones ⇒ mismo estado final, sin depender del reloj real. |
 | Victoria y derrota (fase 9) | Destruir enemigos sube el progreso; al 100 % victoria; vida a 0 derrota y reintento. |
 
@@ -216,6 +218,9 @@ Marcar cada punto en el navegador; anotar semilla, fase y navegador usado. Los p
 - [ ] Al destruir una cobertura se ve y se dispara a través; se puede pasar por la celda.
 - [ ] Los proyectiles enemigos hacen daño al jugador y el blindaje se nota (comparar Panzer III y
       Tiger I).
+- [ ] El daño depende de la zona: mismo cañón, más daño por la espalda que de frente (×0,5 frontal,
+      ×1 lateral, ×1,5 trasera); el enemigo muestra la orientación con franja clara delante y roja
+      detrás.
 - [ ] El anillo de recarga, los segundos, el fogonazo y la marca de impacto se ven y no tapan la
       mira.
 - [ ] No se experimentan tirones ni errores al disparar o destruir varias coberturas seguidas.
@@ -258,10 +263,12 @@ Marcar cada punto en el navegador; anotar semilla, fase y navegador usado. Los p
 - [ ] Los enemigos están al acecho hasta ver al jugador o hasta oír un disparo cercano (≤ 60 m).
 - [ ] Con línea de visión avanzan a atacar; apuntan con giro limitado, esperan la reacción y disparan
       con dispersión y recarga.
+- [ ] Solo disparan si el jugador está dentro de ±15° de su rumbo: no disparan a 90° ni por detrás.
+- [ ] Mientras recargan mantienen el rumbo (no giran hacia el jugador): se puede ganar el flanco.
 - [ ] Sin línea de visión avanzan con A* rodeando coberturas y no se quedan atascados.
 - [ ] No disparan a través de coberturas intactas; los escombros sí dejan pasar.
 - [ ] Se ven con su modelo de cajas (casco, cadenas, torreta y cañón) y con la oclusión correcta.
-- [ ] El balance de `config/tanks.ts` se siente justo (3 impactos laterales al ligero, 4 al pesado; frontal/trasero con el bloque 7.5).
+- [ ] El balance de `config/tanks.ts` se siente justo (5/3/2 al ligero y 8/4/3 al pesado, frontal/lateral/trasero).
 - [ ] No hay comportamientos absurdos (aimbot perfecto, disparos a través de muros, temblores).
 - [ ] La dificultad escalada por misión y el estado de reposición **(fases 9/deuda)**.
 
@@ -313,14 +320,14 @@ La entrega se acepta cuando se cumplen los doce criterios del plan
 | 9 | Documentación completa y `docs/STATUS.md` exacto en la entrega. | Revisión del Lead sobre la documentación. |
 | 10 | Historial de commits convencionales y changelog coherente; etiqueta `v0.1.0`. | Revisión de `git log`, `CHANGELOG.md` y el tag. |
 | 11 | El jugador no atraviesa tanques enemigos ni queda dentro de su modelo (`BUG-001`). | Tests de colisión entre entidades (`world/entityCollision`, `systems/movement`, `systems/ai`, `game`) + QA manual. **Cubierto en el bloque 6.6.** |
-| 12 | Daño por zona (frontal ×0,5, lateral ×1,0, trasera ×1,5) y enemigos sin disparar fuera de su arco de ±15°. | Tests de `systems/armor` y de arco de fuego en `systems/ai` + QA. |
+| 12 | Daño por zona (frontal ×0,5, lateral ×1,0, trasera ×1,5) y enemigos sin disparar fuera de su arco de ±15°. | Tests de `systems/armor`, `systems/damage`, `systems/combat` y de arco de fuego en `systems/ai` + QA. **Cubierto en el bloque 7.5.** |
 
 ## 9. Deuda conocida en pruebas (0.1.0)
 
 - **Sin E2E de navegador** (Playwright u otro): no hay pruebas automatizadas de flujo completo en un
   navegador real; hay verificación manual, capturas headless y conducciones puntuales vía CDP (sin
-  dependencias nuevas) para validar `BUG-001` y los pickups. Se valora un E2E formal en la siguiente
-  iteración.
+  dependencias nuevas) para validar `BUG-001`, los pickups y el blindaje direccional. Se valora un
+  E2E formal en la siguiente iteración.
 - **Sin CI**: la puerta de calidad se ejecuta en local; no hay verificación automática por commit.
 - **Sin jsdom**: la UI DOM se valida a mano y por sus funciones puras; no hay tests de DOM.
 - **Periscopio y overlay**: al usar el contexto completo, no se cubren con el `FaceCanvas` simulado.
@@ -347,7 +354,7 @@ Las decisiones pendientes que afectan a pruebas (umbral de cobertura, CI, herram
 anotan en [`DEVELOPMENT.md`](DEVELOPMENT.md#13-pendientes-y-supuestos-detectados-para-el-lead).
 
 
-## 10. Pruebas de los bloques 6.6 y 7 (implementadas) y del bloque 7.5 (previstas)
+## 10. Pruebas de los bloques 6.6, 7 y 7.5 (implementadas)
 
 - **Colisión entre tanques (bloque 6.6, implementado):** `tests/world/entityCollision.test.ts`
   comprueba la separación mínima (radios + 0,15 m), la holgura, el deslizamiento y el escape sin
@@ -364,12 +371,16 @@ anotan en [`DEVELOPMENT.md`](DEVELOPMENT.md#13-pendientes-y-supuestos-detectados
   del aviso; daño después del blindaje base y con las mejoras; juego real con `seed=42` (recoger
   los tres, potencia en el disparo y no reaparición); modelo por tipo y pickup recogido sin caras.
   QA adicional en Chrome headless vía CDP con capturas de la recogida y los avisos.
-- **Blindaje direccional (7.5, pendiente):** clasificación pura por ángulo (frontal/lateral/trasera),
-  multiplicadores ×0,5/×1,0/×1,5, aplicación después de `armor`, simetría jugador/enemigos y valores
-  límite ±60°/120°.
-- **Arco de fuego enemigo (7.5, pendiente):** no dispara si el jugador está a 90° o 180° de su rumbo;
-  sí dentro de ±15°; la pausa de seguimiento durante la recarga se comporta como está documentada.
-- **Integración de flanqueo (7.5, pendiente):** un impacto trasero hace más daño que uno frontal
-  contra el mismo tanque; la IA tarda en reencarar y el jugador puede ganar el flanco en una
-  simulación headless.
+- **Blindaje direccional (7.5, implementado):** `tests/systems/armor.test.ts` cubre la clasificación
+  frontal/lateral/trasera con umbrales inclusivos ±60°/120°, el giro con el rumbo y los
+  multiplicadores; `tests/systems/combat.test.ts` comprueba que el evento de impacto lleva `zone`;
+  `tests/systems/damage.test.ts` aplica zona + blindaje + mejoras, la simetría jugador/enemigos y el
+  balance 5/3/2 y 8/4/3; `tests/game/game.test.ts` integra disparos reales desde atrás y de frente
+  (60 y 20 de daño).
+- **Arco de fuego y ventana de recarga (7.5, implementado):** la IA no dispara con el jugador a 90° ni
+  por la espalda, sí dentro de ±15°; mantiene el rumbo y no corrige el apuntado mientras recarga; el
+  arco coincide con `AIM_LIMITS` (simetría). QA en Chrome headless: sin disparo a 90°, rumbo
+  congelado 0,5 s y disparo al entrar en el arco.
+- **Marcas de orientación (7.5, implementado):** `tests/render/models.test.ts` comprueba las 35 caras
+  (7 cajas), que las franjas clara y roja giran con el rumbo y quedan en el frente y la espalda.
 - **HUD (fase 8, pendiente):** la zona de impacto se muestra con el daño correcto y no solo por color.

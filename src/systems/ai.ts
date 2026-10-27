@@ -7,7 +7,7 @@
  */
 
 import { AI_TUNING, COMBAT } from '../config/balance';
-import { angleDifference, rotateTowards } from '../core/math';
+import { angleDifference, degreesToRadians, rotateTowards } from '../core/math';
 import type { Rng } from '../core/rng';
 import { createBullet } from '../entities/bullet';
 import type { Bullet } from '../entities/bullet';
@@ -68,12 +68,18 @@ function fireEnemyBullet(enemy: EnemyState, context: AiContext): void {
 
 function updateAttack(enemy: EnemyState, context: AiContext): void {
   const targetAngle = aimAngle(enemy.position, context.player.position);
-  enemy.yaw = rotateTowards(enemy.yaw, targetAngle, enemy.turnSpeed * context.stepSeconds);
+  const reloading = enemy.reloadRemaining > 0;
+
+  // Ventana táctica (bloque 7.5): mientras recarga mantiene el rumbo y no corrige el apuntado.
+  if (!reloading) {
+    enemy.yaw = rotateTowards(enemy.yaw, targetAngle, enemy.turnSpeed * context.stepSeconds);
+  }
+
   const aimError = Math.abs(angleDifference(enemy.yaw, targetAngle));
   const canShoot =
-    aimError <= AI_TUNING.aimToleranceRadians &&
+    aimError <= degreesToRadians(AI_TUNING.fireArcDegrees) &&
     enemy.reactionTimer <= 0 &&
-    enemy.reloadRemaining <= 0;
+    !reloading;
   if (!canShoot) return;
 
   fireEnemyBullet(enemy, context);

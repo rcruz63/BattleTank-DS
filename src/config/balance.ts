@@ -55,10 +55,20 @@ export const AI_TUNING = {
   attackRange: 34,
   minAdvanceDistance: 10,
   reactionSeconds: 1.1,
-  aimToleranceRadians: 0.1,
+  /** Arco de fuego respecto al rumbo; simétrico al cono del jugador (±15°). */
+  fireArcDegrees: 15,
   fireSpreadRadians: 0.05,
   pathIntervalSeconds: 1.1,
   moveSpeedFactor: 0.75,
+} as const;
+
+/** Blindaje direccional: umbrales desde el frente (grados) y multiplicadores de daño por zona. */
+export const ARMOR_ZONES = {
+  frontMaxDegrees: 60,
+  sideMaxDegrees: 120,
+  frontMultiplier: 0.5,
+  sideMultiplier: 1,
+  rearMultiplier: 1.5,
 } as const;
 
 /** Cono de puntería del cañón respecto al rumbo del tanque. */

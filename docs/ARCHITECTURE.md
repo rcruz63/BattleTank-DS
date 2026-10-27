@@ -5,8 +5,8 @@ contratos descritos aquí son el acuerdo entre capas, no un inventario exhaustiv
 
 > **Convención de estado.** **«Implementado»** = existe y está cubierto por tests; **«previsto»** =
 > diseñado y acordado, todavía sin escribir. A fecha de redacción las fases 0–7 y los bloques 6.5
-> (puntería con ratón) y 6.6 (colisión entre tanques) están cerrados; el siguiente es el bloque 7.5
-> (blindaje direccional). El inventario vivo está en [`STATUS.md`](STATUS.md), no aquí.
+> (puntería con ratón), 6.6 (colisión entre tanques) y 7.5 (blindaje direccional) están cerrados; la
+> siguiente es la fase 8 (HUD/radar). El inventario vivo está en [`STATUS.md`](STATUS.md), no aquí.
 >
 > **Las firmas concretas no se fijan en prosa.** Cada capa cierra sus tipos en sus `types.ts` (o en
 > el propio módulo); este documento fija responsabilidades, dependencias permitidas y flujo de datos.
@@ -20,7 +20,7 @@ contratos descritos aquí son el acuerdo entre capas, no un inventario exhaustiv
 | Build y dev server | **Vite 8** (`base: './'`, `target: es2022`, `outDir: dist`, sourcemaps), puerto fijo 5173. |
 | Gráficos | **Canvas 2D** con resolución interna fija **1280×720** escalada por CSS con letterboxing (`index.html`). |
 | HUD | **DOM/CSS** sobre el canvas + un **canvas pequeño independiente** para el radar (fase 8). |
-| Tests | **Vitest** en entorno **Node** (`tests/**/*.test.ts`), sin jsdom; **168 tests en 30 ficheros**. |
+| Tests | **Vitest** en entorno **Node** (`tests/**/*.test.ts`), sin jsdom; **183 tests en 31 ficheros**. |
 | Calidad | **ESLint** (tamaño/complejidad) + **Prettier**; puerta `npm run check`. |
 | Runtime | **Cero dependencias** y **cero assets externos**: geometría procedural, tipografía del sistema, iconos CSS y audio WebAudio sintetizado. |
 | Persistencia | `localStorage` solo para récord y misión desbloqueada (fase 9). |
@@ -47,7 +47,7 @@ Comandos (detalle en [`../README.md`](../README.md)): `npm run dev`, `npm run bu
 
 ## 3. Estructura real de carpetas
 
-Estructura a fecha de la fase 7 (los módulos previstos se añaden en su fase; el inventario vivo
+Estructura a fecha del bloque 7.5 (los módulos previstos se añaden en su fase; el inventario vivo
 está en [`STATUS.md`](STATUS.md)):
 
 ```text
@@ -105,20 +105,19 @@ BattleTank-DS/
 │   │   ├── input.ts        #   entrada pura (teclado/ratón) + adaptadores DOM
 │   │   ├── aim.ts          #   puntero normalizado → cono de cañón y punto de retícula
 │   │   ├── movement.ts     #   giro solidario y avance con colisión contra rejilla y tanques
-│   │   ├── combat.ts       #   recarga, disparo, proyectiles 3D y multiplicadores de potencia
-│   │   ├── damage.ts       #   aplicación de impactos: blindaje base + mejoras y muerte
+│   │   ├── combat.ts       #   recarga, disparo, proyectiles 3D y zona del impacto
+│   │   ├── damage.ts       #   impacto: blindaje base, mejoras, zona direccional y muerte
 │   │   ├── loot.ts         #   recogida, efectos y temporizadores de los pickups
-│   │   ├── ai.ts           #   percepción, alerta, avance con A*, apuntado y disparo enemigo
-│   │   └── armor.ts        #   (previsto 7.5) zonas de blindaje y multiplicadores
+│   │   ├── armor.ts        #   clasificación de zona y multiplicadores de blindaje
+│   │   └── ai.ts           #   percepción, alerta, avance, arco de fuego y ataque
 │   ├── ui/
 │   │   └── styles.css      #   estilos base del shell y el HUD
 │   └── game/
 │       └── game.ts         #   composición: arena, jugadores, IA, puntería, efectos, render
 │
 │   (previstos: config/missions.ts, systems/mission.ts, systems/score.ts, systems/progression.ts,
-│    ui/hud.ts, ui/radar.ts, ui/screens.ts, audio/synth.ts, audio/audio.ts, game/state.ts,
-│    systems/armor.ts (7.5))
-├── tests/                  # espejo de src/ (30 ficheros, 168 tests) + integración headless
+│    ui/hud.ts, ui/radar.ts, ui/screens.ts, audio/synth.ts, audio/audio.ts, game/state.ts)
+├── tests/                  # espejo de src/ (31 ficheros, 183 tests) + integración headless
 ├── docs/
 └── dist/                   # build generado (no versionado)
 ```
@@ -128,12 +127,11 @@ caras de mundo de coberturas (`worldFaces.ts`) y tanques (`models.ts`), las proy
 pasada** con `faces.ts`, añade los tracers de proyectiles (`bulletFaces.ts`) y deja que `painter.ts`
 ordene y pinte. `buildWorldFaces` sigue existiendo como atajo para tests de proyección.
 
-A fecha de redacción las fases 0–7 y los bloques 6.5 y 6.6 están cerrados: el jugador se mueve,
-apunta el cañón con el ratón dentro de un cono, dispara con el clic o `Espacio`, no puede atravesar
-tanques enemigos y recoge botiquín, mejora y potencia con sus efectos; las coberturas se destruyen,
-los enemigos esperan/avanzan/atacan con LOS y A*, el daño respeta blindaje y mejoras y hay feedback
-de impacto/daño. El siguiente trabajo es el **bloque 7.5** (blindaje direccional y flanqueo);
-después, HUD/radar, misiones, audio y pulido.
+A fecha de redacción las fases 0–7 y los bloques 6.5, 6.6 y 7.5 están cerrados: el jugador se
+mueve, apunta y dispara dentro del cono, no puede atravesar tanques, recoge pickups con sus efectos
+y el combate premia el flanqueo; las coberturas se destruyen, los enemigos esperan/avanzan/atacan con
+LOS y A* y solo disparan dentro de su arco frontal. El siguiente trabajo es la **fase 8**
+(HUD/radar); después, misiones, audio y pulido.
 
 ### Responsabilidades por módulo
 
@@ -144,7 +142,7 @@ después, HUD/radar, misiones, audio y pulido.
 | `world` | Rejilla, generación, spawns, geometría, colisión con rejilla y entre tanques, línea de visión y A*. | `core`, `config`. | Canvas, DOM, `render`, `ui`, `systems`. | La rejilla al generarse y al recibir daño |
 | `render` | Cámara/proyección, caras de mundo, de tanques y de pickups, modelos, fondo, pintado y overlays. | `core` (math), `config`, `world/types`, `entities` (datos), sus tipos. | `systems`, `ui`, `audio`, mutar el estado, `Date.now`/`Math.random`. | No |
 | `entities` | Datos y comportamiento local de jugador, proyectil, enemigo y pickup. | `core`, `config`, `world/types`. | DOM, Canvas, `render`, `ui`. | Sus propias entidades |
-| `systems` | Entrada, puntería, movimiento, combate, daño, pickups e IA (y luego misión, puntuación y progresión). | `core`, `config`, `world`, `entities`. | Canvas, `render`, `ui`, `audio`; el DOM solo en los adaptadores de entrada. | El estado de partida |
+| `systems` | Entrada, puntería, movimiento, combate, daño, blindaje direccional, pickups e IA (y luego misión, puntuación y progresión). | `core`, `config`, `world`, `entities`. | Canvas, `render`, `ui`, `audio`; el DOM solo en los adaptadores de entrada. | El estado de partida |
 | `ui` | HUD, radar y pantallas (DOM/CSS + canvas del radar). | Datos ya calculados, `config`. | Lógica de juego, mutar el estado. | Solo su DOM/canvas |
 | `audio` | Síntesis y reproducción WebAudio tras una interfaz de audio. | Bus de eventos / llamadas del `game`. | Estado de juego, DOM, render. | Solo su estado interno |
 | `game` | Composición, dueño del estado, efectos, update/render/dispose y máquina de estados futura. | Todas las capas. | Dibujar a mano fuera de render/UI. | Sí (dueño) |
@@ -179,21 +177,29 @@ tipado en `global.d.ts`; `game.ts` no enlaza eventos, de modo que los tests inye
 - **IA determinista:** `updateEnemies` recibe `rng` inyectado (derivado de la semilla del juego),
   lee el jugador y la rejilla y empuja balas a la lista; no toca DOM ni render. La percepción usa
   `hasLineOfSight`; el avance usa `findPath`. Parámetros en `AI_TUNING` (`balance.ts`): detección,
-  alcance de ataque, reacción, tolerancia de apuntado, dispersión, intervalo de ruta y factor de
-  velocidad; se escalarán por misión en la fase 9.
+  alcance de ataque, reacción, arco de fuego (±15°), dispersión, intervalo de ruta y factor de
+  velocidad; se escalarán por misión en la fase 9. Mientras recarga mantiene el rumbo (no corrige el
+  apuntado): es la ventana de flanqueo del bloque 7.5.
 - **Alerta por estampido:** al disparar el jugador, `alertEnemiesNear` despierta a los enemigos a
   menos de 60 m (`FIRE_ALERT_RADIUS` en `game.ts`). Un enemigo alertado avanza si no ve al jugador.
 - **Combate:** `systems/combat` calcula impactos con daño base; el proyectil del jugador sale del
   pivote de la torreta + 2,2 m de tubo y lleva la dirección 3D de la mira (el cabeceo cuenta). Hay
   impacto contra coberturas, contra tanques (cilindro de 2,2 m de alto) y **contra el suelo**; un
   disparo alto puede pasar por encima de un tanque. `game` filtra objetivos por facción (sin fuego
-  amigo) y delega el daño en `systems/damage.ts`, que aplica el **blindaje base y las mejoras**
-  (`(1 − armor) × 0,9^mejoras`) y actualiza vida/muerte; `systems/combat` acepta multiplicadores de
-  daño y recarga para la potencia. Los enemigos usan el mismo `Bullet` y las mismas colisiones.
+  amigo) y delega el daño en `systems/damage.ts`, que aplica el **blindaje base, las mejoras**
+  (`(1 − armor) × 0,9^mejoras`) **y la zona direccional** (×0,5/×1,0/×1,5) y actualiza vida/muerte;
+  `systems/combat` acepta multiplicadores de daño y recarga para la potencia y adjunta `zone` al
+  evento de impacto. Los enemigos usan el mismo `Bullet` y las mismas colisiones.
 - **Pickups y daño:** `entities/pickup.ts` guarda los pickups; `systems/loot.ts` recoge a 2 m,
   aplica cura/mejora/potencia, mantiene el temporizador y expone los multiplicadores de daño y
-  recarga; `systems/damage.ts` aplica el impacto con blindaje base y mejoras y actualiza vida/muerte.
-  `render` solo dibuja los pickups no recogidos.
+  recarga; `systems/damage.ts` aplica el impacto con blindaje base, mejoras y zona direccional y
+  actualiza vida/muerte. `render` solo dibuja los pickups no recogidos.
+- **Blindaje direccional:** `systems/armor.ts` clasifica la zona de impacto respecto al rumbo del
+  blanco (frontal ≤60°, lateral ≤120°, trasera >120°) con la dirección del proyectil y devuelve
+  ×0,5/×1,0/×1,5. `systems/combat` adjunta `zone` al `ProjectileEvent`; `systems/damage` aplica el
+  multiplicador **después** del blindaje base y de las mejoras. Es simétrico para jugador y
+  enemigos; el HUD de la fase 8 mostrará la zona. La IA solo dispara si el jugador está dentro de su
+  arco de ±15° y no corrige el rumbo mientras recarga. Valores en `config/balance.ts`.
 - **Dirección de dependencias permitida** (cada flecha es «importa a»; sin ciclos):
 
   ```text
@@ -222,12 +228,12 @@ requestAnimationFrame
    │    │  retícula en pantalla (cono de ±15° / ±4°; la cámara no gira)
    │    ├─ systems/combat.updatePlayerWeapon: recarga y disparo en la dirección de la mira; si
    │    │  dispara, alerta a ≤ 60 m y activa retroceso/fogonazo
-   │    ├─ systems/ai.updateEnemies: temporizadores, percepción por LOS, alerta, ataque (giro
-   │    │  limitado + dispersión + recarga) o avance con A* y colisión contra rejilla y tanques
+   │    ├─ systems/ai.updateEnemies: temporizadores, percepción por LOS, alerta, ataque (arco de
+   │    │  fuego ±15°, sin corregir rumbo al recargar) o avance con A* y colisión
    │    ├─ systems/combat.updateProjectiles: subpasos con dirección 3D, impactos en coberturas,
-   │    │  tanques (altura 2,2 m) o suelo, daño/destrucción, caducidad y eventos
+   │    │  tanques (altura 2,2 m) o suelo, zona de blindaje, daño/destrucción y eventos
    │    ├─ systems/loot.updateLoot + collectPickups: temporizadores y recogida a 2 m con su efecto
-   │    ├─ systems/damage.applyProjectileHit: blindaje base + mejoras, vida/muerte y flash de daño
+   │    ├─ systems/damage.applyProjectileHit: blindaje base + mejoras + zona, vida/muerte y flash
    │    └─ (fases 8–9: HUD, progresión de misión, puntuación y persistencia)
    ├─ game.render(context)
    │    ├─ render/playerCamera.createPlayerCamera + retroceso de cámara (solo visual; sin aim)
@@ -286,9 +292,10 @@ El plan describe 5 macro-pasos (§6.3); este es el desglose real de la composici
 1. **Fondo y suelo.** Cielo, horizonte y **rejilla de suelo proyectada** se pintan primero como
    telón de fondo (`render/background.ts`); al ser lo más lejano, quedan detrás de todo.
 2. **Generación de caras de mundo.** `buildWallWorldFaces` produce coberturas intactas (omitiendo
-   caras que tocan otra cobertura) y escombros; `tankWorldFaces` produce el tanque enemigo como cinco
-   cajas rotadas (casco, 2 cadenas, torreta, cañón) sin cara inferior; `pickupWorldFaces` produce la
-   caja, la marca de suelo y el icono flotante de cada pickup no recogido.
+   caras que tocan otra cobertura) y escombros; `tankWorldFaces` produce el tanque enemigo como siete
+   cajas rotadas (casco, 2 cadenas, torreta, cañón y franjas de orientación) sin cara inferior;
+   `pickupWorldFaces` produce la caja, la marca de suelo y el icono flotante de cada pickup no
+   recogido.
 3. **Proyección en una sola pasada** (`projectWorldFaces`): mundo→cámara, descarte de caras traseras,
    recorte de plano cercano, proyección con focal, cálculo de profundidad media, sombreado plano por
    normal y **niebla** de distancia.
@@ -350,7 +357,8 @@ hay z-buffer. Los empates de profundidad conservan el orden de entrada (el `sort
 - **Borde del mundo:** cerrado por coberturas indestructibles (hormigón); no se puede salir.
 - **Tanques:** el jugador y los enemigos son estados con posición, rumbo, vida/armadura, recarga y
   comportamiento; los enemigos añaden modo de IA, ruta, temporizadores y fogonazo. El modelo visual
-  es una composición de cajas (`models.ts`); la simulación usa círculos y la rejilla.
+  es una composición de cajas (`models.ts`) con franja clara en el frente y roja en la espalda para
+  leer la orientación; la simulación usa círculos y la rejilla.
 - **Pickups:** cuatro por escenario (botiquín, mejora y potencia) en celdas libres alcanzables; se
   recogen al pasar a menos de 2 m, no reaparecen y no bloquean el movimiento. Los datos y efectos
   están en `config/pickups.ts`; `systems/loot` aplica la cura (+30 PV), la mejora (+20 de vida
@@ -360,10 +368,12 @@ hay z-buffer. Los empates de profundidad conservan el orden de entrada (el `sort
   torreta (1,55 m de alto, 1,1 m al frente) más 2,2 m de tubo, en la dirección de la mira. Los
   impactos pueden ser contra cobertura, contra tanque (cilindro de 2,2 m de alto) o contra el suelo;
   un disparo elevado puede pasar por encima de un tanque. La dirección de la cámara no interviene.
-- **Blindaje direccional (previsto 7.5):** el evento de impacto llevará la dirección del proyectil
-  y el juego clasificará la zona (frontal/lateral/trasera) con `systems/armor.ts` puro, aplicando
-  ×0,5/×1,0/×1,5 después de `armor`. El arco de fuego enemigo (±15°) y la pausa de seguimiento
-  durante la recarga viven en `systems/ai.ts`; los valores, en `config/balance.ts`.
+  El evento de impacto incluye la **zona de blindaje** cuando golpea a un tanque.
+- **Blindaje direccional (bloque 7.5):** `systems/armor.ts` clasifica la zona respecto al rumbo del
+  blanco (frontal ≤60°, lateral ≤120°, trasera >120°) y devuelve ×0,5/×1,0/×1,5, aplicado después
+  del blindaje base y de las mejoras; es simétrico para jugador y enemigos. La IA solo dispara dentro
+  de ±15° de su rumbo y no corrige el heading mientras recarga (ventana de flanqueo); los modelos
+  llevan franjas de orientación. Valores en `config/balance.ts`.
 - **Limitación:** sin verticalidad real (rampas, puentes, tejados, voladizos), agua ni
   transparencias; requiere cambiar el contrato de mundo y un ADR.
 
@@ -418,8 +428,8 @@ No hay escena unificada: construir caras es una función pura, proyectarlas es o
 
 - **Objetivo:** 60 fps a 1280×720 en un portátil moderno.
 - **Presupuesto:** ≤ **1 500 caras visibles** y ≤ **500 operaciones de dibujo por frame**.
-- **Coste de los enemigos:** cada tanque son 5 cajas × 5 caras = 25 caras nominales; con la
-  formación actual (4 enemigos) son ~100 caras, holgado dentro del presupuesto.
+- **Coste de los enemigos:** cada tanque son 7 cajas × 5 caras = 35 caras nominales; con la
+  formación actual (4 enemigos) son ~140 caras, holgado dentro del presupuesto.
 - **Coste de los pickups:** ~30 caras por pickup (marca, caja e icono) y 4 unidades ⇒ ~120 caras,
   también dentro del presupuesto.
 - **Depuración:** `F3` con fps, caras, celdas visibles y entidades es previsto; hoy el panel temporal
@@ -456,9 +466,10 @@ colisión se dividen en funciones pequeñas; si una regla no cabe sin anidar, se
 | LOS imprecisa en esquinas por muestreo de 1 m | Suficiente para celdas de 4 m; si aparecen fallos, DDA exacto | Aceptado (revisar con QA) |
 | IA que se engancha en esquinas | A* + deslizamiento + recálculo de ruta al chocar; test de avance con obstáculo | Parcial (fase 6) |
 | IA sin estado de reposición/coordinación | Máquina `idle/advance/attack`; reposicionar y flanqueo coordinado quedan como deuda | Deuda planificada |
+| La pausa de recarga hace a la IA demasiado fácil | Ventana configurable (`AI_TUNING`); simulación de flanqueo y ajuste en fase 9 | Revisable (7.5) |
 | **Bug:** jugador atraviesa tanques (`BUG-001`) | Bloqueadores circulares dinámicos + separación de 0,15 m, tests a 6 m/s y 60 Hz (jugador↔enemigo y enemigo↔enemigo) y QA en navegador | Mitigado (bloque 6.6) |
-| Blindaje direccional desequilibra la dificultad | Multiplicadores/umbrales en `balance.ts`; simulación headless y ajuste en fase 9 | Previsto (7.5) |
-| IA demasiado precisa encarando al jugador | Arco de fuego ±15°, giro limitado y pausa de seguimiento al recargar | Previsto (7.5) |
+| Blindaje direccional desequilibra la dificultad | Multiplicadores/umbrales en `balance.ts`; tests de impactos por zona y simulación en fase 9 | Implementado (7.5); balance a validar en fase 9 |
+| IA demasiado precisa encarando al jugador | Arco de fuego ±15°, giro limitado y pausa de seguimiento al recargar | Mitigado (7.5) |
 | Dificultad mal calibrada | Balance en `config/tanks.ts`, IA en `balance.ts`, simulación headless y `?seed=` | Parcial (ajuste fase 9) |
 | Oclusión percibida como injusta | Enemigos con la misma LOS; coberturas destructibles y radar (fase 8) | Diseño |
 | Retícula/puntería descuadrada respecto al cañón | `resolveAim` unitario + cañón visual derivado del mismo punto de retícula; QA visual | Mitigado (bloque 6.5) |
@@ -492,9 +503,12 @@ colisión se dividen en funciones pequeñas; si una regla no cabe sin anidar, se
   en el avance de la IA, separación de seguridad y tests de regresión de `BUG-001`.
 - **Fase 7:** pickups cerrada — `config/pickups.ts`, `entities/pickup.ts`, `systems/loot.ts`,
   `systems/damage.ts`, `render/pickupFaces.ts` y `render/statusOverlay.ts`; recogida a 2 m, efectos
-  de cura/mejora/potencia, aviso flotante y línea de estado temporal. **168 tests en 30 ficheros.**
-- **Siguiente trabajo (bloque 7.5):** blindaje direccional y flanqueo. Después: HUD/radar, misiones,
-  audio y pulido (fases 8–11).
+  de cura/mejora/potencia, aviso flotante y línea de estado temporal.
+- **Bloque 7.5:** blindaje direccional y flanqueo cerrados — `systems/armor.ts`, zona en el evento
+  de impacto, aplicación en `systems/damage.ts`, arco de fuego y pausa de recarga en `systems/ai.ts`
+  y franjas de orientación en `render/models.ts`. **183 tests en 31 ficheros.**
+- **Siguiente trabajo (fase 8):** HUD/radar con vida, progreso, puntuación, recarga, zona de impacto
+  y pantallas. Después: misiones, audio y pulido (fases 9–11).
 
 El inventario real, commit a commit, está en [`STATUS.md`](STATUS.md); el orden y entregables de
 cada fase, en [`PLAN.md`](PLAN.md) §12.
