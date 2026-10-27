@@ -1,7 +1,7 @@
 # Estado del proyecto — BattleTank-DS
 
-> **Actualizado:** 2026-10-27 · **Fase actual:** pausa de revisión; siguiente bloque 7 (pickups)
-> **Último commit:** `fix(collision): bloquear el paso entre tanques`
+> **Actualizado:** 2026-10-27 · **Fase actual:** pausa de revisión; siguiente bloque 7.5 (blindaje)
+> **Último commit:** `feat(loot): pickups de cura, mejora y potencia`
 >
 > Este fichero es el punto de entrada para retomar el proyecto, sea otra persona, otro chat u
 > otro modelo. Se actualiza en **cada commit**. La verdad sobre el alcance está en el plan.
@@ -11,13 +11,20 @@
 1. Lee [`docs/PLAN.md`](PLAN.md) (alcance y fases) y este estado.
 2. `npm install` y `npm run check` para confirmar que la base está sana.
 3. `npm run dev` y abre `http://localhost:5173`.
-4. Lee «Incidencias conocidas» y la «Feature aprobada» antes de elegir tarea: el orden previsto es
-   pickups (7) → blindaje direccional (7.5); `BUG-001` (6.6) ya está corregido.
+4. Lee «Incidencias conocidas» y la «Feature aprobada» antes de elegir tarea: el siguiente trabajo
+   es el blindaje direccional (7.5); pickups (7) y `BUG-001` (6.6) ya están cerrados.
 5. Sigue el flujo de [`docs/DEVELOPMENT.md`](DEVELOPMENT.md): tests → `npm run check` → changelog
    → estado → commit.
 
 ## Hecho
 
+- [x] **Fase 7 — Pickups.** Cuatro pickups por escenario (botiquín, mejora y potencia) repartidos de
+      forma determinista en los spawns alcanzables; se recogen al pasar a menos de 2 m y aplican
+      cura de +30 PV con tope, +20 de vida máxima con −10 % de daño recibido acumulable ×3, o daño
+      ×1,75 y recarga −35 % durante 20 s (renovable). Efectos en `systems/loot.ts`, aplicación de
+      daño en `systems/damage.ts`, modelo procedural con icono flotante en `render/pickupFaces.ts`
+      y aviso/línea de estado en `render/statusOverlay.ts`. 168 tests en 30 ficheros (26 nuevos) y
+      QA en Chrome headless vía CDP: los tres pickups se recogen con su efecto y el aviso visible.
 - [x] **Bloque 6.6 — Colisión entre tanques (`BUG-001`).** `world/entityCollision.ts` trata cada
       tanque vivo como bloqueador circular con separación de seguridad de 0,15 m sobre la suma de
       radios; el movimiento del jugador y el avance de la IA usan `moveCircleAroundEntities`
@@ -67,8 +74,8 @@
 
 ## En curso
 
-- Ninguna tarea en curso: **pausa acordada**. Próximo trabajo: **fase 7** (pickups); después,
-  bloque 7.5 (blindaje direccional).
+- Ninguna tarea en curso: **pausa acordada**. Próximo trabajo: **bloque 7.5** (blindaje direccional
+  y flanqueo).
 
 ## Incidencias conocidas
 
@@ -105,8 +112,8 @@ encarando al jugador. Se implementará después de pickups y antes de HUD/mision
 | 6 | Enemigos: modelos, IA con LOS/A*, dificultad por parámetros | Completada |
 | 6.5 | Puntería con ratón (cañón cónico, balística 3D) | Completada |
 | 6.6 | Colisión entre tanques (`BUG-001`) | Completada |
-| 7 | Pickups: cura, mejora y potencia | **Pendiente (siguiente)** |
-| 7.5 | Blindaje direccional y flanqueo | Pendiente |
+| 7 | Pickups: cura, mejora y potencia | Completada |
+| 7.5 | Blindaje direccional y flanqueo | **Pendiente (siguiente)** |
 | 8 | HUD: vida, progreso, puntuación, radar, recarga y pantallas | Pendiente |
 | 9 | Misiones: campaña de 3, escalado, victoria/derrota y persistencia | Pendiente |
 | 10 | Audio: efectos sintetizados WebAudio, volumen y mute | Pendiente |
@@ -114,6 +121,11 @@ encarando al jugador. Se implementará después de pickups y antes de HUD/mision
 
 ## Deuda técnica registrada
 
+- **Supuestos de pickups pendientes de validar:** la mejora cura también los 20 PV al subir el
+  máximo, las reducciones de daño son multiplicativas y recoger una mejora con el tope ×3 la consume
+  sin efecto. Confirmar en la fase 9.
+- **Feedback de pickups provisional:** icono, aviso y temporizador viven en el canvas temporal hasta
+  el HUD de la fase 8.
 - **Sin blindaje direccional ni arco de fuego enemigo** hasta el bloque 7.5; la IA encara siempre
   al jugador mientras tenga línea de visión.
 - IA sin patrulla ni coordinación de flanqueo: los enemigos permanecen al acecho hasta ver u oír al
@@ -129,6 +141,7 @@ encarando al jugador. Se implementará después de pickups y antes de HUD/mision
 - **Flujo de trabajo acordado con el usuario:** pausa al cerrar cada fase para revisión/intervención. Se retoma con «continúa la fase N» o «continúa el bloque N».
 - **Cambios aprobados 2026-10-27:** corregir `BUG-001` (6.6) y añadir blindaje direccional/flanqueo (7.5). Registrados en `PLAN.md` §2/§12 y `DECISIONS.md` ADR-009. El bloque 6.6 ya está cerrado; queda el 7.5.
 - **QA del bloque 6.6:** además de los tests de regresión, se condujo el juego real en Chrome headless vía CDP (sin dependencias nuevas) para avanzar contra un enemigo: el jugador se detiene a 2,9 m (suma de radios 2,75 m + margen 0,15 m) y no lo cruza.
+- **QA de la fase 7:** se recogieron los tres pickups en Chrome headless vía CDP (botiquín de 40 a 70 PV, mejora de 100 a 120 de vida máxima, potencia con recarga de 1,56 s) y se verificaron con capturas el icono en el mundo, el aviso flotante y la línea de estado.
 - No hay `pnpm` instalado en la máquina; se usa **npm** (Node 24 / npm 11).
 - El audio se sintetiza con WebAudio: no habrá ficheros de audio ni assets externos.
 - La interfaz y la documentación van en español; los identificadores del código, en inglés.

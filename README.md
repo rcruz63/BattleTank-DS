@@ -15,15 +15,16 @@ técnica) en [`docs/STATUS.md`](docs/STATUS.md).
 ## Estado
 
 > **Versión objetivo: `0.1.0` (vertical slice jugable) — en desarrollo**, todavía no publicado.
-> Al redactarse este README las fases 0–6 y los bloques 6.5 (puntería con ratón) y 6.6 (colisión
-> entre tanques) están cerradas. El siguiente trabajo es la fase 7 (pickups), seguida del bloque 7.5
-> (blindaje direccional y flanqueo). Ya hay un combate jugable:
+> Al redactarse este README las fases 0–6 y los bloques 6.5 (puntería con ratón), 6.6 (colisión
+> entre tanques) y la fase 7 (pickups de cura, mejora y potencia) están cerrados. El siguiente
+> trabajo es el bloque 7.5 (blindaje direccional y flanqueo). Ya hay un combate jugable:
 > `WASD`/flechas mueven y giran el tanque, el ratón apunta el cañón dentro de un cono (la cámara y
 > el casco **no** giran con él), y `Espacio` o el clic izquierdo disparan con 2,4 s de recarga. Las coberturas de madera y ladrillo se
 > destruyen, los Panzer III y Tiger I esperan al acecho, detectan por línea de visión, avanzan con A*
 > y disparan (el estampido de tu cañón alerta a los cercanos); el daño respeta el blindaje, hay
 > overlay rojo al recibirlo y una pantalla provisional de tanque destruido, y los tanques son
-> sólidos: no se atraviesan entre sí. Faltan pickups, HUD funcional, misiones y audio. Consulta
+> sólidos: no se atraviesan entre sí. Ya hay pickups de cura, mejora y potencia que se recogen al
+> pasar por encima, con aviso en pantalla. Faltan HUD funcional, misiones y audio. Consulta
 > [`docs/STATUS.md`](docs/STATUS.md) para el estado exacto del día.
 
 El título «BATTLE TANK — PERISCOPIO» es provisional y puede cambiarse en un commit de
@@ -104,16 +105,16 @@ BattleTank-DS/
 ├── index.html          # shell: canvas 1280×720 + contenedor del HUD
 ├── src/
 │   ├── main.ts         # arranque: canvas, entrada (teclado + ratón), createGame y bucle
-│   ├── config/         # datos puros: balance, materiales, tanques, paleta e identidad
+│   ├── config/         # datos puros: balance, materiales, tanques, paleta, pickups e identidad
 │   ├── core/           # matemáticas, RNG determinista, bucle de paso fijo, eventos
 │   ├── world/          # rejilla, generación, spawns, geometría, colisión, LOS y A*
-│   ├── render/         # cámara, caras, modelos de tanques, painter, fondo y periscopio
-│   ├── entities/       # jugador, proyectil y enemigo (pickups en la fase 7)
-│   ├── systems/        # entrada, puntería, movimiento, combate e IA (loot, misión y puntuación después)
+│   ├── render/         # cámara, caras, modelos de tanques y pickups, painter, overlays y periscopio
+│   ├── entities/       # jugador, proyectil, enemigo y pickup
+│   ├── systems/        # entrada, puntería, movimiento, combate, IA, loot y daño (misión y puntuación después)
 │   ├── ui/             # estilos base; HUD, radar y pantallas en la fase 8
 │   ├── audio/          # efectos sintetizados con WebAudio (fase 10)
 │   └── game/           # composición actual (createGame); máquina de estados en fases 8-9
-├── tests/              # espejo de src/ (142 tests en 25 ficheros) + integración headless
+├── tests/              # espejo de src/ (168 tests en 30 ficheros) + integración headless
 ├── docs/               # plan, estado y documentación del proyecto
 └── dist/               # build generado (no versionado)
 ```
@@ -135,6 +136,8 @@ almacenamiento, el juego debe seguir funcionando sin persistencia (degradación 
 
 ## Limitaciones conocidas y siguiente paso
 
+- **HUD y avisos definitivos (fase 8):** los efectos de los pickups ya existen, pero su icono,
+  cuenta atrás y barras viven en el panel temporal del canvas hasta el HUD.
 - **`BUG-001` corregido en el bloque 6.6:** el jugador y los enemigos ya no se atraviesan; cada
   tanque vivo bloquea el paso del otro con la suma de radios más 0,15 m de separación de seguridad.
   Detalle y tests en [`docs/STATUS.md`](docs/STATUS.md) y [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) §8.

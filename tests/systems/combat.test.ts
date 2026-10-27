@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { GUN } from '../../src/config/balance';
 import { createBullet } from '../../src/entities/bullet';
 import type { Bullet } from '../../src/entities/bullet';
+import { createEnemy } from '../../src/entities/enemy';
 import { createPlayer } from '../../src/entities/player';
 import {
+  buildProjectileTargets,
   createPlayerBullet,
   isWeaponReady,
   reloadProgress,
@@ -91,6 +93,52 @@ describe('recarga y disparo', () => {
     expect(bullet.direction.z).toBeCloseTo(1, 6);
     expect(bullet.owner).toBe('player');
     expect(bullet.damage).toBe(player.damage);
+  });
+});
+
+describe('multiplicadores de potencia y objetivos', () => {
+  it('aplica daño y recarga temporales al disparar', () => {
+    const player = playerAt();
+    const bullets: Bullet[] = [];
+
+    expect(
+      updatePlayerWeapon({
+        player,
+        fireRequested: true,
+        stepSeconds: 1 / 60,
+        bullets,
+        direction: { x: 0, y: 0, z: 1 },
+        damageMultiplier: 1.75,
+        reloadMultiplier: 0.65,
+      }),
+    ).toBe(true);
+
+    expect(bullets[0]?.damage).toBeCloseTo(player.damage * 1.75, 9);
+    expect(player.reloadRemaining).toBeCloseTo(player.reloadSeconds * 0.65, 9);
+    expect(player.reloadDuration).toBeCloseTo(player.reloadSeconds * 0.65, 9);
+    expect(reloadProgress(player)).toBeCloseTo(0, 9);
+  });
+
+  it('crea el proyectil con multiplicador de daño', () => {
+    const player = playerAt();
+    const bullet = createPlayerBullet(player, { x: 0, y: 0, z: 1 }, 1.75);
+    expect(bullet.damage).toBeCloseTo(player.damage * 1.75, 9);
+  });
+
+  it('construye los objetivos vivos de cada facción', () => {
+    const player = playerAt();
+    const enemy = createEnemy('enemigo-1', 'light', { x: 10, z: 20, yaw: 0 });
+    const dead = createEnemy('enemigo-2', 'heavy', { x: 10, z: 24, yaw: 0 });
+    dead.alive = false;
+
+    const targets = buildProjectileTargets(player, [enemy, dead]);
+    expect(targets.map((target) => target.id)).toEqual(['player', 'enemigo-1']);
+    expect(targets.map((target) => target.faction)).toEqual(['player', 'enemy']);
+
+    player.alive = false;
+    expect(buildProjectileTargets(player, [enemy]).map((target) => target.id)).toEqual([
+      'enemigo-1',
+    ]);
   });
 });
 

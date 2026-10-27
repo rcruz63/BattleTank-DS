@@ -5,12 +5,13 @@
  * influye de verdad. El avance se hace en subpasos para no atravesar coberturas.
  */
 
-import { COMBAT, GUN } from '../config/balance';
+import { COMBAT, GUN, TANK_TARGET_HEIGHT } from '../config/balance';
 import { normalize3 } from '../core/math';
 import type { Vec3 } from '../core/math';
 import type { MaterialId } from '../config/materials';
 import { createBullet } from '../entities/bullet';
 import type { Bullet, ProjectileOwner } from '../entities/bullet';
+import type { EnemyState } from '../entities/enemy';
 import { playerForward } from '../entities/player';
 import type { PlayerState } from '../entities/player';
 import { planarDistanceSquared } from '../world/geometry';
@@ -56,12 +57,44 @@ export function isWeaponReady(player: PlayerState): boolean {
 
 /** 0 = acaba de disparar; 1 = lista para volver a disparar. */
 export function reloadProgress(player: PlayerState): number {
-  if (player.reloadSeconds <= 0) return 1;
-  return 1 - player.reloadRemaining / player.reloadSeconds;
+  if (player.reloadDuration <= 0) return 1;
+  return 1 - player.reloadRemaining / player.reloadDuration;
+}
+
+/** Objetivos vivos del combate: el jugador y los enemigos que siguen en pie. */
+export function buildProjectileTargets(
+  player: PlayerState,
+  enemies: readonly EnemyState[],
+): ProjectileTarget[] {
+  const targets: ProjectileTarget[] = [];
+  if (player.alive) {
+    targets.push({
+      id: 'player',
+      position: player.position,
+      radius: player.radius,
+      height: TANK_TARGET_HEIGHT,
+      faction: 'player',
+    });
+  }
+  for (const enemy of enemies) {
+    if (!enemy.alive) continue;
+    targets.push({
+      id: enemy.id,
+      position: enemy.position,
+      radius: enemy.radius,
+      height: TANK_TARGET_HEIGHT,
+      faction: 'enemy',
+    });
+  }
+  return targets;
 }
 
 /** Crea un proyectil en la boca del cañón, en la dirección 3D de la mira. */
-export function createPlayerBullet(player: PlayerState, direction: Vec3): Bullet {
+export function createPlayerBullet(
+  player: PlayerState,
+  direction: Vec3,
+  damageMultiplier = 1,
+): Bullet {
   const forward = playerForward(player);
   const unit = normalize3(direction);
   const pivot: Vec3 = {
@@ -79,7 +112,7 @@ export function createPlayerBullet(player: PlayerState, direction: Vec3): Bullet
     position,
     direction: unit,
     speed: player.shellSpeed,
-    damage: player.damage,
+    damage: player.damage * damageMultiplier,
     owner: 'player',
   });
 }
@@ -90,6 +123,10 @@ export interface PlayerWeaponStep {
   readonly stepSeconds: number;
   readonly bullets: Bullet[];
   readonly direction: Vec3;
+  /** Multiplicador de daño (potencia); 1 por defecto. */
+  readonly damageMultiplier?: number;
+  /** Multiplicador de duración de la recarga (potencia); 1 por defecto. */
+  readonly reloadMultiplier?: number;
 }
 
 /** Avanza la recarga y dispara si corresponde. Devuelve true si se disparó. */
@@ -98,8 +135,9 @@ export function updatePlayerWeapon(step: PlayerWeaponStep): boolean {
   player.reloadRemaining = Math.max(0, player.reloadRemaining - stepSeconds);
   if (!fireRequested || player.reloadRemaining > 0) return false;
 
-  bullets.push(createPlayerBullet(player, direction));
-  player.reloadRemaining = player.reloadSeconds;
+  bullets.push(createPlayerBullet(player, direction, step.damageMultiplier ?? 1));
+  player.reloadDuration = player.reloadSeconds * (step.reloadMultiplier ?? 1);
+  player.reloadRemaining = player.reloadDuration;
   return true;
 }
 

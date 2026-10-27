@@ -21,6 +21,8 @@ export interface PlayerState {
   readonly armor: number;
   /** Tiempo restante de recarga; 0 = arma lista. */
   reloadRemaining: number;
+  /** Duración de la recarga en curso; la potencia la reduce temporalmente. */
+  reloadDuration: number;
   alive: boolean;
 }
 
@@ -39,6 +41,7 @@ export function createPlayer(spawn: SpawnPoint): PlayerState {
     shellSpeed: PLAYER_TANK.shellSpeed,
     armor: PLAYER_TANK.armor,
     reloadRemaining: 0,
+    reloadDuration: PLAYER_TANK.reloadSeconds,
     alive: true,
   };
 }

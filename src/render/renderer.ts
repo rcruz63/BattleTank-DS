@@ -1,15 +1,17 @@
-/** Composición del frame: fondo, rejilla de suelo, coberturas, tanques y proyectiles. */
+/** Composición del frame: fondo, rejilla de suelo, coberturas, tanques, pickups y proyectiles. */
 
 import { LIGHT_DIRECTION, RENDER_DEFAULTS, VIEWPORT } from '../config/balance';
 import { PALETTE } from '../config/palette';
 import type { Bullet } from '../entities/bullet';
 import type { EnemyState } from '../entities/enemy';
+import type { PickupState } from '../entities/pickup';
 import { createCameraFrame } from './camera';
 import { drawBackground, drawGroundGrid } from './background';
 import { buildBulletFaces } from './bulletFaces';
 import { projectWorldFaces } from './faces';
 import { tankWorldFaces } from './models';
 import { paintFaces } from './painter';
+import { pickupWorldFaces } from './pickupFaces';
 import { buildWallWorldFaces } from './worldFaces';
 import type { PerspectiveCamera, RenderFace, Viewport } from './types';
 import type { WorldGrid } from '../world/types';
@@ -19,6 +21,7 @@ export interface WorldView {
   readonly camera: PerspectiveCamera;
   readonly bullets?: readonly Bullet[];
   readonly enemies?: readonly EnemyState[];
+  readonly pickups?: readonly PickupState[];
 }
 
 export interface RenderStats {
@@ -42,8 +45,9 @@ export function renderWorld(
   const enemyFaces = (view.enemies ?? [])
     .filter((enemy) => enemy.alive)
     .flatMap((enemy) => tankWorldFaces(enemy));
+  const pickupFaces = (view.pickups ?? []).flatMap((pickup) => pickupWorldFaces(pickup));
 
-  const faces: RenderFace[] = projectWorldFaces([...wallFaces, ...enemyFaces], {
+  const faces: RenderFace[] = projectWorldFaces([...wallFaces, ...enemyFaces, ...pickupFaces], {
     camera: view.camera,
     viewport,
     fogStart: RENDER_DEFAULTS.fogStart,

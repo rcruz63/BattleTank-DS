@@ -9,6 +9,13 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 ### Añadido
 
+- Pickups de cura, mejora y potencia: 4 por escenario repartidos de forma determinista, recogida a
+  2 m del jugador y efectos con feedback visual (caja e icono flotante, aviso «+30 PV»/«Mejora ×N»/
+  «Potencia 20 s» y línea de estado temporal). El botiquín cura 30 PV sin superar el máximo, la
+  mejora suma +20 de vida máxima y −10 % de daño recibido acumulable ×3, y la potencia da daño ×1,75
+  y recarga −35 % durante 20 s (se renueva). Datos en `config/pickups.ts`, estado en
+  `entities/pickup.ts`, reglas en `systems/loot.ts`, aplicación de daño en `systems/damage.ts`,
+  modelo procedural en `render/pickupFaces.ts` y recogida cableada en `game.ts`; 168 tests.
 - Puntería con ratón: el cañón pivota sobre la mazorca en un cono de ±15° horizontal y ±4°
   vertical, la retícula sigue al puntero y el disparo sale en esa dirección; clic izquierdo o
   Espacio disparan. Balística 3D con altura de blancos e impacto en suelo, cañón dibujado
@@ -43,6 +50,9 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 - El cableado de entrada (teclado y ratón) se mueve de `game.ts` a `main.ts`; `createGame` acepta
   el estado de entrada inyectado y ya no enlaza eventos del DOM.
+- La aplicación de daño sale de `game.ts` a `systems/damage.ts` y los overlays temporales de canvas
+  (panel de estado, aviso de pickup y pantalla de destrucción) a `render/statusOverlay.ts`; la
+  geometría de cajas compartida se extrae a `render/boxes.ts`.
 
 ### Corregido
 

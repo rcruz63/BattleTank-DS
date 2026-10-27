@@ -4,9 +4,9 @@ Arquitectura del vertical slice **0.1.0**. Se deriva de [`PLAN.md`](PLAN.md) §5
 contratos descritos aquí son el acuerdo entre capas, no un inventario exhaustivo del código.
 
 > **Convención de estado.** **«Implementado»** = existe y está cubierto por tests; **«previsto»** =
-> diseñado y acordado, todavía sin escribir. A fecha de redacción las fases 0–6 y los bloques 6.5
-> (puntería con ratón) y 6.6 (colisión entre tanques) están cerrados; la siguiente es la fase 7
-> (pickups). El inventario vivo está en [`STATUS.md`](STATUS.md), no aquí.
+> diseñado y acordado, todavía sin escribir. A fecha de redacción las fases 0–7 y los bloques 6.5
+> (puntería con ratón) y 6.6 (colisión entre tanques) están cerrados; el siguiente es el bloque 7.5
+> (blindaje direccional). El inventario vivo está en [`STATUS.md`](STATUS.md), no aquí.
 >
 > **Las firmas concretas no se fijan en prosa.** Cada capa cierra sus tipos en sus `types.ts` (o en
 > el propio módulo); este documento fija responsabilidades, dependencias permitidas y flujo de datos.
@@ -20,7 +20,7 @@ contratos descritos aquí son el acuerdo entre capas, no un inventario exhaustiv
 | Build y dev server | **Vite 8** (`base: './'`, `target: es2022`, `outDir: dist`, sourcemaps), puerto fijo 5173. |
 | Gráficos | **Canvas 2D** con resolución interna fija **1280×720** escalada por CSS con letterboxing (`index.html`). |
 | HUD | **DOM/CSS** sobre el canvas + un **canvas pequeño independiente** para el radar (fase 8). |
-| Tests | **Vitest** en entorno **Node** (`tests/**/*.test.ts`), sin jsdom; **142 tests en 25 ficheros**. |
+| Tests | **Vitest** en entorno **Node** (`tests/**/*.test.ts`), sin jsdom; **168 tests en 30 ficheros**. |
 | Calidad | **ESLint** (tamaño/complejidad) + **Prettier**; puerta `npm run check`. |
 | Runtime | **Cero dependencias** y **cero assets externos**: geometría procedural, tipografía del sistema, iconos CSS y audio WebAudio sintetizado. |
 | Persistencia | `localStorage` solo para récord y misión desbloqueada (fase 9). |
@@ -47,7 +47,7 @@ Comandos (detalle en [`../README.md`](../README.md)): `npm run dev`, `npm run bu
 
 ## 3. Estructura real de carpetas
 
-Estructura a fecha del bloque 6.6 (los módulos previstos se añaden en su fase; el inventario vivo
+Estructura a fecha de la fase 7 (los módulos previstos se añaden en su fase; el inventario vivo
 está en [`STATUS.md`](STATUS.md)):
 
 ```text
@@ -60,6 +60,7 @@ BattleTank-DS/
 │   │   ├── identity.ts     #   título, subtítulo, versión
 │   │   ├── balance.ts      #   cámara, arena, render, combate, IA, radios, luz
 │   │   ├── materials.ts    #   materiales: vida, altura, escombros, colores
+│   │   ├── pickups.ts      #   efectos, colores y reparto de botiquín, mejora y potencia
 │   │   ├── palette.ts      #   colores del mundo y del HUD
 │   │   └── tanks.ts        #   stats y colores de tanques; fuente de verdad del balance
 │   ├── core/               # utilidades puras
@@ -86,21 +87,27 @@ BattleTank-DS/
 │   │   ├── color.ts        #   sombreado plano, mezcla y niebla
 │   │   ├── faces.ts        #   WorldFace + projectWorldFaces (culling, recorte, sombreado, niebla)
 │   │   ├── worldFaces.ts   #   caras de coberturas y escombros (buildWallWorldFaces)
+│   │   ├── boxes.ts        #   cajas opacas reutilizables (tanques y pickups)
 │   │   ├── models.ts       #   cajas rotadas del tanque enemigo: casco, cadenas, torreta, cañón
+│   │   ├── pickupFaces.ts  #   caja, marca de suelo e icono flotante de los pickups
 │   │   ├── bulletFaces.ts  #   tracers de proyectiles (rombos billboard)
 │   │   ├── background.ts   #   cielo, horizonte y rejilla del suelo
 │   │   ├── painter.ts      #   ordenación y pintado de caras
-│   │   ├── renderer.ts     #   composición: coberturas + tanques + proyectiles
+│   │   ├── renderer.ts     #   composición: coberturas + tanques + pickups + proyectiles
+│   │   ├── statusOverlay.ts #  panel temporal, aviso de pickup y pantalla de destruido
 │   │   └── periscope.ts    #   overlay: retícula móvil, cañón orientable, recarga y destellos
 │   ├── entities/           # datos y comportamiento local
 │   │   ├── player.ts       #   estado del tanque del jugador
 │   │   ├── bullet.ts       #   proyectil
+│   │   ├── pickup.ts       #   estado del botiquín, la mejora y la potencia
 │   │   └── enemy.ts        #   estado del Panzer III / Tiger I y su modo de IA
 │   ├── systems/            # reglas de juego puras sobre el estado
 │   │   ├── input.ts        #   entrada pura (teclado/ratón) + adaptadores DOM
 │   │   ├── aim.ts          #   puntero normalizado → cono de cañón y punto de retícula
 │   │   ├── movement.ts     #   giro solidario y avance con colisión contra rejilla y tanques
-│   │   ├── combat.ts       #   recarga, disparo, proyectiles 3D, impactos y daño
+│   │   ├── combat.ts       #   recarga, disparo, proyectiles 3D y multiplicadores de potencia
+│   │   ├── damage.ts       #   aplicación de impactos: blindaje base + mejoras y muerte
+│   │   ├── loot.ts         #   recogida, efectos y temporizadores de los pickups
 │   │   ├── ai.ts           #   percepción, alerta, avance con A*, apuntado y disparo enemigo
 │   │   └── armor.ts        #   (previsto 7.5) zonas de blindaje y multiplicadores
 │   ├── ui/
@@ -108,10 +115,10 @@ BattleTank-DS/
 │   └── game/
 │       └── game.ts         #   composición: arena, jugadores, IA, puntería, efectos, render
 │
-│   (previstos: config/missions.ts, entities/pickup.ts, systems/loot.ts, systems/mission.ts,
-│    systems/score.ts, systems/progression.ts, ui/hud.ts, ui/radar.ts, ui/screens.ts,
-│    audio/synth.ts, audio/audio.ts, game/state.ts, systems/armor.ts (7.5))
-├── tests/                  # espejo de src/ (25 ficheros, 142 tests) + integración headless
+│   (previstos: config/missions.ts, systems/mission.ts, systems/score.ts, systems/progression.ts,
+│    ui/hud.ts, ui/radar.ts, ui/screens.ts, audio/synth.ts, audio/audio.ts, game/state.ts,
+│    systems/armor.ts (7.5))
+├── tests/                  # espejo de src/ (30 ficheros, 168 tests) + integración headless
 ├── docs/
 └── dist/                   # build generado (no versionado)
 ```
@@ -121,22 +128,23 @@ caras de mundo de coberturas (`worldFaces.ts`) y tanques (`models.ts`), las proy
 pasada** con `faces.ts`, añade los tracers de proyectiles (`bulletFaces.ts`) y deja que `painter.ts`
 ordene y pinte. `buildWorldFaces` sigue existiendo como atajo para tests de proyección.
 
-A fecha de redacción las fases 0–6 y los bloques 6.5 y 6.6 están cerrados: el jugador se mueve,
-apunta el cañón con el ratón dentro de un cono, dispara con el clic o `Espacio` y no puede atravesar
-tanques enemigos; las coberturas se destruyen, los enemigos esperan/avanzan/atacan con LOS y A*, el
-daño respeta el blindaje y hay feedback de impacto/daño. El siguiente trabajo es la **fase 7**
-(pickups); después, el bloque 7.5 (blindaje direccional).
+A fecha de redacción las fases 0–7 y los bloques 6.5 y 6.6 están cerrados: el jugador se mueve,
+apunta el cañón con el ratón dentro de un cono, dispara con el clic o `Espacio`, no puede atravesar
+tanques enemigos y recoge botiquín, mejora y potencia con sus efectos; las coberturas se destruyen,
+los enemigos esperan/avanzan/atacan con LOS y A*, el daño respeta blindaje y mejoras y hay feedback
+de impacto/daño. El siguiente trabajo es el **bloque 7.5** (blindaje direccional y flanqueo);
+después, HUD/radar, misiones, audio y pulido.
 
 ### Responsabilidades por módulo
 
 | Capa | Responsabilidad | Puede importar de | Prohibido | Muta estado |
 |---|---|---|---|---|
-| `config` | Datos puros: balance de tanques, materiales, arena/cámara/render/IA, paleta e identidad, `as const`. | Nada del juego. | `systems`, `render`, lógica, DOM. | No |
+| `config` | Datos puros: balance de tanques, materiales, pickups, arena/cámara/render/IA, paleta e identidad, `as const`. | Nada del juego. | `systems`, `render`, lógica, DOM. | No |
 | `core` | Matemáticas, RNG, bucle, bus de eventos. | Nada del juego. | Canvas, DOM, estado de juego. | Solo estado interno |
 | `world` | Rejilla, generación, spawns, geometría, colisión con rejilla y entre tanques, línea de visión y A*. | `core`, `config`. | Canvas, DOM, `render`, `ui`, `systems`. | La rejilla al generarse y al recibir daño |
-| `render` | Cámara/proyección, caras de mundo y de proyectiles, modelos de tanque, fondo, pintado y overlay. | `core` (math), `config`, `world/types`, `entities` (datos), sus tipos. | `systems`, `ui`, `audio`, mutar el estado, `Date.now`/`Math.random`. | No |
-| `entities` | Datos y comportamiento local de jugador, proyectil y enemigo. | `core`, `config`, `world/types`. | DOM, Canvas, `render`, `ui`. | Sus propias entidades |
-| `systems` | Entrada, puntería, movimiento, combate e IA (y luego loot, misión, puntuación y progresión). | `core`, `config`, `world`, `entities`. | Canvas, `render`, `ui`, `audio`; el DOM solo en los adaptadores de entrada. | El estado de partida |
+| `render` | Cámara/proyección, caras de mundo, de tanques y de pickups, modelos, fondo, pintado y overlays. | `core` (math), `config`, `world/types`, `entities` (datos), sus tipos. | `systems`, `ui`, `audio`, mutar el estado, `Date.now`/`Math.random`. | No |
+| `entities` | Datos y comportamiento local de jugador, proyectil, enemigo y pickup. | `core`, `config`, `world/types`. | DOM, Canvas, `render`, `ui`. | Sus propias entidades |
+| `systems` | Entrada, puntería, movimiento, combate, daño, pickups e IA (y luego misión, puntuación y progresión). | `core`, `config`, `world`, `entities`. | Canvas, `render`, `ui`, `audio`; el DOM solo en los adaptadores de entrada. | El estado de partida |
 | `ui` | HUD, radar y pantallas (DOM/CSS + canvas del radar). | Datos ya calculados, `config`. | Lógica de juego, mutar el estado. | Solo su DOM/canvas |
 | `audio` | Síntesis y reproducción WebAudio tras una interfaz de audio. | Bus de eventos / llamadas del `game`. | Estado de juego, DOM, render. | Solo su estado interno |
 | `game` | Composición, dueño del estado, efectos, update/render/dispose y máquina de estados futura. | Todas las capas. | Dibujar a mano fuera de render/UI. | Sí (dueño) |
@@ -161,12 +169,13 @@ tipado en `global.d.ts`; `game.ts` no enlaza eventos, de modo que los tests inye
   de las celdas, de los tanques y de los proyectiles a partir de los datos que recibe.
 - **LOS y pathfinding compartidos:** `world/los.ts` y `world/pathfind.ts` son puros y deterministas;
   los usan la IA y (en el futuro) el jugador/UX. Una cobertura intacta bloquea; los escombros no.
-- **`render` no muta:** recibe rejilla, cámara, viewport, enemigos y proyectiles; devuelve caras o
-  pinta con ellas. No lee estado global, no avanza temporizadores y no modifica entidades. Paleta,
+- **`render` no muta:** recibe rejilla, cámara, viewport, enemigos, pickups y proyectiles; devuelve
+  caras o pinta con ellas. No lee estado global, no avanza temporizadores y no modifica entidades. Paleta,
   materiales y valores de render son datos estáticos de `config/`.
-- **Dos pasos de render:** (1) construir `WorldFace[]` con `buildWallWorldFaces` y
-  `tankWorldFaces`; (2) proyectarlas todas juntas con `projectWorldFaces` y añadir los tracers. Así
-  tanques y coberturas comparten el mismo orden de profundidad y la oclusión es coherente.
+- **Dos pasos de render:** (1) construir `WorldFace[]` con `buildWallWorldFaces`,
+  `tankWorldFaces` y `pickupWorldFaces`; (2) proyectarlas todas juntas con `projectWorldFaces` y
+  añadir los tracers. Así tanques, pickups y coberturas comparten el mismo orden de profundidad y la
+  oclusión es coherente.
 - **IA determinista:** `updateEnemies` recibe `rng` inyectado (derivado de la semilla del juego),
   lee el jugador y la rejilla y empuja balas a la lista; no toca DOM ni render. La percepción usa
   `hasLineOfSight`; el avance usa `findPath`. Parámetros en `AI_TUNING` (`balance.ts`): detección,
@@ -177,9 +186,14 @@ tipado en `global.d.ts`; `game.ts` no enlaza eventos, de modo que los tests inye
 - **Combate:** `systems/combat` calcula impactos con daño base; el proyectil del jugador sale del
   pivote de la torreta + 2,2 m de tubo y lleva la dirección 3D de la mira (el cabeceo cuenta). Hay
   impacto contra coberturas, contra tanques (cilindro de 2,2 m de alto) y **contra el suelo**; un
-  disparo alto puede pasar por encima de un tanque. `game` aplica el **blindaje**
-  (`daño × (1 − armor)`), filtra objetivos por facción (sin fuego amigo) y actualiza vida/muerte.
-  Los enemigos usan el mismo `Bullet` y las mismas colisiones que el jugador.
+  disparo alto puede pasar por encima de un tanque. `game` filtra objetivos por facción (sin fuego
+  amigo) y delega el daño en `systems/damage.ts`, que aplica el **blindaje base y las mejoras**
+  (`(1 − armor) × 0,9^mejoras`) y actualiza vida/muerte; `systems/combat` acepta multiplicadores de
+  daño y recarga para la potencia. Los enemigos usan el mismo `Bullet` y las mismas colisiones.
+- **Pickups y daño:** `entities/pickup.ts` guarda los pickups; `systems/loot.ts` recoge a 2 m,
+  aplica cura/mejora/potencia, mantiene el temporizador y expone los multiplicadores de daño y
+  recarga; `systems/damage.ts` aplica el impacto con blindaje base y mejoras y actualiza vida/muerte.
+  `render` solo dibuja los pickups no recogidos.
 - **Dirección de dependencias permitida** (cada flecha es «importa a»; sin ciclos):
 
   ```text
@@ -212,16 +226,17 @@ requestAnimationFrame
    │    │  limitado + dispersión + recarga) o avance con A* y colisión contra rejilla y tanques
    │    ├─ systems/combat.updateProjectiles: subpasos con dirección 3D, impactos en coberturas,
    │    │  tanques (altura 2,2 m) o suelo, daño/destrucción, caducidad y eventos
-   │    ├─ game: aplica blindaje y vida/muerte, marca de impacto y flash de daño
-   │    └─ (fases 7–9: pickups, progresión de misión, puntuación y persistencia)
+   │    ├─ systems/loot.updateLoot + collectPickups: temporizadores y recogida a 2 m con su efecto
+   │    ├─ systems/damage.applyProjectileHit: blindaje base + mejoras, vida/muerte y flash de daño
+   │    └─ (fases 8–9: HUD, progresión de misión, puntuación y persistencia)
    ├─ game.render(context)
    │    ├─ render/playerCamera.createPlayerCamera + retroceso de cámara (solo visual; sin aim)
-   │    ├─ render/renderer.renderWorld: fondo y rejilla → caras de coberturas + tanques enemigos
+   │    ├─ render/renderer.renderWorld: fondo y rejilla → caras de coberturas + tanques + pickups
    │    │  → projectWorldFaces (culling, recorte, sombreado, niebla) → tracers → painter
    │    ├─ render/periscope.drawPeriscope: máscara, retícula y marcas en el punto de mira, cañón
    │    │  orientable, marca del rumbo del casco, anillo de recarga, fogonazo y marca de impacto
-   │    ├─ overlay rojo de daño y pantalla provisional de tanque destruido
-   │    └─ texto de estado temporal (semilla, enemigos, proyectiles, vida y recarga)
+   │    ├─ render/statusOverlay: aviso de pickup, overlay de daño y pantalla de destruido
+   │    └─ panel temporal con semilla, enemigos, proyectiles, vida, recarga y efectos
    └─ (fase 8: HUD/radar DOM; fase 10: audio consume eventos)
 ```
 
@@ -235,9 +250,9 @@ requestAnimationFrame
   `global.d.ts`) para inspeccionar/recolocar estado desde la consola en desarrollo. No forman parte
   de la lógica ni de la API del juego.
 - **Estado actual:** `main.ts` enlaza teclado/ratón, inyecta el `InputState` y arranca el bucle.
-  `game.update` resuelve la puntería y cablea movimiento, IA, combate y efectos; `game.render`
-  compone cámara, mundo, tanques, proyectiles, periscopio (con la retícula en el punto de mira) y
-  overlays. El detalle exacto está en [`STATUS.md`](STATUS.md).
+  `game.update` resuelve la puntería y cablea movimiento, IA, combate, pickups, daño y efectos;
+  `game.render` compone cámara, mundo, tanques, pickups, proyectiles, periscopio (con la retícula en
+  el punto de mira) y overlays. El detalle exacto está en [`STATUS.md`](STATUS.md).
 
 ## 6. Cámara y proyección
 
@@ -272,7 +287,8 @@ El plan describe 5 macro-pasos (§6.3); este es el desglose real de la composici
    telón de fondo (`render/background.ts`); al ser lo más lejano, quedan detrás de todo.
 2. **Generación de caras de mundo.** `buildWallWorldFaces` produce coberturas intactas (omitiendo
    caras que tocan otra cobertura) y escombros; `tankWorldFaces` produce el tanque enemigo como cinco
-   cajas rotadas (casco, 2 cadenas, torreta, cañón) sin cara inferior.
+   cajas rotadas (casco, 2 cadenas, torreta, cañón) sin cara inferior; `pickupWorldFaces` produce la
+   caja, la marca de suelo y el icono flotante de cada pickup no recogido.
 3. **Proyección en una sola pasada** (`projectWorldFaces`): mundo→cámara, descarte de caras traseras,
    recorte de plano cercano, proyección con focal, cálculo de profundidad media, sombreado plano por
    normal y **niebla** de distancia.
@@ -287,10 +303,11 @@ El plan describe 5 macro-pasos (§6.3); este es el desglose real de la composici
    el centro, el **anillo de recarga** con segundos, el fogonazo en la punta del cañón y la marca de
    impacto. **Decisión actual:** el overlay está en canvas, no es una viñeta CSS; el plan preveía
    CSS y se revisará en la fase 8 si el HUD lo requiere.
-7. **Feedback de pantalla.** `overlayTint` tiñe de rojo al recibir daño; si el jugador ha muerto se
-   pinta el overlay provisional «TANQUE DESTRUIDO» (la pantalla de resultados llega en la fase 9).
+7. **Feedback de pantalla.** `overlayTint` tiñe de rojo al recibir daño; el aviso de pickup
+   (`render/statusOverlay.ts`) muestra el efecto recogido; si el jugador ha muerto se pinta el
+   overlay provisional «TANQUE DESTRUIDO» (la pantalla de resultados llega en la fase 9).
 8. **Estado temporal.** Hasta que exista el HUD DOM, se dibuja un panel con semilla, fase, enemigos
-   vivos, proyectiles, vida y recarga.
+   vivos, proyectiles, vida, recarga y efectos activos (mejora ×N y potencia restante).
 
 **Oclusión:** el test de `tests/render/occlusion.test.ts` comprueba que una cobertura intacta tapa al
 enemigo en el centro de la mira y que, al destruirla, la línea queda despejada.
@@ -334,6 +351,11 @@ hay z-buffer. Los empates de profundidad conservan el orden de entrada (el `sort
 - **Tanques:** el jugador y los enemigos son estados con posición, rumbo, vida/armadura, recarga y
   comportamiento; los enemigos añaden modo de IA, ruta, temporizadores y fogonazo. El modelo visual
   es una composición de cajas (`models.ts`); la simulación usa círculos y la rejilla.
+- **Pickups:** cuatro por escenario (botiquín, mejora y potencia) en celdas libres alcanzables; se
+  recogen al pasar a menos de 2 m, no reaparecen y no bloquean el movimiento. Los datos y efectos
+  están en `config/pickups.ts`; `systems/loot` aplica la cura (+30 PV), la mejora (+20 de vida
+  máxima, +20 PV y −10 % de daño recibido acumulable ×3) y la potencia (20 s de daño ×1,75 y recarga
+  ×0,65, renovable). El aviso y la línea de estado son provisionales hasta el HUD (fase 8).
 - **Proyectiles:** `Bullet` lleva dirección 3D normalizada; el del jugador sale del pivote de la
   torreta (1,55 m de alto, 1,1 m al frente) más 2,2 m de tubo, en la dirección de la mira. Los
   impactos pueden ser contra cobertura, contra tanque (cilindro de 2,2 m de alto) o contra el suelo;
@@ -398,6 +420,8 @@ No hay escena unificada: construir caras es una función pura, proyectarlas es o
 - **Presupuesto:** ≤ **1 500 caras visibles** y ≤ **500 operaciones de dibujo por frame**.
 - **Coste de los enemigos:** cada tanque son 5 cajas × 5 caras = 25 caras nominales; con la
   formación actual (4 enemigos) son ~100 caras, holgado dentro del presupuesto.
+- **Coste de los pickups:** ~30 caras por pickup (marca, caja e icono) y 4 unidades ⇒ ~120 caras,
+  también dentro del presupuesto.
 - **Depuración:** `F3` con fps, caras, celdas visibles y entidades es previsto; hoy el panel temporal
   muestra enemigos, proyectiles, vida y recarga.
 - **Degradación:** si se excede, primero distancia de dibujado y culling más agresivo; después,
@@ -465,10 +489,12 @@ colisión se dividen en funciones pequeñas; si una regla no cabe sin anidar, se
   móvil en el periscopio, cámara con pitch base 0° y cursor oculto.
 - **Bloque 6.6:** colisión entre tanques cerrada — `world/entityCollision.ts` con bloqueadores
   circulares, `moveCircleWith` en `world/collision.ts`, integración en el movimiento del jugador y
-  en el avance de la IA, separación de seguridad y tests de regresión de `BUG-001`. **142 tests en
-  25 ficheros.**
-- **Siguiente trabajo (fase 7):** pickups (cura, mejora y potencia). Después: bloque 7.5 (blindaje
-  direccional/flanqueo), HUD/radar, misiones/persistencia, audio y pulido (fases 8–11).
+  en el avance de la IA, separación de seguridad y tests de regresión de `BUG-001`.
+- **Fase 7:** pickups cerrada — `config/pickups.ts`, `entities/pickup.ts`, `systems/loot.ts`,
+  `systems/damage.ts`, `render/pickupFaces.ts` y `render/statusOverlay.ts`; recogida a 2 m, efectos
+  de cura/mejora/potencia, aviso flotante y línea de estado temporal. **168 tests en 30 ficheros.**
+- **Siguiente trabajo (bloque 7.5):** blindaje direccional y flanqueo. Después: HUD/radar, misiones,
+  audio y pulido (fases 8–11).
 
 El inventario real, commit a commit, está en [`STATUS.md`](STATUS.md); el orden y entregables de
 cada fase, en [`PLAN.md`](PLAN.md) §12.

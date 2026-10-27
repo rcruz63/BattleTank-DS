@@ -2,8 +2,9 @@
 
 Documento de diseño del vertical slice **0.1.0**. Se deriva del plan aprobado
 ([`PLAN.md`](PLAN.md), fuente de verdad del alcance); si hay conflicto, manda el plan y se corrige
-este documento. Estado: fases 0–6 y el bloque 6.5 (puntería con ratón) cerrados; la siguiente es la
-fase 7 (pickups). El detalle vivo está en [`STATUS.md`](STATUS.md).
+este documento. Estado: fases 0–7 y los bloques 6.5 (puntería con ratón) y 6.6 (colisión entre
+tanques) cerrados; el siguiente es el bloque 7.5 (blindaje direccional). El detalle vivo está en
+[`STATUS.md`](STATUS.md).
 
 **Balance de tanques:** los números concretos (PV, velocidad, giro, recarga, daño, blindaje y
 velocidad de proyectil) viven en **`src/config/tanks.ts`**, que es la fuente de verdad. Este
@@ -213,12 +214,16 @@ cobertura con material, altura y vida.
 | Mejora (upgrade) | +20 PV máximos y −10 % de daño recibido durante la misión (acumulable ×3) | Llave inglesa/chevrones |
 | Potencia (power) | Durante 20 s: daño ×1,75 y recarga −35 % | Rayo amarillo |
 
-- Aparecen en celdas libres **alcanzables**, con 3–5 unidades por misión.
+- Aparecen en celdas libres **alcanzables**, con 3–5 unidades por misión (hoy 4, con los tres tipos
+  garantizados por reparto determinista).
 - Se recogen al pasar por encima: radio de 2 m.
 - No reaparecen. Al morir se pierden todos los acumulados de la misión.
-- El HUD muestra icono y cuenta atrás de los efectos temporales.
-- La mejora acumulable ×3 implica hasta −30 % extra de daño recibido; cómo se combina con la
-  reducción base del Sherman (aditiva o multiplicativa) está pendiente (ver §12).
+- El HUD muestra icono y cuenta atrás de los efectos temporales **(fase 8)**; hasta entonces el
+  aviso flotante y la línea de estado temporal muestran el efecto y el temporizador.
+- **Implementado en la fase 7:** datos y balance en `config/pickups.ts`, reglas en `systems/loot.ts`
+  y modelo procedural en `render/pickupFaces.ts`.
+- La mejora acumulable ×3 implica hasta −30 % extra de daño recibido; supuesto implementado:
+  reducciones **multiplicativas** sobre el blindaje base (ver §12).
 - La reducción de la mejora se combinará con el multiplicador de zona de blindaje (bloque 7.5); el
   orden definitivo se fijará en la fase 9.
 
@@ -353,8 +358,8 @@ Todo el sonido se **sintetiza con WebAudio**; no hay ficheros de audio ni músic
   ajuste de balance se hace en `tanks.ts` y se refleja aquí.
 - **Fórmula de la bonificación por vida restante:** no definida; proponer una lineal sobre la vida
   máxima del jugador (definida en `src/config/tanks.ts`) y fijarla en `config/balance.ts`.
-- **Combinación de reducciones de daño:** reducción base del Sherman (10 %) + mejoras (−10 % ×3);
-  falta decidir si son aditivas o multiplicativas y si hay tope.
+- **Combinación de reducciones de daño:** supuesto implementado: multiplicativas
+  (`(1 − armor) × 0,9^mejoras`); falta confirmarlo y decidir si hay tope con las mejoras.
 - **Cadencia escalada por misión:** el plan la menciona, pero la tabla de misiones no tiene
   parámetro; decidir si se añade columna/dato o se deja fuera de 0.1.0.
 - **Significado exacto de «densidad de coberturas»:** supuesto de trabajo, porcentaje de celdas
@@ -363,10 +368,14 @@ Todo el sonido se **sintetiza con WebAudio**; no hay ficheros de audio ni músic
 - **Precisión IA (actualizada):** la IA usa tolerancia de apuntado, tiempo de reacción y
   dispersión (`AI_TUNING`), no una probabilidad de acierto; la tabla de misiones traducirá su
   «precisión %» a estos parámetros en la fase 9.
-- **Pickup de cura con vida al máximo:** no está definido si se puede recoger (y se desperdicia) o
-  si se ignora; supuesto: se puede recoger y no supera el máximo.
-- **Potencia con efecto activo:** supuesto, al recoger otra se renueva el temporizador de 20 s, no se
-  acumula duración.
+- **Pickup de cura con vida al máximo:** supuesto implementado en la fase 7: se puede recoger y se
+  desperdicia, sin superar el máximo.
+- **Cura de la mejora:** supuesto implementado: al subir +20 la vida máxima también se curan 20 PV
+  actuales (con tope en el nuevo máximo).
+- **Mejora con el tope alcanzado:** supuesto implementado: la cuarta mejora se recoge y se
+  desperdicia sin sumar acumulaciones.
+- **Potencia con efecto activo:** supuesto implementado: al recoger otra se renueva el temporizador
+  de 20 s, no se acumula duración.
 - **Escombros de cobertura destruida (resuelto):** altura por material en `materials.ts`
   (0,35–0,5 m); no bloquean visión, proyectiles ni el paso.
 - **Derrota por salir del área jugable:** el plan la menciona, pero el borde es infranqueable; en la

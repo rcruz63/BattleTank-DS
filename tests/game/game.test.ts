@@ -96,6 +96,66 @@ describe('composición del juego', () => {
     game.dispose();
   });
 
+  it('crea los pickups del escenario y recoge el botiquín al pasar por encima', () => {
+    const game = createGame({ seed: 42 });
+    expect(game.pickups).toHaveLength(4);
+    expect(new Set(game.pickups.map((pickup) => pickup.kind))).toEqual(
+      new Set(['health', 'upgrade', 'power']),
+    );
+
+    const health = game.pickups.find((pickup) => pickup.kind === 'health');
+    if (!health) throw new Error('La arena de prueba debe tener un botiquín.');
+    game.player.health = 40;
+    game.player.position = { ...health.position };
+    game.update(1 / 60);
+
+    expect(health.collected).toBe(true);
+    expect(game.player.health).toBe(70);
+
+    game.dispose();
+  });
+
+  it('la mejora sube la vida máxima y la potencia acelera y refuerza el disparo', () => {
+    const input = createInputState();
+    const game = createGame({ seed: 42, input });
+
+    const upgrade = game.pickups.find((pickup) => pickup.kind === 'upgrade');
+    if (!upgrade) throw new Error('La arena de prueba debe tener una mejora.');
+    game.player.position = { ...upgrade.position };
+    game.update(1 / 60);
+    expect(game.player.maxHealth).toBe(120);
+    expect(game.loot.upgradeStacks).toBe(1);
+
+    const power = game.pickups.find((pickup) => pickup.kind === 'power');
+    if (!power) throw new Error('La arena de prueba debe tener una potencia.');
+    game.player.position = { ...power.position };
+    game.update(1 / 60);
+    expect(game.loot.powerRemaining).toBeGreaterThan(19);
+
+    input.handleKeyDown('Space');
+    game.update(1 / 60);
+    expect(game.bullets).toHaveLength(1);
+    expect(game.bullets[0]?.damage).toBeCloseTo(game.player.damage * 1.75, 9);
+    expect(game.player.reloadRemaining).toBeCloseTo(game.player.reloadSeconds * 0.65, 6);
+
+    game.dispose();
+  });
+
+  it('los pickups recogidos no reaparecen', () => {
+    const game = createGame({ seed: 42 });
+    const [pickup] = game.pickups;
+    if (!pickup) throw new Error('La arena de prueba debe tener pickups.');
+    game.player.position = { ...pickup.position };
+    game.update(1 / 60);
+    expect(pickup.collected).toBe(true);
+
+    for (let step = 0; step < 60; step += 1) game.update(1 / 60);
+    expect(game.pickups).toHaveLength(4);
+    expect(pickup.collected).toBe(true);
+
+    game.dispose();
+  });
+
   it('responde a la entrada de avance y giro', () => {
     const input = createInputState();
     const game = createGame({ seed: 42, input });
