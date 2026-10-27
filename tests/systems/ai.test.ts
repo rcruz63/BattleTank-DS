@@ -4,6 +4,7 @@ import { createEnemy } from '../../src/entities/enemy';
 import type { Bullet } from '../../src/entities/bullet';
 import { createPlayer } from '../../src/entities/player';
 import { alertEnemiesNear, updateEnemies } from '../../src/systems/ai';
+import { minEntityDistance } from '../../src/world/entityCollision';
 import { createEmptyGrid, placeObstacle } from '../../src/world/grid';
 import { planarDistance } from '../../src/world/geometry';
 
@@ -82,6 +83,29 @@ describe('IA de enemigos', () => {
 
     expect(enemy.aiMode).toBe('idle');
     expect(bullets).toHaveLength(0);
+  });
+
+  it('el avance de la IA respeta a los demás tanques', () => {
+    const grid = createEmptyGrid(20, 20, 4, 1);
+    const player = createPlayer({ x: 10, z: 76, yaw: Math.PI });
+    const blocker = createEnemy('bloqueador', 'light', { x: 10, z: 40, yaw: Math.PI });
+    const mover = createEnemy('mover', 'light', { x: 10, z: 30, yaw: 0 });
+    // El bloqueador se queda quieto delante de la ruta del que avanza: la colisión debe frenarlo.
+    Object.assign(blocker, { speed: 0 });
+
+    const bullets: Bullet[] = [];
+    const context = contextFor(grid, player, bullets);
+    const minimum = minEntityDistance(mover.radius, blocker.radius);
+
+    for (let step = 0; step < 180; step += 1) {
+      updateEnemies([mover, blocker], context);
+      expect(planarDistance(mover.position, blocker.position)).toBeGreaterThanOrEqual(
+        minimum - 1e-9,
+      );
+    }
+
+    expect(mover.position.z).toBeGreaterThan(30);
+    expect(mover.position.z).toBeLessThan(blocker.position.z);
   });
 
   it('el estampido de un disparo alerta a los enemigos cercanos', () => {

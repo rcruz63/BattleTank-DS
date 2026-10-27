@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { createGame } from '../../src/game/game';
 import { createInputState } from '../../src/systems/input';
+import { canCircleOccupy } from '../../src/world/collision';
+import { planarDistance } from '../../src/world/geometry';
 
 describe('composición del juego', () => {
   it('crea el escenario con la semilla pedida y expone el estado', () => {
@@ -41,6 +43,55 @@ describe('composición del juego', () => {
     const bullet = game.bullets[0];
     expect(bullet?.direction.x).toBeCloseTo(Math.sin((15 * Math.PI) / 180), 5);
     expect(bullet?.direction.y).toBeCloseTo(0, 5);
+
+    game.dispose();
+  });
+
+  it('el jugador no atraviesa tanques enemigos (BUG-001)', () => {
+    const input = createInputState();
+    const game = createGame({ seed: 42, input });
+    const enemy = game.enemies[0];
+    if (!enemy) throw new Error('La arena de prueba debe tener enemigos.');
+    const grid = game.arena.grid;
+    const origin = game.player.position;
+    const distanceToEnemy = 4.5;
+    let placed = false;
+
+    for (let quarter = 0; quarter < 4 && !placed; quarter += 1) {
+      const yaw = (quarter * Math.PI) / 2;
+      const forward = { x: Math.sin(yaw), z: Math.cos(yaw) };
+      const target = {
+        x: origin.x + forward.x * distanceToEnemy,
+        z: origin.z + forward.z * distanceToEnemy,
+      };
+      const pathClear = [1, 2, 3, 4].every((distance) =>
+        canCircleOccupy(
+          grid,
+          { x: origin.x + forward.x * distance, z: origin.z + forward.z * distance },
+          game.player.radius,
+        ),
+      );
+      if (!pathClear || !canCircleOccupy(grid, target, enemy.radius)) continue;
+      game.player.yaw = yaw;
+      enemy.position = target;
+      placed = true;
+    }
+
+    expect(placed).toBe(true);
+
+    input.handleKeyDown('KeyW');
+    for (let step = 0; step < 120; step += 1) {
+      game.update(1 / 60);
+      expect(planarDistance(game.player.position, enemy.position)).toBeGreaterThanOrEqual(
+        game.player.radius + enemy.radius - 1e-9,
+      );
+    }
+
+    const forward = { x: Math.sin(game.player.yaw), z: Math.cos(game.player.yaw) };
+    const ahead =
+      (enemy.position.x - game.player.position.x) * forward.x +
+      (enemy.position.z - game.player.position.z) * forward.z;
+    expect(ahead).toBeGreaterThan(0);
 
     game.dispose();
   });

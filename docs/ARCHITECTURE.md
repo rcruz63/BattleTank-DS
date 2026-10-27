@@ -4,9 +4,9 @@ Arquitectura del vertical slice **0.1.0**. Se deriva de [`PLAN.md`](PLAN.md) §5
 contratos descritos aquí son el acuerdo entre capas, no un inventario exhaustivo del código.
 
 > **Convención de estado.** **«Implementado»** = existe y está cubierto por tests; **«previsto»** =
-> diseñado y acordado, todavía sin escribir. A fecha de redacción las fases 0–6 y el bloque 6.5
-> (puntería con ratón) están cerrados; la siguiente es la fase 7 (pickups). El inventario vivo está
-> en [`STATUS.md`](STATUS.md), no aquí.
+> diseñado y acordado, todavía sin escribir. A fecha de redacción las fases 0–6 y los bloques 6.5
+> (puntería con ratón) y 6.6 (colisión entre tanques) están cerrados; la siguiente es la fase 7
+> (pickups). El inventario vivo está en [`STATUS.md`](STATUS.md), no aquí.
 >
 > **Las firmas concretas no se fijan en prosa.** Cada capa cierra sus tipos en sus `types.ts` (o en
 > el propio módulo); este documento fija responsabilidades, dependencias permitidas y flujo de datos.
@@ -20,7 +20,7 @@ contratos descritos aquí son el acuerdo entre capas, no un inventario exhaustiv
 | Build y dev server | **Vite 8** (`base: './'`, `target: es2022`, `outDir: dist`, sourcemaps), puerto fijo 5173. |
 | Gráficos | **Canvas 2D** con resolución interna fija **1280×720** escalada por CSS con letterboxing (`index.html`). |
 | HUD | **DOM/CSS** sobre el canvas + un **canvas pequeño independiente** para el radar (fase 8). |
-| Tests | **Vitest** en entorno **Node** (`tests/**/*.test.ts`), sin jsdom; **132 tests en 24 ficheros**. |
+| Tests | **Vitest** en entorno **Node** (`tests/**/*.test.ts`), sin jsdom; **142 tests en 25 ficheros**. |
 | Calidad | **ESLint** (tamaño/complejidad) + **Prettier**; puerta `npm run check`. |
 | Runtime | **Cero dependencias** y **cero assets externos**: geometría procedural, tipografía del sistema, iconos CSS y audio WebAudio sintetizado. |
 | Persistencia | `localStorage` solo para récord y misión desbloqueada (fase 9). |
@@ -47,8 +47,8 @@ Comandos (detalle en [`../README.md`](../README.md)): `npm run dev`, `npm run bu
 
 ## 3. Estructura real de carpetas
 
-Estructura a fecha de la fase 6 (los módulos previstos se añaden en su fase; el inventario vivo está
-en [`STATUS.md`](STATUS.md)):
+Estructura a fecha del bloque 6.6 (los módulos previstos se añaden en su fase; el inventario vivo
+está en [`STATUS.md`](STATUS.md)):
 
 ```text
 BattleTank-DS/
@@ -74,7 +74,7 @@ BattleTank-DS/
 │   │   ├── generate.ts     #   generación procedural validada
 │   │   ├── spawns.ts       #   colocación de enemigos y pickups
 │   │   ├── collision.ts    #   círculo vs rejilla con deslizamiento y subpasos
-│   │   ├── entityCollision.ts # (previsto 6.6) bloqueadores dinámicos entre tanques
+│   │   ├── entityCollision.ts # bloqueadores dinámicos entre tanques y separación de seguridad
 │   │   ├── los.ts          #   línea de visión por muestreo (coberturas intactas bloquean)
 │   │   └── pathfind.ts     #   A* de 4 direcciones con lista abierta ordenada
 │   ├── render/             # pipeline pseudo-3D, sin mutar el estado
@@ -99,7 +99,7 @@ BattleTank-DS/
 │   ├── systems/            # reglas de juego puras sobre el estado
 │   │   ├── input.ts        #   entrada pura (teclado/ratón) + adaptadores DOM
 │   │   ├── aim.ts          #   puntero normalizado → cono de cañón y punto de retícula
-│   │   ├── movement.ts     #   giro solidario y avance con colisión
+│   │   ├── movement.ts     #   giro solidario y avance con colisión contra rejilla y tanques
 │   │   ├── combat.ts       #   recarga, disparo, proyectiles 3D, impactos y daño
 │   │   ├── ai.ts           #   percepción, alerta, avance con A*, apuntado y disparo enemigo
 │   │   └── armor.ts        #   (previsto 7.5) zonas de blindaje y multiplicadores
@@ -110,9 +110,8 @@ BattleTank-DS/
 │
 │   (previstos: config/missions.ts, entities/pickup.ts, systems/loot.ts, systems/mission.ts,
 │    systems/score.ts, systems/progression.ts, ui/hud.ts, ui/radar.ts, ui/screens.ts,
-│    audio/synth.ts, audio/audio.ts, game/state.ts, systems/armor.ts (7.5),
-│    world/entityCollision.ts (6.6))
-├── tests/                  # espejo de src/ (24 ficheros, 132 tests) + integración headless
+│    audio/synth.ts, audio/audio.ts, game/state.ts, systems/armor.ts (7.5))
+├── tests/                  # espejo de src/ (25 ficheros, 142 tests) + integración headless
 ├── docs/
 └── dist/                   # build generado (no versionado)
 ```
@@ -122,11 +121,11 @@ caras de mundo de coberturas (`worldFaces.ts`) y tanques (`models.ts`), las proy
 pasada** con `faces.ts`, añade los tracers de proyectiles (`bulletFaces.ts`) y deja que `painter.ts`
 ordene y pinte. `buildWorldFaces` sigue existiendo como atajo para tests de proyección.
 
-A fecha de redacción las fases 0–6 y el bloque 6.5 están cerrados: el jugador se mueve, apunta el
-cañón con el ratón dentro de un cono y dispara con el clic o `Espacio`; las coberturas se destruyen,
-los enemigos esperan/avanzan/atacan con LOS y A*, el daño respeta el blindaje y hay feedback de
-impacto/daño. El siguiente trabajo es el **bloque 6.6** (colisión entre tanques, `BUG-001`); después
-pickups (7) y blindaje direccional (7.5).
+A fecha de redacción las fases 0–6 y los bloques 6.5 y 6.6 están cerrados: el jugador se mueve,
+apunta el cañón con el ratón dentro de un cono, dispara con el clic o `Espacio` y no puede atravesar
+tanques enemigos; las coberturas se destruyen, los enemigos esperan/avanzan/atacan con LOS y A*, el
+daño respeta el blindaje y hay feedback de impacto/daño. El siguiente trabajo es la **fase 7**
+(pickups); después, el bloque 7.5 (blindaje direccional).
 
 ### Responsabilidades por módulo
 
@@ -134,7 +133,7 @@ pickups (7) y blindaje direccional (7.5).
 |---|---|---|---|---|
 | `config` | Datos puros: balance de tanques, materiales, arena/cámara/render/IA, paleta e identidad, `as const`. | Nada del juego. | `systems`, `render`, lógica, DOM. | No |
 | `core` | Matemáticas, RNG, bucle, bus de eventos. | Nada del juego. | Canvas, DOM, estado de juego. | Solo estado interno |
-| `world` | Rejilla, generación, spawns, geometría, colisión, línea de visión y A*. | `core`, `config`. | Canvas, DOM, `render`, `ui`, `systems`. | La rejilla al generarse y al recibir daño |
+| `world` | Rejilla, generación, spawns, geometría, colisión con rejilla y entre tanques, línea de visión y A*. | `core`, `config`. | Canvas, DOM, `render`, `ui`, `systems`. | La rejilla al generarse y al recibir daño |
 | `render` | Cámara/proyección, caras de mundo y de proyectiles, modelos de tanque, fondo, pintado y overlay. | `core` (math), `config`, `world/types`, `entities` (datos), sus tipos. | `systems`, `ui`, `audio`, mutar el estado, `Date.now`/`Math.random`. | No |
 | `entities` | Datos y comportamiento local de jugador, proyectil y enemigo. | `core`, `config`, `world/types`. | DOM, Canvas, `render`, `ui`. | Sus propias entidades |
 | `systems` | Entrada, puntería, movimiento, combate e IA (y luego loot, misión, puntuación y progresión). | `core`, `config`, `world`, `entities`. | Canvas, `render`, `ui`, `audio`; el DOM solo en los adaptadores de entrada. | El estado de partida |
@@ -153,6 +152,11 @@ tipado en `global.d.ts`; `game.ts` no enlaza eventos, de modo que los tests inye
   `EnemyState`); las reglas viven en `systems` (`updatePlayerMovement`, `updatePlayerWeapon`,
   `updateProjectiles`, `updateEnemies`). La IA no se implementa dentro del enemigo: `systems/ai.ts`
   lee y muta su estado.
+- **Colisión en dos niveles:** `world/collision.ts` resuelve el círculo contra la rejilla y expone
+  `moveCircleWith`, que admite una comprobación de ocupación adicional; `world/entityCollision.ts`
+  añade los tanques **vivos** como bloqueadores circulares con separación de seguridad. El movimiento
+  del jugador (`systems/movement`) y el avance de la IA (`systems/ai`) usan esa variante, así que
+  ningún tanque atraviesa a otro; los destruidos dejan de bloquear.
 - **`world` no sabe dibujar:** la rejilla no contiene colores ni caras. `render` deriva la geometría
   de las celdas, de los tanques y de los proyectiles a partir de los datos que recibe.
 - **LOS y pathfinding compartidos:** `world/los.ts` y `world/pathfind.ts` son puros y deterministas;
@@ -199,12 +203,13 @@ requestAnimationFrame
    │    ├─ systems/input.snapshot(): avance (W/S, ↑/↓), giro (A/D, ←/→), flanco de disparo y
    │    │  puntero normalizado (aimX/aimY)
    │    ├─ systems/movement.updatePlayerMovement: giro solidario + avance con colisión deslizante
+   │    │  contra la rejilla y contra los tanques enemigos vivos
    │    ├─ systems/aim.resolveAim: rumbo del casco + puntero → dirección 3D del cañón y punto de
    │    │  retícula en pantalla (cono de ±15° / ±4°; la cámara no gira)
    │    ├─ systems/combat.updatePlayerWeapon: recarga y disparo en la dirección de la mira; si
    │    │  dispara, alerta a ≤ 60 m y activa retroceso/fogonazo
    │    ├─ systems/ai.updateEnemies: temporizadores, percepción por LOS, alerta, ataque (giro
-   │    │  limitado + dispersión + recarga) o avance con A* y colisión
+   │    │  limitado + dispersión + recarga) o avance con A* y colisión contra rejilla y tanques
    │    ├─ systems/combat.updateProjectiles: subpasos con dirección 3D, impactos en coberturas,
    │    │  tanques (altura 2,2 m) o suelo, daño/destrucción, caducidad y eventos
    │    ├─ game: aplica blindaje y vida/muerte, marca de impacto y flash de daño
@@ -307,12 +312,18 @@ hay z-buffer. Los empates de profundidad conservan el orden de entrada (el `sort
 - **Coberturas destruidas:** `damageObstacle` reduce su vida; al llegar a 0 `isBlocked` deja de
   bloquear el paso y solo quedan escombros bajos (0,35–0,5 m según material, `materials.ts`). La
   visión, los proyectiles y el paso siguen a través de ellos.
-- **Colisión del tanque:** círculo de radio propio (jugador 1,35 m; enemigos 1,4 m) contra celdas:
-  `canCircleOccupy` comprueba la ocupación y `moveCircle` mueve por ejes separados con subpasos de
-  0,25 m como máximo, con deslizamiento y detección de bloqueo. Enemigos y jugador usan la misma
-  función. **Limitación actual (`BUG-001`):** no hay colisión entre tanques; el jugador puede
-  atravesar a un enemigo y la cámara quedar dentro de su modelo. Se corrige en el bloque 6.6 con
-  `world/entityCollision.ts` (bloqueadores dinámicos + separación de seguridad).
+- **Colisión del tanque:** círculo de radio propio (jugador 1,35 m; enemigos 1,4 m) contra celdas y
+  contra otros tanques. `canCircleOccupy` comprueba la ocupación de la rejilla; `moveCircleWith`
+  avanza por ejes separados con subpasos de 0,25 m como máximo, con deslizamiento y detección de
+  bloqueo, aplicando la comprobación de ocupación que recibe. `world/entityCollision.ts` añade los
+  tanques vivos como bloqueadores circulares (`EntityBlocker`): `minEntityDistance` es la suma de
+  radios más `ENTITY_SEPARATION` (0,15 m) y `entityClearance` mide la holgura. Si un tanque empieza
+  solapado (por ejemplo al recolocarlo desde `window.__BT__` en QA) puede alejarse, pero ningún
+  movimiento puede agravar el solape. Los tanques destruidos ya no bloquean. El movimiento del
+  jugador y el avance de la IA comparten el mismo mecanismo; los spawns generados respetan
+  distancias muy superiores (20 m jugador↔enemigo, 8 m entre enemigos), así que no aparecen
+  solapados. Tests: `tests/world/entityCollision.test.ts`, `tests/systems/movement.test.ts`,
+  `tests/systems/ai.test.ts` y `tests/game/game.test.ts`.
 - **Línea de visión:** `hasLineOfSight` muestrea el segmento cada **1 m** (suficiente para celdas de
   4 m), devuelve `false` si sale del mapa o si encuentra una celda bloqueada. Los escombros no
   bloquean; las coberturas intactas sí.
@@ -421,7 +432,7 @@ colisión se dividen en funciones pequeñas; si una regla no cabe sin anidar, se
 | LOS imprecisa en esquinas por muestreo de 1 m | Suficiente para celdas de 4 m; si aparecen fallos, DDA exacto | Aceptado (revisar con QA) |
 | IA que se engancha en esquinas | A* + deslizamiento + recálculo de ruta al chocar; test de avance con obstáculo | Parcial (fase 6) |
 | IA sin estado de reposición/coordinación | Máquina `idle/advance/attack`; reposicionar y flanqueo coordinado quedan como deuda | Deuda planificada |
-| **Bug:** jugador atraviesa tanques (`BUG-001`) | Bloqueadores dinámicos + separación y tests de regresión en el bloque 6.6 | Pendiente (prioridad alta) |
+| **Bug:** jugador atraviesa tanques (`BUG-001`) | Bloqueadores circulares dinámicos + separación de 0,15 m, tests a 6 m/s y 60 Hz (jugador↔enemigo y enemigo↔enemigo) y QA en navegador | Mitigado (bloque 6.6) |
 | Blindaje direccional desequilibra la dificultad | Multiplicadores/umbrales en `balance.ts`; simulación headless y ajuste en fase 9 | Previsto (7.5) |
 | IA demasiado precisa encarando al jugador | Arco de fuego ±15°, giro limitado y pausa de seguimiento al recargar | Previsto (7.5) |
 | Dificultad mal calibrada | Balance en `config/tanks.ts`, IA en `balance.ts`, simulación headless y `?seed=` | Parcial (ajuste fase 9) |
@@ -451,10 +462,13 @@ colisión se dividen en funciones pequeñas; si una regla no cabe sin anidar, se
   ocultación por coberturas y ganchos de depuración.
 - **Bloque 6.5:** puntería con ratón cerrada — `systems/aim`, puntero en `InputState`, cableado de
   entrada en `main.ts`, proyectiles con dirección 3D, impactos en suelo, cañón orientable y retícula
-  móvil en el periscopio, cámara con pitch base 0° y cursor oculto. **132 tests en 24 ficheros.**
-- **Siguiente trabajo (bloque 6.6):** colisión entre tanques (`BUG-001`) antes de pickups. Después:
-  fase 7 (pickups), bloque 7.5 (blindaje direccional/flanqueo), HUD/radar, misiones/persistencia,
-  audio y pulido (fases 8–11).
+  móvil en el periscopio, cámara con pitch base 0° y cursor oculto.
+- **Bloque 6.6:** colisión entre tanques cerrada — `world/entityCollision.ts` con bloqueadores
+  circulares, `moveCircleWith` en `world/collision.ts`, integración en el movimiento del jugador y
+  en el avance de la IA, separación de seguridad y tests de regresión de `BUG-001`. **142 tests en
+  25 ficheros.**
+- **Siguiente trabajo (fase 7):** pickups (cura, mejora y potencia). Después: bloque 7.5 (blindaje
+  direccional/flanqueo), HUD/radar, misiones/persistencia, audio y pulido (fases 8–11).
 
 El inventario real, commit a commit, está en [`STATUS.md`](STATUS.md); el orden y entregables de
 cada fase, en [`PLAN.md`](PLAN.md) §12.

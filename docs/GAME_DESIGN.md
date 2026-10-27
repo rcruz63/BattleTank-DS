@@ -237,8 +237,8 @@ stats concretos están en **`src/config/tanks.ts`** (fuente de verdad) y el ajus
 
 - **Idle (acecho):** sin alerta. No patrulla todavía ni tiene línea de visión; espera.
 - **Advance:** alertado pero sin línea de visión (o fuera de rango de ataque). Navega con A* de 4
-  direcciones hacia la posición del jugador y se mueve con colisión deslizante; recalcula la ruta
-  periódicamente y al chocar.
+  direcciones hacia la posición del jugador y se mueve con colisión deslizante contra la rejilla y
+  contra otros tanques; recalcula la ruta periódicamente y al chocar.
 - **Attack:** alertado, con línea de visión y dentro de rango. Gira la torreta/casco con velocidad
   limitada hacia el jugador, espera el tiempo de reacción y dispara con dispersión cuando está
   encarado y ha recargado; después vuelve a recargar.
@@ -346,9 +346,6 @@ Todo el sonido se **sintetiza con WebAudio**; no hay ficheros de audio ni músic
 
 ## 12. Pendientes de diseño para el Lead
 
-- **Colisión entre tanques (BUG-001, bloque 6.6):** hoy el jugador puede atravesar a un enemigo
-  porque el movimiento solo colisiona contra la rejilla. Arreglo planificado: bloqueadores
-  dinámicos y separación de seguridad; ver `STATUS.md`.
 - **Impactos y balance (resuelto para el lateral):** con los valores actuales de
   `src/config/tanks.ts` el Sherman hace **3 impactos laterales al Panzer III** (100 PV) y **4
   laterales al Tiger I** (140 PV y 10 % de blindaje), que es lo que fija el plan. Con el blindaje

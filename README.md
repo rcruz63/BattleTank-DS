@@ -15,16 +15,16 @@ técnica) en [`docs/STATUS.md`](docs/STATUS.md).
 ## Estado
 
 > **Versión objetivo: `0.1.0` (vertical slice jugable) — en desarrollo**, todavía no publicado.
-> Al redactarse este README las fases 0–6 y el bloque 6.5 (puntería con ratón) están cerradas. El
-> siguiente trabajo es el bloque 6.6 (corregir que el jugador atraviesa tanques), seguido de la
-> fase 7 (pickups) y el bloque 7.5 (blindaje direccional y flanqueo). Ya hay un combate jugable:
+> Al redactarse este README las fases 0–6 y los bloques 6.5 (puntería con ratón) y 6.6 (colisión
+> entre tanques) están cerradas. El siguiente trabajo es la fase 7 (pickups), seguida del bloque 7.5
+> (blindaje direccional y flanqueo). Ya hay un combate jugable:
 > `WASD`/flechas mueven y giran el tanque, el ratón apunta el cañón dentro de un cono (la cámara y
 > el casco **no** giran con él), y `Espacio` o el clic izquierdo disparan con 2,4 s de recarga. Las coberturas de madera y ladrillo se
 > destruyen, los Panzer III y Tiger I esperan al acecho, detectan por línea de visión, avanzan con A*
-> y disparan (el estampido de tu cañón alerta a los cercanos); el daño respeta el blindaje y hay
-> overlay rojo al recibirlo y una pantalla provisional de tanque destruido. Faltan pickups, HUD
-> funcional, misiones y audio. Consulta [`docs/STATUS.md`](docs/STATUS.md) para el estado exacto del
-> día.
+> y disparan (el estampido de tu cañón alerta a los cercanos); el daño respeta el blindaje, hay
+> overlay rojo al recibirlo y una pantalla provisional de tanque destruido, y los tanques son
+> sólidos: no se atraviesan entre sí. Faltan pickups, HUD funcional, misiones y audio. Consulta
+> [`docs/STATUS.md`](docs/STATUS.md) para el estado exacto del día.
 
 El título «BATTLE TANK — PERISCOPIO» es provisional y puede cambiarse en un commit de
 documentación. La interfaz y la documentación van en español; los identificadores, tipos y nombres
@@ -113,7 +113,7 @@ BattleTank-DS/
 │   ├── ui/             # estilos base; HUD, radar y pantallas en la fase 8
 │   ├── audio/          # efectos sintetizados con WebAudio (fase 10)
 │   └── game/           # composición actual (createGame); máquina de estados en fases 8-9
-├── tests/              # espejo de src/ (132 tests en 24 ficheros) + integración headless
+├── tests/              # espejo de src/ (142 tests en 25 ficheros) + integración headless
 ├── docs/               # plan, estado y documentación del proyecto
 └── dist/               # build generado (no versionado)
 ```
@@ -135,10 +135,9 @@ almacenamiento, el juego debe seguir funcionando sin persistencia (degradación 
 
 ## Limitaciones conocidas y siguiente paso
 
-- **`BUG-001` (prioridad alta):** el jugador puede atravesar tanques enemigos porque el movimiento
-  solo colisiona contra la rejilla. Arreglo planificado en el bloque 6.6: colisión entre tanques,
-  separación de seguridad y tests de regresión. Detalle y reproducción en
-  [`docs/STATUS.md`](docs/STATUS.md).
+- **`BUG-001` corregido en el bloque 6.6:** el jugador y los enemigos ya no se atraviesan; cada
+  tanque vivo bloquea el paso del otro con la suma de radios más 0,15 m de separación de seguridad.
+  Detalle y tests en [`docs/STATUS.md`](docs/STATUS.md) y [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) §8.
 - **Blindaje direccional (aprobado, bloque 7.5):** daño ×0,5 frontal, ×1,0 lateral y ×1,5 trasero,
   con arco de fuego enemigo de ±15° y ventanas de flanqueo. Hoy no está implementado: todos los
   impactos se tratan igual y la IA acaba encarando al jugador. Diseño en

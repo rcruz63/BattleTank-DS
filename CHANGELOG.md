@@ -44,6 +44,15 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 - El cableado de entrada (teclado y ratón) se mueve de `game.ts` a `main.ts`; `createGame` acepta
   el estado de entrada inyectado y ya no enlaza eventos del DOM.
 
+### Corregido
+
+- `BUG-001`: el jugador ya no atraviesa tanques enemigos. El movimiento del jugador y el avance de
+  la IA tratan los tanques vivos como bloqueadores circulares dinámicos
+  (`world/entityCollision.ts`) con separación de seguridad de 0,15 m sobre la suma de radios; los
+  enemigos destruidos dejan de bloquear y un tanque que empiece solapado puede separarse sin
+  hundirse más. Tests de regresión a 6 m/s y 60 Hz (jugador↔enemigo, retroceso y enemigo↔enemigo)
+  y QA en Chrome headless: el jugador se detiene a 2,9 m y no cruza.
+
 ### Decidido
 
 - Vertical slice 0.1.0: primera persona de periscopio, polígonos planos, escenario procedural,

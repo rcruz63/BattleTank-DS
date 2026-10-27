@@ -11,7 +11,8 @@ son reglas deterministas sobre estado, los constructores de caras (`worldFaces`,
 `bulletFaces`) producen datos, `faces` los proyecta y solo el pintor toca el contrato gráfico
 (`FaceCanvas`). La composición del frame vive en `render/renderer.ts`; **no hay una escena unificada
 (`render/scene.ts`)**. La UI y el audio son adaptadores finos que se sustituyen por dobles. Estado:
-**132 tests en 24 ficheros** con las fases 0–6 y el bloque 6.5 (puntería con ratón) cerrados.
+**142 tests en 25 ficheros** con las fases 0–6 y los bloques 6.5 (puntería con ratón) y 6.6
+(colisión entre tanques) cerrados.
 
 | Nivel | Qué cubre | Herramienta | Cuándo |
 |---|---|---|---|
@@ -51,6 +52,7 @@ DOM o WebAudio, el diseño que se está probando no está separado: extrae la l�
 | `world/generate` | Determinismo por semilla; conectividad de spawns y pickups (*flood fill*); borde cerrado; sin solapamientos; distancias mínimas; reintentos acotados. |
 | `world/grid` | Conversión mundo↔celda, límites, consultas de ocupación, daño de coberturas, altura de escombros y alcanzabilidad. |
 | `world/collision` | Círculo contra celda vacía/cobertura, deslizamiento por ejes, no atravesar coberturas (incluido desplazamiento grande), bordes del mundo, estabilidad en esquinas. |
+| `world/entityCollision` | Separación mínima = radios + margen; holgura respecto al bloqueador más cercano; el movimiento se detiene sin invadir a otro tanque a 6 m/s y 60 Hz; deslizamiento por el eje libre; escape sin agravar un solape inicial. |
 | `world/los` | Línea despejada en celdas libres; cobertura intacta bloquea; cobertura fuera de la línea no bloquea; escombros no bloquean; fuera del mapa no hay visión. |
 | `world/pathfind` | Ruta recta con celdas contiguas; rodeo de una cobertura; `null` con destino bloqueado/encerrado; origen igual a destino; rechazo de origen bloqueado o fuera del mapa. |
 | `entities/player` | Creación desde `tanks.ts` y el spawn; rumbo solidario, velocidad, recarga, blindaje y vida inicial. Cubierto de forma indirecta por `movement` y `game`; test directo previsto. |
@@ -58,9 +60,9 @@ DOM o WebAudio, el diseño que se está probando no está separado: extrae la l�
 | `entities/enemy` | Creación del Panzer III/Tiger I desde `tanks.ts` y el spawn; vida, blindaje, radios y modo de IA inicial. |
 | `systems/input` | **W/S y ↑/↓** para el avance; **A/D y ←/→** para el giro; el puntero normalizado (`setPointer`, limitado a ±1) y el disparo como flanco (`Espacio`, `requestFire`); `clear` libera teclas, disparo y puntero. Los adaptadores DOM evitan el scroll con flechas y convierten coordenadas del canvas escalado y clic izquierdo. |
 | `systems/aim` | `resolveAim`: centro → tiro horizontal y retícula en el centro; derecha → giro máximo y retícula a la derecha; elevación → cabeceo y retícula arriba; puntero fuera de rango se limita al cono; gira con el rumbo del tanque; dirección siempre normalizada. |
-| `systems/movement` | Avance en el sentido de la mira, retroceso más lento, giro del casco y la mira a la vez, sin entrada no cambia nada, se detiene ante cobertura, normalización del ángulo. |
+| `systems/movement` | Avance en el sentido de la mira, retroceso más lento, giro del casco y la mira a la vez, sin entrada no cambia nada, se detiene ante cobertura, normalización del ángulo; no atraviesa enemigos a 6 m/s y 60 Hz ni al retroceder, la cámara no queda dentro del modelo y un enemigo destruido no bloquea (`BUG-001`). |
 | `systems/combat` | `isWeaponReady`/`reloadProgress`; recarga de 2,4 s; no dispara durante la recarga; el disparo sale del pivote de la torreta + 2,2 m de tubo, con la dirección 3D de la mira; los proyectiles avanzan en subpasos, impactan en coberturas por altura, en tanques (cilindro de 2,2 m) **y en el suelo**, aplican daño y destruyen madera (1 impacto) y ladrillo (3); un disparo alto pasa por encima de un tanque; caducidad; filtrado por facción. |
-| `systems/ai` | Dispara con LOS, encarado y tras recargar; no dispara a través de cobertura intacta; alertado sin LOS avanza con A*; se queda quieto si el jugador está destruido; `alertEnemiesNear` despierta solo a los cercanos al estampido. |
+| `systems/ai` | Dispara con LOS, encarado y tras recargar; no dispara a través de cobertura intacta; alertado sin LOS avanza con A*; se queda quieto si el jugador está destruido; `alertEnemiesNear` despierta solo a los cercanos al estampido; el avance no solapa con otro tanque. |
 | `render/camera` | Transformación mundo→cámara con yaw/posición conocidos; proyección del centro; focal según FOV; puntos detrás de cámara. |
 | `render/faces` | `projectWorldFaces`: descarte de caras traseras, recorte de plano cercano, proyección, profundidad media, sombreado por normal y niebla; cubierto vía `worldFaces`, `models` y la prueba de oclusión. |
 | `render/clip` | Polígono delante sin cambios; parcialmente detrás recortado a `z ≥ 0,3`; totalmente detrás descartado; polígonos con varios vértices. |
@@ -76,7 +78,7 @@ DOM o WebAudio, el diseño que se está probando no está separado: extrae la l�
 | `systems/mission` / `systems/score` / `systems/progression` (fase 9) | Validación de misiones, progreso, victoria/derrota, puntuación y persistencia con almacenamiento falso. |
 | `ui` (parte pura, fase 8) | Formateo de segundos/puntos/porcentajes, umbrales de color de vida, matemática del radar, cuenta atrás de efectos. El DOM real no se prueba en unitarias. |
 | `audio` (fase 10) | Con un doble de `AudioBus`: mapeo de eventos a efectos, mute/volumen, no lanzar si no hay WebAudio. |
-| `game` | `createGame` con semilla e `InputState` inyectado: expone arena, jugador, enemigos y proyectiles; `update` responde a avance/giro y resuelve la puntería con el puntero; el disparo sale con la dirección 3D del cañón (el ratón orienta el tiro); mueve la IA; `dispose` limpia la entrada. En fases posteriores: máquina de estados, pausa y reinicio. |
+| `game` | `createGame` con semilla e `InputState` inyectado: expone arena, jugador, enemigos y proyectiles; `update` responde a avance/giro y resuelve la puntería con el puntero; el disparo sale con la dirección 3D del cañón (el ratón orienta el tiro); mueve la IA; el jugador no atraviesa a un enemigo colocado delante (`BUG-001`); `dispose` limpia la entrada. En fases posteriores: máquina de estados, pausa y reinicio. |
 
 ## 4. Renderer con contexto simulado
 
@@ -131,6 +133,7 @@ avanzan como en el juego real y se afirman invariantes. Escenarios mínimos:
 | Escenario | Qué demuestra |
 |---|---|
 | Movimiento y colisión | Con `InputState` inyectado: avanzar, girar, retroceder; se desliza y no atraviesa coberturas; el borde del mundo no se cruza. |
+| Colisión entre tanques (`BUG-001`) | A 6 m/s y 60 Hz el jugador se detiene a la distancia de separación (≥ suma de radios), nunca cruza al enemigo ni queda dentro de su modelo; el retroceso también respeta la colisión; dos enemigos no se solapan al avanzar; un enemigo destruido deja de bloquear. |
 | Disparo y recarga | Un disparo listo crea un proyectil; durante 2,4 s el arma no dispara; el flanco de entrada no repite fuego al mantener la tecla. |
 | Puntería | El puntero a la derecha inclina el cañón y el proyectil sale con dirección 3D coherente con `resolveAim`; el centro apunta al frente; la cámara no cambia de rumbo con el ratón. |
 | Tiro alto/suelo | Un disparo elevado puede pasar por encima de un tanque; uno bajo impacta en el suelo (`kind: 'ground'`) y no daña a nadie. |
@@ -189,6 +192,9 @@ Marcar cada punto en el navegador; anotar semilla, fase y navegador usado. Los p
 - [ ] El clic izquierdo y `Espacio` disparan; el tiro sale en la dirección de la retícula.
 - [ ] No se puede mirar libremente ni asomarse: la cámara es solidaria.
 - [ ] Colisión con coberturas y bordes: se desliza, no atraviesa, no se queda clavado en esquinas.
+- [ ] Colisión con tanques enemigos: al avanzar contra uno el casco se detiene a la distancia de
+      separación, no lo atraviesa y la cámara no entra en su modelo; retroceder tampoco lo cruza
+      (`BUG-001`, bloque 6.6).
 - [ ] Al disparar, la cámara retrocede un instante y vuelve; el rumbo lógico no cambia.
 - [ ] Al recibir daño se ve el tinte rojo; al morir aparece la pantalla provisional «TANQUE DESTRUIDO».
 - [ ] `Esc` pausa y `M` silencia **(fases 8/10)**.
@@ -297,14 +303,14 @@ La entrega se acepta cuando se cumplen los doce criterios del plan
 | 8 | Efectos de sonido sintetizados, volumen y silencio. | Tests del adaptador + QA manual. |
 | 9 | Documentación completa y `docs/STATUS.md` exacto en la entrega. | Revisión del Lead sobre la documentación. |
 | 10 | Historial de commits convencionales y changelog coherente; etiqueta `v0.1.0`. | Revisión de `git log`, `CHANGELOG.md` y el tag. |
-| 11 | El jugador no atraviesa tanques enemigos ni queda dentro de su modelo (`BUG-001`). | Tests de colisión entre entidades + QA manual. |
+| 11 | El jugador no atraviesa tanques enemigos ni queda dentro de su modelo (`BUG-001`). | Tests de colisión entre entidades (`world/entityCollision`, `systems/movement`, `systems/ai`, `game`) + QA manual. **Cubierto en el bloque 6.6.** |
 | 12 | Daño por zona (frontal ×0,5, lateral ×1,0, trasera ×1,5) y enemigos sin disparar fuera de su arco de ±15°. | Tests de `systems/armor` y de arco de fuego en `systems/ai` + QA. |
 
 ## 9. Deuda conocida en pruebas (0.1.0)
 
 - **Sin E2E de navegador** (Playwright u otro): no hay pruebas automatizadas de flujo completo en un
-  navegador real; hay verificación manual y capturas headless puntuales. Se valora en la siguiente
-  iteración.
+  navegador real; hay verificación manual, capturas headless y una conducción puntual vía CDP (sin
+  dependencias nuevas) para validar `BUG-001`. Se valora un E2E formal en la siguiente iteración.
 - **Sin CI**: la puerta de calidad se ejecuta en local; no hay verificación automática por commit.
 - **Sin jsdom**: la UI DOM se valida a mano y por sus funciones puras; no hay tests de DOM.
 - **Periscopio y overlay**: al usar el contexto completo, no se cubren con el `FaceCanvas` simulado.
@@ -331,15 +337,22 @@ Las decisiones pendientes que afectan a pruebas (umbral de cobertura, CI, herram
 anotan en [`DEVELOPMENT.md`](DEVELOPMENT.md#13-pendientes-y-supuestos-detectados-para-el-lead).
 
 
-## 10. Pruebas previstas para `BUG-001` (6.6) y blindaje direccional (7.5)
+## 10. Pruebas del bloque 6.6 (implementadas) y del bloque 7.5 (previstas)
 
-- **Colisión entre tanques:** el jugador no puede atravesar a un enemigo a 6 m/s y 60 Hz; distancia
-  final ≥ suma de radios; la cámara no queda dentro del modelo; los enemigos tampoco se solapan entre
-  sí; separación de seguridad en spawns y al empujar.
-- **Blindaje direccional:** clasificación pura por ángulo (frontal/lateral/trasera), multiplicadores
-  ×0,5/×1,0/×1,5, aplicación después de `armor`, simetría jugador/enemigos y valores límite ±60°/120°.
-- **Arco de fuego enemigo:** no dispara si el jugador está a 90° o 180° de su rumbo; sí dentro de
-  ±15°; la pausa de seguimiento durante la recarga se comporta como está documentada.
-- **Integración de flanqueo:** un impacto trasero hace más daño que uno frontal contra el mismo
-  tanque; la IA tarda en reencarar y el jugador puede ganar el flanco en una simulación headless.
-- **HUD (fase 8):** la zona de impacto se muestra con el daño correcto y no solo por color.
+- **Colisión entre tanques (bloque 6.6, implementado):** `tests/world/entityCollision.test.ts`
+  comprueba la separación mínima (radios + 0,15 m), la holgura, el deslizamiento y el escape sin
+  agravar un solape; `tests/systems/movement.test.ts` simula 300 pasos a 6 m/s y 60 Hz y verifica que
+  el jugador nunca queda más cerca de la suma de radios, que no cruza al enemigo, que la cámara no
+  queda dentro del modelo, que retrocediendo tampoco lo atraviesa y que un enemigo destruido no
+  bloquea; `tests/systems/ai.test.ts` comprueba que el avance de un enemigo se frena ante otro;
+  `tests/game/game.test.ts` integra el flujo real con `seed=42`. QA adicional: juego real en Chrome
+  headless vía CDP, avance contra un enemigo y captura; el jugador se detiene a 2,9 m.
+- **Blindaje direccional (7.5, pendiente):** clasificación pura por ángulo (frontal/lateral/trasera),
+  multiplicadores ×0,5/×1,0/×1,5, aplicación después de `armor`, simetría jugador/enemigos y valores
+  límite ±60°/120°.
+- **Arco de fuego enemigo (7.5, pendiente):** no dispara si el jugador está a 90° o 180° de su rumbo;
+  sí dentro de ±15°; la pausa de seguimiento durante la recarga se comporta como está documentada.
+- **Integración de flanqueo (7.5, pendiente):** un impacto trasero hace más daño que uno frontal
+  contra el mismo tanque; la IA tarda en reencarar y el jugador puede ganar el flanco en una
+  simulación headless.
+- **HUD (fase 8, pendiente):** la zona de impacto se muestra con el daño correcto y no solo por color.

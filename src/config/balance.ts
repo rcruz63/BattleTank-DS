@@ -46,6 +46,9 @@ export const COMBAT = {
 /** Radio de colisión de los tanques enemigos (m). */
 export const ENEMY_RADIUS = 1.4;
 
+/** Margen de seguridad al colisionar dos tanques (m): se suma a la suma de sus radios. */
+export const ENTITY_SEPARATION = 0.15;
+
 /** Ajustes base de la IA; las misiones los escalan en la fase 9. */
 export const AI_TUNING = {
   detectionRange: 70,

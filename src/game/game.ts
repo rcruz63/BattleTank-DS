@@ -148,12 +148,13 @@ function stepCombat(state: GameState, stepSeconds: number): void {
   const snapshot = input.snapshot();
 
   if (player.alive) {
-    updatePlayerMovement(
+    updatePlayerMovement({
       player,
-      { forward: snapshot.forward, turn: snapshot.turn },
+      command: { forward: snapshot.forward, turn: snapshot.turn },
       stepSeconds,
-      arena.grid,
-    );
+      grid: arena.grid,
+      enemies,
+    });
 
     state.aim = resolveAim(player.yaw, VIEWPORT, {
       x: snapshot.aimX,
@@ -237,7 +238,7 @@ function drawTemporaryStatus(
   context.font = '16px monospace';
   context.textAlign = 'left';
   context.fillText(
-    `Semilla ${seed} · fase 6.5 · enemigos ${alive}/${enemies.length} · proyectiles ${bulletCount}`,
+    `Semilla ${seed} · fase 6.6 · enemigos ${alive}/${enemies.length} · proyectiles ${bulletCount}`,
     36,
     48,
   );

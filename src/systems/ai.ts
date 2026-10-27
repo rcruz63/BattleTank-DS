@@ -13,7 +13,8 @@ import { createBullet } from '../entities/bullet';
 import type { Bullet } from '../entities/bullet';
 import type { EnemyState } from '../entities/enemy';
 import type { PlayerState } from '../entities/player';
-import { moveCircle } from '../world/collision';
+import { moveCircleAroundEntities } from '../world/entityCollision';
+import type { EntityBlocker } from '../world/entityCollision';
 import { planarDistance } from '../world/geometry';
 import { cellCenter, worldToCell } from '../world/grid';
 import { hasLineOfSight } from '../world/los';
@@ -97,7 +98,23 @@ function nextWaypoint(enemy: EnemyState, grid: WorldGrid): WorldPoint | null {
   return planarDistance(enemy.position, center) > 1 ? center : null;
 }
 
-function advanceEnemy(enemy: EnemyState, context: AiContext): void {
+/** Círculos que bloquean el avance de un enemigo: el jugador y los demás enemigos, si están vivos. */
+function blockerCircles(
+  enemy: EnemyState,
+  others: readonly EnemyState[],
+  player: PlayerState,
+): EntityBlocker[] {
+  const blockers: EntityBlocker[] = [];
+  if (player.alive) blockers.push({ position: player.position, radius: player.radius });
+  for (const other of others) {
+    if (other !== enemy && other.alive) {
+      blockers.push({ position: other.position, radius: other.radius });
+    }
+  }
+  return blockers;
+}
+
+function advanceEnemy(enemy: EnemyState, context: AiContext, others: readonly EnemyState[]): void {
   const { grid, player, stepSeconds } = context;
   if (planarDistance(enemy.position, player.position) <= AI_TUNING.minAdvanceDistance) {
     return;
@@ -118,12 +135,13 @@ function advanceEnemy(enemy: EnemyState, context: AiContext): void {
   if (Math.abs(angleDifference(enemy.yaw, targetAngle)) > 0.45) return;
 
   const distance = enemy.speed * AI_TUNING.moveSpeedFactor * stepSeconds;
-  const result = moveCircle(
+  const result = moveCircleAroundEntities({
     grid,
-    enemy.position,
-    { x: Math.sin(enemy.yaw) * distance, z: Math.cos(enemy.yaw) * distance },
-    enemy.radius,
-  );
+    position: enemy.position,
+    delta: { x: Math.sin(enemy.yaw) * distance, z: Math.cos(enemy.yaw) * distance },
+    radius: enemy.radius,
+    blockers: blockerCircles(enemy, others, player),
+  });
   enemy.position = result.position;
   if (result.collided) enemy.pathTimer = 0;
 }
@@ -155,7 +173,7 @@ function updateAwareness(enemy: EnemyState, perception: Perception): void {
   enemy.pathTimer = 0;
 }
 
-function updateEnemy(enemy: EnemyState, context: AiContext): void {
+function updateEnemy(enemy: EnemyState, context: AiContext, others: readonly EnemyState[]): void {
   tickEnemyTimers(enemy, context.stepSeconds);
 
   if (!context.player.alive) {
@@ -178,12 +196,12 @@ function updateEnemy(enemy: EnemyState, context: AiContext): void {
   }
 
   enemy.aiMode = 'advance';
-  advanceEnemy(enemy, context);
+  advanceEnemy(enemy, context, others);
 }
 
 export function updateEnemies(enemies: readonly EnemyState[], context: AiContext): void {
   for (const enemy of enemies) {
     if (!enemy.alive) continue;
-    updateEnemy(enemy, context);
+    updateEnemy(enemy, context, enemies);
   }
 }

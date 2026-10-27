@@ -291,9 +291,9 @@ Detalle completo en [`TESTING.md`](TESTING.md); resumen de convenciones:
   2D simulado y fixtures de rejilla/cámara/caras; la IA, con rejilla, jugador y RNG inyectados.
 - Helpers compartidos en `tests/helpers/` (previsto) para no duplicar fixtures.
 - Los tests son código: también se leen, se refactorizan y no se dejan comentados.
-- Estado actual: **132 tests en 24 ficheros** (`tests/core`, `tests/world`, `tests/render`,
-  `tests/systems`, `tests/game`), incluidas las pruebas de puntería, LOS, A*, IA, modelos y
-  oclusión.
+- Estado actual: **142 tests en 25 ficheros** (`tests/core`, `tests/world`, `tests/render`,
+  `tests/systems`, `tests/game`), incluidas las pruebas de puntería, LOS, A*, IA, modelos,
+  oclusión y colisión entre tanques.
 
 ## 12. Si falla `npm run check`
 

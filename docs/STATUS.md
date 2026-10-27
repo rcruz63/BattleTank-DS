@@ -1,7 +1,7 @@
 # Estado del proyecto — BattleTank-DS
 
-> **Actualizado:** 2026-10-27 · **Fase actual:** pausa de revisión; siguiente bloque 6.6 (corrección)
-> **Último commit:** `docs: registrar BUG-001 y planificar blindaje direccional`
+> **Actualizado:** 2026-10-27 · **Fase actual:** pausa de revisión; siguiente bloque 7 (pickups)
+> **Último commit:** `fix(collision): bloquear el paso entre tanques`
 >
 > Este fichero es el punto de entrada para retomar el proyecto, sea otra persona, otro chat u
 > otro modelo. Se actualiza en **cada commit**. La verdad sobre el alcance está en el plan.
@@ -12,12 +12,20 @@
 2. `npm install` y `npm run check` para confirmar que la base está sana.
 3. `npm run dev` y abre `http://localhost:5173`.
 4. Lee «Incidencias conocidas» y la «Feature aprobada» antes de elegir tarea: el orden previsto es
-   `BUG-001` (6.6) → pickups (7) → blindaje direccional (7.5).
+   pickups (7) → blindaje direccional (7.5); `BUG-001` (6.6) ya está corregido.
 5. Sigue el flujo de [`docs/DEVELOPMENT.md`](DEVELOPMENT.md): tests → `npm run check` → changelog
    → estado → commit.
 
 ## Hecho
 
+- [x] **Bloque 6.6 — Colisión entre tanques (`BUG-001`).** `world/entityCollision.ts` trata cada
+      tanque vivo como bloqueador circular con separación de seguridad de 0,15 m sobre la suma de
+      radios; el movimiento del jugador y el avance de la IA usan `moveCircleAroundEntities`
+      (rejilla + bloqueadores, con subpasos y deslizamiento) y `world/collision.ts` expone
+      `moveCircleWith` para integrar comprobaciones extra sin duplicar el barrido. Los enemigos
+      destruidos no bloquean y un tanque que empiece solapado (por ejemplo al recolocarlo en QA)
+      puede separarse sin hundirse más. 142 tests en 25 ficheros (10 nuevos de regresión) y QA en
+      Chrome headless vía CDP: a 6 m/s el jugador se detiene a 2,9 m del enemigo y no lo cruza.
 - [x] **Bloque 6.5 — Puntería con ratón.** El cañón pivota sobre la mazorca en un cono de
       ±15° horizontal / ±4° vertical; la retícula sigue al puntero y el disparo sale en esa
       dirección (balística 3D, altura de blancos e impacto en suelo). Clic izquierdo o Espacio
@@ -59,23 +67,13 @@
 
 ## En curso
 
-- Ninguna tarea en curso: **pausa acordada**. Próximo trabajo: **bloque 6.6** (corregir
-  `BUG-001`); después, fase 7 (pickups) y bloque 7.5 (blindaje direccional).
+- Ninguna tarea en curso: **pausa acordada**. Próximo trabajo: **fase 7** (pickups); después,
+  bloque 7.5 (blindaje direccional).
 
 ## Incidencias conocidas
 
-### BUG-001 — El jugador atraviesa tanques enemigos (prioridad alta · bloque 6.6)
-
-- **Síntoma:** al avanzar contra un Panzer III o un Tiger I se atraviesa su modelo; la cámara queda
-  dentro, el tanque desaparece un instante y reaparece detrás.
-- **Reproducción:** `?seed=42`, localizar un enemigo y avanzar hasta contacto sin disparar.
-- **Causa raíz:** `systems/movement.ts` (jugador) y `systems/ai.ts` (enemigos) usan `moveCircle`
-  solo contra la rejilla; no existe colisión círculo-círculo ni separación entre tanques.
-- **Arreglo propuesto:** `world/entityCollision.ts` con bloqueadores dinámicos integrado en el
-  movimiento del jugador y de la IA; separación de seguridad y tests de regresión.
-- **Criterios de aceptación:** a 6 m/s y 60 Hz no se cruza un enemigo; distancia final ≥ suma de
-  radios; no se puede quedar la cámara dentro del modelo; los enemigos tampoco se solapan entre sí.
-- **Estado:** pendiente, bloque 6.6 (antes de pickups, porque rompe el combate).
+- Ninguna abierta. `BUG-001` (el jugador atravesaba tanques enemigos) quedó resuelto en el bloque
+  6.6: ver «Hecho» y [`ARCHITECTURE.md`](ARCHITECTURE.md) §8.
 
 ## Feature aprobada — Bloque 7.5: blindaje direccional y flanqueo
 
@@ -106,8 +104,8 @@ encarando al jugador. Se implementará después de pickups y antes de HUD/mision
 | 5 | Combate: disparo, recarga, proyectiles, impactos y escombros | Completada |
 | 6 | Enemigos: modelos, IA con LOS/A*, dificultad por parámetros | Completada |
 | 6.5 | Puntería con ratón (cañón cónico, balística 3D) | Completada |
-| 6.6 | Colisión entre tanques (`BUG-001`) | **Pendiente (siguiente)** |
-| 7 | Pickups: cura, mejora y potencia | Pendiente |
+| 6.6 | Colisión entre tanques (`BUG-001`) | Completada |
+| 7 | Pickups: cura, mejora y potencia | **Pendiente (siguiente)** |
 | 7.5 | Blindaje direccional y flanqueo | Pendiente |
 | 8 | HUD: vida, progreso, puntuación, radar, recarga y pantallas | Pendiente |
 | 9 | Misiones: campaña de 3, escalado, victoria/derrota y persistencia | Pendiente |
@@ -116,7 +114,6 @@ encarando al jugador. Se implementará después de pickups y antes de HUD/mision
 
 ## Deuda técnica registrada
 
-- **Colisión entre tanques inexistente (BUG-001)**: mitigación planificada en el bloque 6.6.
 - **Sin blindaje direccional ni arco de fuego enemigo** hasta el bloque 7.5; la IA encara siempre
   al jugador mientras tenga línea de visión.
 - IA sin patrulla ni coordinación de flanqueo: los enemigos permanecen al acecho hasta ver u oír al
@@ -130,7 +127,8 @@ encarando al jugador. Se implementará después de pickups y antes de HUD/mision
 ## Decisiones y notas operativas
 
 - **Flujo de trabajo acordado con el usuario:** pausa al cerrar cada fase para revisión/intervención. Se retoma con «continúa la fase N» o «continúa el bloque N».
-- **Cambios aprobados 2026-10-27:** corregir `BUG-001` (6.6) y añadir blindaje direccional/flanqueo (7.5). Registrados en `PLAN.md` §2/§12 y `DECISIONS.md` ADR-009.
+- **Cambios aprobados 2026-10-27:** corregir `BUG-001` (6.6) y añadir blindaje direccional/flanqueo (7.5). Registrados en `PLAN.md` §2/§12 y `DECISIONS.md` ADR-009. El bloque 6.6 ya está cerrado; queda el 7.5.
+- **QA del bloque 6.6:** además de los tests de regresión, se condujo el juego real en Chrome headless vía CDP (sin dependencias nuevas) para avanzar contra un enemigo: el jugador se detiene a 2,9 m (suma de radios 2,75 m + margen 0,15 m) y no lo cruza.
 - No hay `pnpm` instalado en la máquina; se usa **npm** (Node 24 / npm 11).
 - El audio se sintetiza con WebAudio: no habrá ficheros de audio ni assets externos.
 - La interfaz y la documentación van en español; los identificadores del código, en inglés.

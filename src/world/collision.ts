@@ -11,6 +11,21 @@ export interface CollisionResult {
   readonly collided: boolean;
 }
 
+/** Desplazamiento en el plano XZ. */
+export interface PlanarDelta {
+  readonly x: number;
+  readonly z: number;
+}
+
+/** Posición de partida y desplazamiento de un círculo que se mueve por el plano. */
+export interface CircleMove {
+  readonly position: WorldPoint;
+  readonly delta: PlanarDelta;
+}
+
+/** Comprueba si una posición candidata está libre para el círculo. */
+export type OccupancyCheck = (position: WorldPoint) => boolean;
+
 interface CellCircleCheck {
   readonly position: WorldPoint;
   readonly radius: number;
@@ -65,61 +80,57 @@ export function canCircleOccupy(
 }
 
 interface AxisMove {
-  readonly grid: WorldGrid;
   readonly position: WorldPoint;
   readonly dx: number;
   readonly dz: number;
-  readonly radius: number;
 }
 
-function axisPosition(move: AxisMove): { position: WorldPoint; blocked: boolean } {
+function axisPosition(
+  move: AxisMove,
+  isFree: OccupancyCheck,
+): { position: WorldPoint; blocked: boolean } {
   const candidate = { x: move.position.x + move.dx, z: move.position.z + move.dz };
-  if (canCircleOccupy(move.grid, candidate, move.radius)) {
+  if (isFree(candidate)) {
     return { position: candidate, blocked: false };
   }
   return { position: move.position, blocked: true };
 }
 
 /**
- * Desplaza el círculo en subpasos y por ejes separados: bloquea el eje que choca y deja que el
- * otro siga (deslizamiento). Devuelve la posición final.
+ * Desplaza el círculo en subpasos y por ejes separados con `isFree` como criterio de ocupación:
+ * bloquea el eje que choca y deja que el otro siga (deslizamiento). Devuelve la posición final.
  */
-export function moveCircle(
-  grid: WorldGrid,
-  position: WorldPoint,
-  delta: { readonly x: number; readonly z: number },
-  radius: number,
-): CollisionResult {
+export function moveCircleWith(move: CircleMove, isFree: OccupancyCheck): CollisionResult {
   const steps = Math.max(
     1,
-    Math.ceil(Math.max(Math.abs(delta.x), Math.abs(delta.z)) / MAX_SUBSTEP),
+    Math.ceil(Math.max(Math.abs(move.delta.x), Math.abs(move.delta.z)) / MAX_SUBSTEP),
   );
-  const stepX = delta.x / steps;
-  const stepZ = delta.z / steps;
-  let current = position;
+  const stepX = move.delta.x / steps;
+  const stepZ = move.delta.z / steps;
+  let current = move.position;
   let collided = false;
 
   for (let step = 0; step < steps; step += 1) {
-    const horizontal = axisPosition({
-      grid,
-      position: current,
-      dx: stepX,
-      dz: 0,
-      radius,
-    });
+    const horizontal = axisPosition({ position: current, dx: stepX, dz: 0 }, isFree);
     current = horizontal.position;
     collided = collided || horizontal.blocked;
 
-    const vertical = axisPosition({
-      grid,
-      position: current,
-      dx: 0,
-      dz: stepZ,
-      radius,
-    });
+    const vertical = axisPosition({ position: current, dx: 0, dz: stepZ }, isFree);
     current = vertical.position;
     collided = collided || vertical.blocked;
   }
 
   return { position: current, collided };
+}
+
+/** Movimiento contra la rejilla, con la comprobación de celdas del escenario. */
+export function moveCircle(
+  grid: WorldGrid,
+  position: WorldPoint,
+  delta: PlanarDelta,
+  radius: number,
+): CollisionResult {
+  return moveCircleWith({ position, delta }, (candidate) =>
+    canCircleOccupy(grid, candidate, radius),
+  );
 }
