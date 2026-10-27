@@ -37,13 +37,34 @@ describe('entrada de teclado', () => {
     expect(input.snapshot().fire).toBe(true);
   });
 
+  it('normaliza y limita la posición del puntero', () => {
+    const input = createInputState();
+    expect(input.snapshot().aimX).toBe(0);
+    input.setPointer(0.5, -0.25);
+    expect(input.snapshot().aimX).toBeCloseTo(0.5, 9);
+    expect(input.snapshot().aimY).toBeCloseTo(-0.25, 9);
+    input.setPointer(9, -9);
+    expect(input.snapshot().aimX).toBe(1);
+    expect(input.snapshot().aimY).toBe(-1);
+  });
+
+  it('el clic encola el disparo como flanco', () => {
+    const input = createInputState();
+    input.requestFire();
+    expect(input.snapshot().fire).toBe(true);
+    expect(input.snapshot().fire).toBe(false);
+  });
+
   it('clear libera teclas y disparo pendiente', () => {
     const input = createInputState();
     input.handleKeyDown('KeyW');
     input.handleKeyDown('Space');
+    input.setPointer(1, 1);
     input.clear();
     const snapshot = input.snapshot();
     expect(snapshot.forward).toBe(0);
     expect(snapshot.fire).toBe(false);
+    expect(snapshot.aimX).toBe(0);
+    expect(snapshot.aimY).toBe(0);
   });
 });

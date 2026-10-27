@@ -5,11 +5,16 @@ import { withAlpha } from './color';
 
 export { VIEWPORT };
 
-/** Obtiene el contexto 2D del canvas del juego o lanza un error claro. */
-export function getGameContext(canvasId = 'game-canvas'): CanvasRenderingContext2D {
+/** Canvas del juego (necesario para escalar la posición del ratón). */
+export function getGameCanvas(canvasId = 'game-canvas'): HTMLCanvasElement {
   const canvas = document.querySelector<HTMLCanvasElement>(`#${canvasId}`);
   if (!canvas) throw new Error(`No se encontró el canvas #${canvasId}.`);
+  return canvas;
+}
 
+/** Obtiene el contexto 2D del canvas del juego o lanza un error claro. */
+export function getGameContext(canvasId = 'game-canvas'): CanvasRenderingContext2D {
+  const canvas = getGameCanvas(canvasId);
   const context = canvas.getContext('2d');
   if (!context) throw new Error('Este navegador no soporta Canvas 2D.');
   return context;

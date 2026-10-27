@@ -37,6 +37,7 @@ body {
 
 #game-canvas {
   display: block;
+  cursor: none;
   width: min(100vw, calc(100vh * (16 / 9)));
   height: min(100vh, calc(100vw * (9 / 16)));
   background: #0b0f0e;

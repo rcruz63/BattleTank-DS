@@ -4,7 +4,7 @@ import { createInputState } from '../../src/systems/input';
 
 describe('composición del juego', () => {
   it('crea el escenario con la semilla pedida y expone el estado', () => {
-    const game = createGame({ seed: 42, bindInput: false });
+    const game = createGame({ seed: 42 });
     expect(game.seed).toBe(42);
     expect(game.arena.grid.seed).toBe(42);
     expect(game.player.health).toBeGreaterThan(0);
@@ -16,7 +16,7 @@ describe('composición del juego', () => {
 
   it('dispara, consume el flanco y entra en recarga', () => {
     const input = createInputState();
-    const game = createGame({ seed: 42, input, bindInput: false });
+    const game = createGame({ seed: 42, input });
 
     input.handleKeyDown('Space');
     game.update(1 / 60);
@@ -29,9 +29,25 @@ describe('composición del juego', () => {
     game.dispose();
   });
 
+  it('el ratón orienta el cañón dentro del cono', () => {
+    const input = createInputState();
+    const game = createGame({ seed: 42, input });
+
+    input.setPointer(1, 0);
+    input.requestFire();
+    game.update(1 / 60);
+
+    expect(game.bullets).toHaveLength(1);
+    const bullet = game.bullets[0];
+    expect(bullet?.direction.x).toBeCloseTo(Math.sin((15 * Math.PI) / 180), 5);
+    expect(bullet?.direction.y).toBeCloseTo(0, 5);
+
+    game.dispose();
+  });
+
   it('responde a la entrada de avance y giro', () => {
     const input = createInputState();
-    const game = createGame({ seed: 42, input, bindInput: false });
+    const game = createGame({ seed: 42, input });
     const start = { ...game.player.position };
 
     input.handleKeyDown('KeyW');

@@ -1,17 +1,18 @@
 /**
  * Combate: recarga del jugador, creación de proyectiles y avance con colisiones.
  *
- * Los proyectiles son balísticos discretos (no hitscan). El avance se hace en subpasos para no
- * atravesar coberturas; el plano cercano del render es independiente de esta simulación.
+ * Los proyectiles son balísticos discretos (no hitscan) con dirección 3D: el cabeceo del cañón
+ * influye de verdad. El avance se hace en subpasos para no atravesar coberturas.
  */
 
-import { COMBAT } from '../config/balance';
+import { COMBAT, GUN } from '../config/balance';
+import { normalize3 } from '../core/math';
+import type { Vec3 } from '../core/math';
 import type { MaterialId } from '../config/materials';
 import { createBullet } from '../entities/bullet';
 import type { Bullet, ProjectileOwner } from '../entities/bullet';
 import { playerForward } from '../entities/player';
 import type { PlayerState } from '../entities/player';
-import type { Vec3 } from '../core/math';
 import { planarDistanceSquared } from '../world/geometry';
 import {
   damageObstacle,
@@ -26,11 +27,13 @@ export interface ProjectileTarget {
   readonly id: string;
   readonly position: WorldPoint;
   readonly radius: number;
+  /** Altura del cilindro de impacto (m). */
+  readonly height: number;
   readonly faction: ProjectileOwner;
 }
 
 export interface ProjectileEvent {
-  readonly kind: 'cover' | 'target';
+  readonly kind: 'cover' | 'ground' | 'target';
   readonly position: Vec3;
   readonly cell: CellPoint | null;
   readonly material: MaterialId | null;
@@ -57,39 +60,45 @@ export function reloadProgress(player: PlayerState): number {
   return 1 - player.reloadRemaining / player.reloadSeconds;
 }
 
-function muzzlePosition(player: PlayerState): Vec3 {
+/** Crea un proyectil en la boca del cañón, en la dirección 3D de la mira. */
+export function createPlayerBullet(player: PlayerState, direction: Vec3): Bullet {
   const forward = playerForward(player);
-  const offset = player.radius + 0.9;
-  return {
-    x: player.position.x + forward.x * offset,
-    y: COMBAT.muzzleHeight,
-    z: player.position.z + forward.z * offset,
+  const unit = normalize3(direction);
+  const pivot: Vec3 = {
+    x: player.position.x + forward.x * GUN.pivotForward,
+    y: GUN.pivotHeight,
+    z: player.position.z + forward.z * GUN.pivotForward,
   };
-}
+  const position: Vec3 = {
+    x: pivot.x + unit.x * GUN.barrelLength,
+    y: pivot.y + unit.y * GUN.barrelLength,
+    z: pivot.z + unit.z * GUN.barrelLength,
+  };
 
-/** Crea un proyectil del jugador en la boca del cañón, alineado con la mira. */
-export function createPlayerBullet(player: PlayerState): Bullet {
-  const forward = playerForward(player);
   return createBullet({
-    position: muzzlePosition(player),
-    direction: { x: forward.x, y: 0, z: forward.z },
+    position,
+    direction: unit,
     speed: player.shellSpeed,
     damage: player.damage,
     owner: 'player',
   });
 }
 
+export interface PlayerWeaponStep {
+  readonly player: PlayerState;
+  readonly fireRequested: boolean;
+  readonly stepSeconds: number;
+  readonly bullets: Bullet[];
+  readonly direction: Vec3;
+}
+
 /** Avanza la recarga y dispara si corresponde. Devuelve true si se disparó. */
-export function updatePlayerWeapon(
-  player: PlayerState,
-  fireRequested: boolean,
-  stepSeconds: number,
-  bullets: Bullet[],
-): boolean {
+export function updatePlayerWeapon(step: PlayerWeaponStep): boolean {
+  const { player, fireRequested, stepSeconds, bullets, direction } = step;
   player.reloadRemaining = Math.max(0, player.reloadRemaining - stepSeconds);
   if (!fireRequested || player.reloadRemaining > 0) return false;
 
-  bullets.push(createPlayerBullet(player));
+  bullets.push(createPlayerBullet(player, direction));
   player.reloadRemaining = player.reloadSeconds;
   return true;
 }
@@ -109,9 +118,25 @@ function findTargetHit(
   return targets.find(
     (target) =>
       target.faction !== bullet.owner &&
+      position.y >= 0 &&
+      position.y <= target.height &&
       planarDistanceSquared(point, target.position) <=
         (target.radius + bullet.radius) * (target.radius + bullet.radius),
   );
+}
+
+function hitGround(bullet: Bullet, position: Vec3): ProjectileEvent {
+  bullet.alive = false;
+  return {
+    kind: 'ground',
+    position,
+    cell: null,
+    material: null,
+    destroyedCover: false,
+    targetId: null,
+    damage: bullet.damage,
+    owner: bullet.owner,
+  };
 }
 
 function hitCover(
@@ -149,8 +174,10 @@ function advanceBullet(bullet: Bullet, input: ProjectilesInput): ProjectileEvent
       y: bullet.position.y + bullet.direction.y * stepDistance,
       z: bullet.position.z + bullet.direction.z * stepDistance,
     };
-    const cell = worldToCell(grid, candidate.x, candidate.z);
 
+    if (candidate.y <= 0) return hitGround(bullet, candidate);
+
+    const cell = worldToCell(grid, candidate.x, candidate.z);
     if (candidate.y <= coverHeightAt(grid, cell)) {
       return hitCover(grid, cell, bullet, candidate);
     }

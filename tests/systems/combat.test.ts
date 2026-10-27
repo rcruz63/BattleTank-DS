@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { GUN } from '../../src/config/balance';
 import { createBullet } from '../../src/entities/bullet';
 import type { Bullet } from '../../src/entities/bullet';
 import { createPlayer } from '../../src/entities/player';
@@ -49,25 +50,44 @@ describe('recarga y disparo', () => {
     const bullets: Bullet[] = [];
     expect(isWeaponReady(player)).toBe(true);
 
-    expect(updatePlayerWeapon(player, true, 1 / 60, bullets)).toBe(true);
+    expect(updatePlayerWeapon({
+      player,
+      fireRequested: true,
+      stepSeconds: 1 / 60,
+      bullets,
+      direction: { x: 0, y: 0, z: 1 },
+    })).toBe(true);
     expect(bullets).toHaveLength(1);
     expect(isWeaponReady(player)).toBe(false);
     expect(reloadProgress(player)).toBeLessThan(1);
 
-    expect(updatePlayerWeapon(player, true, 1 / 60, bullets)).toBe(false);
+    expect(updatePlayerWeapon({
+      player,
+      fireRequested: true,
+      stepSeconds: 1 / 60,
+      bullets,
+      direction: { x: 0, y: 0, z: 1 },
+    })).toBe(false);
     expect(bullets).toHaveLength(1);
 
     player.reloadRemaining = 0;
-    expect(updatePlayerWeapon(player, true, 1 / 60, bullets)).toBe(true);
+    expect(updatePlayerWeapon({
+      player,
+      fireRequested: true,
+      stepSeconds: 1 / 60,
+      bullets,
+      direction: { x: 0, y: 0, z: 1 },
+    })).toBe(true);
     expect(bullets).toHaveLength(2);
     expect(isWeaponReady(player)).toBe(false);
   });
 
   it('genera el proyectil en la boca del cañón y alineado con la mira', () => {
     const player = playerAt();
-    const bullet = createPlayerBullet(player);
+    const bullet = createPlayerBullet(player, { x: 0, y: 0, z: 1 });
     expect(bullet.position.x).toBeCloseTo(10, 6);
-    expect(bullet.position.z).toBeCloseTo(5 + player.radius + 0.9, 6);
+    expect(bullet.position.y).toBeCloseTo(GUN.pivotHeight, 6);
+    expect(bullet.position.z).toBeCloseTo(5 + GUN.pivotForward + GUN.barrelLength, 6);
     expect(bullet.direction.z).toBeCloseTo(1, 6);
     expect(bullet.owner).toBe('player');
     expect(bullet.damage).toBe(player.damage);
@@ -121,7 +141,9 @@ describe('impactos de proyectiles', () => {
       bullets: [bullet],
       stepSeconds: 0.05,
       grid,
-      targets: [{ id: 'enemigo-1', position: { x: 10, z: 10 }, radius: 1, faction: 'enemy' }],
+      targets: [
+        { id: 'enemigo-1', position: { x: 10, z: 10 }, radius: 1, height: 2.2, faction: 'enemy' },
+      ],
     });
     expect(events).toHaveLength(1);
     expect(events[0]?.kind).toBe('target');
@@ -138,7 +160,44 @@ describe('impactos de proyectiles', () => {
       stepSeconds: 0.05,
       grid,
       targets: [
-        { id: 'aliado', position: { x: 10, z: 10 }, radius: 1, faction: 'player' },
+        { id: 'aliado', position: { x: 10, z: 10 }, radius: 1, height: 2.2, faction: 'player' },
+      ],
+    });
+    expect(events).toHaveLength(0);
+    expect(bullets).toHaveLength(1);
+  });
+
+  it('una trayectoria descendente impacta contra el suelo', () => {
+    const grid = createEmptyGrid(10, 10, 4, 1);
+    const bullet = createBullet({
+      position: { x: 10, y: 0.3, z: 10 },
+      direction: { x: 0, y: -1, z: 0 },
+      speed: 80,
+      damage: 40,
+      owner: 'player',
+    });
+    const bullets = [bullet];
+    const events = updateProjectiles({ bullets, stepSeconds: 0.05, grid, targets: [] });
+    expect(events[0]?.kind).toBe('ground');
+    expect(bullets).toHaveLength(0);
+  });
+
+  it('puede pasar por encima de un blanco si el proyectil vuela alto', () => {
+    const grid = createEmptyGrid(10, 10, 4, 1);
+    const bullet = createBullet({
+      position: { x: 10, y: 2.6, z: 7.5 },
+      direction: { x: 0, y: 0, z: 1 },
+      speed: 80,
+      damage: 40,
+      owner: 'player',
+    });
+    const bullets = [bullet];
+    const events = updateProjectiles({
+      bullets,
+      stepSeconds: 0.05,
+      grid,
+      targets: [
+        { id: 'enemigo-1', position: { x: 10, z: 10 }, radius: 1, height: 2.2, faction: 'enemy' },
       ],
     });
     expect(events).toHaveLength(0);

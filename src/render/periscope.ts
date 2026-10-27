@@ -1,5 +1,5 @@
 /**
- * Overlay del periscopio: máscara oscura, mira, recarga, destellos y silueta del cañón/casco.
+ * Overlay del periscopio: máscara, retícula móvil, cañón orientable, recarga y destellos.
  *
  * Se pinta después del mundo. El HUD de misión (vida, progreso, radar…) es DOM y vive en `src/ui/`.
  */
@@ -8,11 +8,12 @@ import { clamp } from '../core/math';
 import { VIEWPORT } from '../config/balance';
 import { PALETTE } from '../config/palette';
 import { withAlpha } from './color';
-import type { Viewport } from './types';
+import type { ScreenPoint, Viewport } from './types';
 
 const TOP_MASK = 58;
 const BOTTOM_MASK = 118;
 const SIDE_MASK = 64;
+const BARREL_SCREEN_LENGTH = 300;
 
 export interface PeriscopeState {
   /** 0 = recién disparado; 1 = listo. */
@@ -23,6 +24,9 @@ export interface PeriscopeState {
   readonly muzzleFlash: number;
   /** 0..1, intensidad de la marca de impacto. */
   readonly hitMarker: number;
+  /** Punto de pantalla donde apunta el cañón. */
+  readonly aimScreenX: number;
+  readonly aimScreenY: number;
 }
 
 const READY_STATE: PeriscopeState = {
@@ -31,6 +35,8 @@ const READY_STATE: PeriscopeState = {
   ready: true,
   muzzleFlash: 0,
   hitMarker: 0,
+  aimScreenX: VIEWPORT.width / 2,
+  aimScreenY: VIEWPORT.height / 2,
 };
 
 function drawMask(context: CanvasRenderingContext2D, viewport: Viewport): void {
@@ -79,49 +85,120 @@ function drawHullEdges(context: CanvasRenderingContext2D, viewport: Viewport): v
   context.fill();
 }
 
-function drawGunBarrel(context: CanvasRenderingContext2D, viewport: Viewport): void {
-  const centerX = viewport.width / 2;
-  const baseY = viewport.height;
-  const halfBase = 54;
-  const halfTop = 17;
-  const topY = viewport.height - BOTTOM_MASK - 36;
+interface BarrelGeometry {
+  readonly tipX: number;
+  readonly tipY: number;
+  readonly unitX: number;
+  readonly unitY: number;
+}
 
-  context.fillStyle = '#12150f';
-  context.beginPath();
-  context.moveTo(centerX - halfBase, baseY);
-  context.lineTo(centerX - halfTop, topY);
-  context.lineTo(centerX + halfTop, topY);
-  context.lineTo(centerX + halfBase, baseY);
-  context.closePath();
-  context.fill();
+/** El cañón pivota en la mazorca (abajo, fuera de pantalla) y apunta hacia la retícula. */
+function barrelGeometry(viewport: Viewport, aim: ScreenPoint): BarrelGeometry {
+  const pivotX = viewport.width / 2;
+  const pivotY = viewport.height + 40;
+  const dx = aim.x - pivotX;
+  const dy = aim.y - pivotY;
+  const length = Math.hypot(dx, dy) || 1;
+  const unitX = dx / length;
+  const unitY = dy / length;
+  return {
+    unitX,
+    unitY,
+    tipX: pivotX + unitX * BARREL_SCREEN_LENGTH,
+    tipY: pivotY + unitY * BARREL_SCREEN_LENGTH,
+  };
+}
 
+interface BarrelHighlight {
+  readonly pivotX: number;
+  readonly pivotY: number;
+  readonly tipX: number;
+  readonly tipY: number;
+  readonly perpendicularX: number;
+  readonly perpendicularY: number;
+}
+
+function drawBarrelHighlight(
+  context: CanvasRenderingContext2D,
+  highlight: BarrelHighlight,
+): void {
+  const { pivotX, pivotY, tipX, tipY, perpendicularX, perpendicularY } = highlight;
   context.strokeStyle = 'rgba(180, 170, 130, 0.18)';
   context.lineWidth = 2;
   context.beginPath();
-  context.moveTo(centerX - halfTop + 2, topY + 2);
-  context.lineTo(centerX - halfBase + 2, baseY);
+  context.moveTo(tipX - perpendicularX * 14, tipY - perpendicularY * 14);
+  context.lineTo(pivotX - perpendicularX * 51, pivotY - perpendicularY * 51);
   context.stroke();
+}
+
+function drawGunBarrel(
+  context: CanvasRenderingContext2D,
+  viewport: Viewport,
+  aim: ScreenPoint,
+): void {
+  const { unitX, unitY, tipX, tipY } = barrelGeometry(viewport, aim);
+  const pivotX = viewport.width / 2;
+  const pivotY = viewport.height + 40;
+  const perpendicularX = -unitY;
+  const perpendicularY = unitX;
+  const halfBase = 54;
+  const halfTip = 17;
+
+  context.fillStyle = '#12150f';
+  context.beginPath();
+  context.moveTo(pivotX - perpendicularX * halfBase, pivotY - perpendicularY * halfBase);
+  context.lineTo(tipX - perpendicularX * halfTip, tipY - perpendicularY * halfTip);
+  context.lineTo(tipX + perpendicularX * halfTip, tipY + perpendicularY * halfTip);
+  context.lineTo(pivotX + perpendicularX * halfBase, pivotY + perpendicularY * halfBase);
+  context.closePath();
+  context.fill();
+
+  drawBarrelHighlight(context, {
+    pivotX,
+    pivotY,
+    tipX,
+    tipY,
+    perpendicularX,
+    perpendicularY,
+  });
 }
 
 function drawMuzzleFlash(
   context: CanvasRenderingContext2D,
   viewport: Viewport,
+  aim: ScreenPoint,
   intensity: number,
 ): void {
   if (intensity <= 0.01) return;
-  const centerX = viewport.width / 2;
-  const centerY = viewport.height - BOTTOM_MASK - 30;
+  const { tipX, tipY } = barrelGeometry(viewport, aim);
   const glowRadius = 26 + 34 * intensity;
 
   context.fillStyle = withAlpha(PALETTE.destelloDisparo, 0.28 * intensity);
   context.beginPath();
-  context.arc(centerX, centerY, glowRadius, 0, Math.PI * 2);
+  context.arc(tipX, tipY, glowRadius, 0, Math.PI * 2);
   context.fill();
 
   context.fillStyle = withAlpha('#fff2c4', 0.9 * intensity);
   context.beginPath();
-  context.arc(centerX, centerY, 8 + 10 * intensity, 0, Math.PI * 2);
+  context.arc(tipX, tipY, 8 + 10 * intensity, 0, Math.PI * 2);
   context.fill();
+}
+
+/** Marca tenue del rumbo del casco (centro de la vista). */
+function drawHullMarker(context: CanvasRenderingContext2D, viewport: Viewport): void {
+  const centerX = viewport.width / 2;
+  const centerY = viewport.height / 2;
+  context.strokeStyle = withAlpha(PALETTE.mira, 0.16);
+  context.lineWidth = 1;
+  context.beginPath();
+  context.moveTo(centerX - 8, centerY);
+  context.lineTo(centerX + 8, centerY);
+  context.moveTo(centerX, centerY - 8);
+  context.lineTo(centerX, centerY + 8);
+  context.stroke();
+  context.beginPath();
+  context.arc(centerX, centerY, 3, 0, Math.PI * 2);
+  context.stroke();
 }
 
 function drawCrossLines(
@@ -181,11 +258,10 @@ function drawRangeTicks(
 
 function drawReloadRing(
   context: CanvasRenderingContext2D,
-  viewport: Viewport,
   state: PeriscopeState,
 ): void {
-  const centerX = viewport.width / 2;
-  const centerY = viewport.height / 2;
+  const centerX = state.aimScreenX;
+  const centerY = state.aimScreenY;
   const radius = 31;
 
   context.strokeStyle = withAlpha(PALETTE.mira, 0.16);
@@ -217,13 +293,12 @@ function drawReloadRing(
 
 function drawHitMarker(
   context: CanvasRenderingContext2D,
-  viewport: Viewport,
-  intensity: number,
+  state: PeriscopeState,
 ): void {
-  if (intensity <= 0.01) return;
-  const centerX = viewport.width / 2;
-  const centerY = viewport.height / 2;
-  const alpha = clamp(intensity, 0, 1);
+  if (state.hitMarker <= 0.01) return;
+  const centerX = state.aimScreenX;
+  const centerY = state.aimScreenY;
+  const alpha = clamp(state.hitMarker, 0, 1);
   const inner = 26;
   const outer = 36;
 
@@ -246,16 +321,16 @@ export function drawPeriscope(
   viewport: Viewport = VIEWPORT,
   state: PeriscopeState = READY_STATE,
 ): void {
+  const aim: ScreenPoint = { x: state.aimScreenX, y: state.aimScreenY };
+
   drawMask(context, viewport);
   drawHullEdges(context, viewport);
-  drawGunBarrel(context, viewport);
-  drawMuzzleFlash(context, viewport, state.muzzleFlash);
-
-  const centerX = viewport.width / 2;
-  const centerY = viewport.height / 2;
-  drawCrossLines(context, centerX, centerY);
-  drawCenterMark(context, centerX, centerY);
-  drawRangeTicks(context, centerX, centerY);
-  drawReloadRing(context, viewport, state);
-  drawHitMarker(context, viewport, state.hitMarker);
+  drawGunBarrel(context, viewport, aim);
+  drawMuzzleFlash(context, viewport, aim, state.muzzleFlash);
+  drawHullMarker(context, viewport);
+  drawCrossLines(context, aim.x, aim.y);
+  drawCenterMark(context, aim.x, aim.y);
+  drawRangeTicks(context, aim.x, aim.y);
+  drawReloadRing(context, state);
+  drawHitMarker(context, state);
 }

@@ -1,7 +1,8 @@
 import './ui/styles.css';
 import { createFrameStepper, runAnimationLoop } from './core/loop';
 import { createGame } from './game/game';
-import { getGameContext, VIEWPORT } from './render/canvas';
+import { getGameCanvas, getGameContext, VIEWPORT } from './render/canvas';
+import { bindKeyboardInput, bindMouseInput, createInputState } from './systems/input';
 
 /** Semilla reproducible vía `?seed=123` para depurar escenarios concretos. */
 function seedFromUrl(): number | undefined {
@@ -21,10 +22,14 @@ function drawFatalError(context: CanvasRenderingContext2D, message: string): voi
 }
 
 function boot(): void {
+  const canvas = getGameCanvas();
   const context = getGameContext();
+  const input = createInputState();
+  const unbindKeyboard = bindKeyboardInput(input);
+  const unbindMouse = bindMouseInput(input, canvas);
 
   try {
-    const game = createGame({ seed: seedFromUrl() });
+    const game = createGame({ seed: seedFromUrl(), input });
     // Gancho de depuración/QA: inspeccionar o recolocar el estado desde la consola.
     window.__BT__ = game;
 
@@ -38,9 +43,13 @@ function boot(): void {
     const stop = runAnimationLoop(stepper);
     window.addEventListener('beforeunload', () => {
       stop();
+      unbindKeyboard();
+      unbindMouse();
       game.dispose();
     });
   } catch (error) {
+    unbindKeyboard();
+    unbindMouse();
     const message = error instanceof Error ? error.message : 'Error al iniciar el juego.';
     drawFatalError(context, message);
     throw error;

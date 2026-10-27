@@ -1,7 +1,7 @@
 # Estado del proyecto — BattleTank-DS
 
-> **Actualizado:** 2026-10-26 · **Fase actual:** 7 — Pickups
-> **Último commit:** `feat(ai): enemigos con línea de visión y máquina de estados`
+> **Actualizado:** 2026-10-27 · **Fase actual:** pausa de revisión antes de 7 — Pickups
+> **Último commit:** `feat(aim): puntería con ratón y cañón cónico`
 >
 > Este fichero es el punto de entrada para retomar el proyecto, sea otra persona, otro chat u
 > otro modelo. Se actualiza en **cada commit**. La verdad sobre el alcance está en el plan.
@@ -16,6 +16,14 @@
 
 ## Hecho
 
+- [x] **Bloque 6.5 — Puntería con ratón.** El cañón pivota sobre la mazorca en un cono de
+      ±15° horizontal / ±4° vertical; la retícula sigue al puntero y el disparo sale en esa
+      dirección (balística 3D, altura de blancos e impacto en suelo). Clic izquierdo o Espacio
+      disparan; recarga, marca de impacto y cañón dibujado se orientan a la retícula; el centro
+      conserva una marca tenue del rumbo del casco. La cámara pasa a pitch 0° y el movimiento no
+      cambia. Nuevo `systems/aim.ts`, entrada de ratón en `input.ts`, cableado en `main.ts` y
+      README/GAME_DESIGN/ARCHITECTURE/TESTING sincronizados. 132 tests en verde; QA visual
+      headless con ratón a la derecha y clic.
 - [x] **Fase 6 — Enemigos e IA.** Panzer III y Tiger I con estado propio; percepción por muestreo
       de 1 m (las coberturas intactas bloquean), alerta visual y por estampido a 60 m, avance con A*
       rodeando muros, apuntado con giro limitado, disparo con dispersión y recarga, daño cruzado
@@ -49,10 +57,7 @@
 
 ## En curso
 
-- [ ] **Fase 7 — Pickups.** Botiquín (cura +30 PV), mejora (+20 PV máx. y −10 % daño recibido) y
-      potencia (20 s de daño ×1,75 y recarga −35 %), con generación sobre celdas alcanzables,
-      recogida al pasar por encima y feedback en periscopio/HUD (`src/entities/pickup.ts`,
-      `src/systems/loot.ts`).
+- Ninguna tarea en curso: **pausa acordada** para revisión antes de la fase 7.
 
 ## Pendiente (por fases)
 
@@ -64,7 +69,8 @@
 | 4 | Jugador: movimiento solidario, colisión, cámara de periscopio | Completada |
 | 5 | Combate: disparo, recarga, proyectiles, impactos y escombros | Completada |
 | 6 | Enemigos: modelos, IA con LOS/A*, dificultad por parámetros | Completada |
-| 7 | Pickups: cura, mejora y potencia | En curso |
+| 6.5 | Puntería con ratón (cañón cónico, balística 3D) | Completada |
+| 7 | Pickups: cura, mejora y potencia | Pendiente |
 | 3 | Mundo: rejilla, generación procedural validada, escena de prismas | Pendiente |
 | 4 | Jugador: movimiento solidario, colisión, cámara de periscopio | Pendiente |
 | 5 | Combate: disparo, recarga, proyectiles, impactos y escombros | Pendiente |
@@ -82,6 +88,8 @@
 - Reparto provisional de tipos de enemigo (`3 ligeros + 1 pesado`); la fase 9 lo sustituirá por el
   reparto de cada misión.
 - Pantalla de destrucción y texto de estado son provisionales (fases 8-9).
+- El cañón del jugador es un overlay 2D que pivota desde la mazorca; no hay modelo 3D del arma
+  en primera persona. Es suficiente para 0.1.0 y se puede mejorar tras la entrega.
 
 ## Decisiones y notas operativas
 
@@ -92,6 +100,8 @@
 - `main.ts` arranca el juego real (`createGame`): WASD/flechas para moverse, Espacio para disparar.
   El HUD funcional y la pantalla de resultados llegan en las fases 8-9; el texto de estado actual es temporal.
 - Depuración: `?seed=42` reproduce un escenario; `window.__BT__` expone el estado del juego en consola.
+- Controles: W/S avanzar/retroceder, A/D girar tanque y vista, ratón para apuntar en el cono,
+  clic izquierdo o Espacio disparar.
 - `main.ts` dibuja todavía una pantalla de arranque; se sustituirá por el bucle real en la fase 1.
 
 ## Comandos de referencia

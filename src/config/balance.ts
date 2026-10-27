@@ -6,7 +6,8 @@ export const CAMERA_DEFAULTS = {
   fovDegrees: 72,
   near: 0.3,
   eyeHeight: 1.7,
-  pitchDegrees: -4,
+  // La cámara mira al horizonte para que la retícula centrada corresponda a un tiro horizontal.
+  pitchDegrees: 0,
 } as const;
 
 export const ARENA_DEFAULTS = {
@@ -56,3 +57,19 @@ export const AI_TUNING = {
   pathIntervalSeconds: 1.1,
   moveSpeedFactor: 0.75,
 } as const;
+
+/** Cono de puntería del cañón respecto al rumbo del tanque. */
+export const AIM_LIMITS = {
+  maxYawDegrees: 15,
+  maxPitchDegrees: 4,
+} as const;
+
+/** Geometría del cañón del jugador: pivote en la torreta y longitud del tubo. */
+export const GUN = {
+  pivotForward: 1.1,
+  pivotHeight: 1.55,
+  barrelLength: 2.2,
+} as const;
+
+/** Altura de impacto de un tanque (cilindro de colisión vertical). */
+export const TANK_TARGET_HEIGHT = 2.2;

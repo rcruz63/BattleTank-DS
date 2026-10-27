@@ -1,6 +1,11 @@
-/** Composición del juego: estado, entrada, IA, combate y render del periscopio. */
+/** Composición del juego: estado, entrada, puntería, IA, combate y render del periscopio. */
 
-import { ARENA_DEFAULTS, COMBAT, VIEWPORT } from '../config/balance';
+import {
+  ARENA_DEFAULTS,
+  COMBAT,
+  TANK_TARGET_HEIGHT,
+  VIEWPORT,
+} from '../config/balance';
 import { PALETTE } from '../config/palette';
 import { createRng } from '../core/rng';
 import type { Rng } from '../core/rng';
@@ -15,6 +20,8 @@ import { createPlayerCamera } from '../render/playerCamera';
 import { renderWorld } from '../render/renderer';
 import { overlayTint } from '../render/canvas';
 import type { PerspectiveCamera } from '../render/types';
+import { resolveAim } from '../systems/aim';
+import type { ResolvedAim } from '../systems/aim';
 import { alertEnemiesNear, updateEnemies } from '../systems/ai';
 import {
   isWeaponReady,
@@ -23,7 +30,7 @@ import {
   updateProjectiles,
 } from '../systems/combat';
 import type { ProjectileEvent, ProjectileTarget } from '../systems/combat';
-import { bindKeyboardInput, createInputState } from '../systems/input';
+import { createInputState } from '../systems/input';
 import type { InputState } from '../systems/input';
 import { updatePlayerMovement } from '../systems/movement';
 import { generateArena } from '../world/generate';
@@ -33,8 +40,6 @@ export interface GameOptions {
   readonly seed?: number;
   /** Permite inyectar entrada en tests o en una futura pantalla de mandos. */
   readonly input?: InputState;
-  /** Desactiva el teclado (tests headless). */
-  readonly bindInput?: boolean;
 }
 
 export interface Game {
@@ -64,7 +69,7 @@ interface GameState {
   readonly bullets: Bullet[];
   readonly aiRng: Rng;
   readonly effects: EffectsState;
-  readonly unbindInput: () => void;
+  aim: ResolvedAim;
 }
 
 const FIRE_ALERT_RADIUS = 60;
@@ -99,6 +104,7 @@ function buildTargets(
       id: 'player',
       position: player.position,
       radius: player.radius,
+      height: TANK_TARGET_HEIGHT,
       faction: 'player',
     });
   }
@@ -108,6 +114,7 @@ function buildTargets(
       id: enemy.id,
       position: enemy.position,
       radius: enemy.radius,
+      height: TANK_TARGET_HEIGHT,
       faction: 'enemy',
     });
   }
@@ -148,7 +155,19 @@ function stepCombat(state: GameState, stepSeconds: number): void {
       arena.grid,
     );
 
-    if (updatePlayerWeapon(player, snapshot.fire, stepSeconds, bullets)) {
+    state.aim = resolveAim(player.yaw, VIEWPORT, {
+      x: snapshot.aimX,
+      y: snapshot.aimY,
+    });
+
+    const fired = updatePlayerWeapon({
+      player,
+      fireRequested: snapshot.fire,
+      stepSeconds,
+      bullets,
+      direction: state.aim.direction,
+    });
+    if (fired) {
       effects.recoil = 1;
       effects.muzzleFlash = 1;
       alertEnemiesNear(enemies, player.position, FIRE_ALERT_RADIUS);
@@ -174,7 +193,7 @@ function stepCombat(state: GameState, stepSeconds: number): void {
   for (const impact of impacts) {
     if (applyTargetHit(impact, player, enemies)) playerHit = true;
   }
-  if (impacts.length > 0) effects.hitMarker = 1;
+  if (impacts.some((impact) => impact.kind !== 'ground')) effects.hitMarker = 1;
   if (playerHit) effects.damageFlash = 1;
 
   decayEffects(effects, stepSeconds);
@@ -213,12 +232,12 @@ function drawTemporaryStatus(
   const { seed, player, enemies, bulletCount } = status;
   const alive = enemies.filter((enemy) => enemy.alive).length;
   context.fillStyle = 'rgba(4, 6, 5, 0.55)';
-  context.fillRect(24, 24, 430, 58);
+  context.fillRect(24, 24, 470, 58);
   context.fillStyle = PALETTE.texto;
   context.font = '16px monospace';
   context.textAlign = 'left';
   context.fillText(
-    `Semilla ${seed} · fase 6 · enemigos ${alive}/${enemies.length} · proyectiles ${bulletCount}`,
+    `Semilla ${seed} · fase 6.5 · enemigos ${alive}/${enemies.length} · proyectiles ${bulletCount}`,
     36,
     48,
   );
@@ -226,7 +245,7 @@ function drawTemporaryStatus(
   const reload =
     player.reloadRemaining > 0 ? `recargando ${player.reloadRemaining.toFixed(1)} s` : 'lista';
   context.fillText(
-    `W/S · A/D · ESPACIO · vida ${Math.round(player.health)} · recarga ${reload}`,
+    `W/S · A/D girar · ratón apuntar · clic/ESPACIO disparar · vida ${Math.round(player.health)} · ${reload}`,
     36,
     70,
   );
@@ -249,7 +268,7 @@ function drawDestroyedOverlay(context: CanvasRenderingContext2D): void {
 }
 
 function renderGame(state: GameState, context: CanvasRenderingContext2D): void {
-  const { player, arena, bullets, enemies, effects, seed } = state;
+  const { player, arena, bullets, enemies, effects, seed, aim } = state;
   const baseCamera = createPlayerCamera(player.position, player.yaw);
   const camera = cameraWithRecoil(baseCamera, player, effects.recoil);
   renderWorld(context, { grid: arena.grid, camera, bullets, enemies });
@@ -260,6 +279,8 @@ function renderGame(state: GameState, context: CanvasRenderingContext2D): void {
     ready: isWeaponReady(player),
     muzzleFlash: effects.muzzleFlash,
     hitMarker: effects.hitMarker,
+    aimScreenX: aim.screenX,
+    aimScreenY: aim.screenY,
   };
   drawPeriscope(context, VIEWPORT, periscopeState);
 
@@ -274,20 +295,17 @@ function renderGame(state: GameState, context: CanvasRenderingContext2D): void {
 function createGameState(options: GameOptions): GameState {
   const seed = options.seed ?? Date.now() >>> 0;
   const arena = generateArena({ seed, ...ARENA_DEFAULTS });
-  const input = options.input ?? createInputState();
-  const unbindInput =
-    options.bindInput === false ? () => undefined : bindKeyboardInput(input);
 
   return {
     seed,
     arena,
     player: createPlayer(arena.playerSpawn),
     enemies: buildEnemyRoster(arena.enemySpawns),
-    input,
+    input: options.input ?? createInputState(),
     bullets: [],
     aiRng: createRng((seed ^ 0x9e3779b9) >>> 0),
     effects: createEffects(),
-    unbindInput,
+    aim: resolveAim(arena.playerSpawn.yaw, VIEWPORT, { x: 0, y: 0 }),
   };
 }
 
@@ -305,7 +323,6 @@ export function createGame(options: GameOptions = {}): Game {
     render: (context) => renderGame(state, context),
 
     dispose: () => {
-      state.unbindInput();
       state.input.clear();
     },
   };
