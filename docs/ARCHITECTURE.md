@@ -95,7 +95,7 @@ BattleTank-DS/
 │   │   ├── painter.ts      #   ordenación y pintado de caras
 │   │   ├── renderer.ts     #   composición: coberturas + tanques + pickups + proyectiles
 │   │   ├── statusOverlay.ts #  panel temporal, aviso de pickup y pantalla de destruido
-│   │   └── periscope.ts    #   overlay: retícula móvil, cañón orientable, recarga y destellos
+│   │   └── periscope.ts    #   overlay: máscara, retícula móvil, recarga y marca de impacto
 │   ├── entities/           # datos y comportamiento local
 │   │   ├── player.ts       #   estado del tanque del jugador
 │   │   ├── bullet.ts       #   proyectil
@@ -239,8 +239,8 @@ requestAnimationFrame
    │    ├─ render/playerCamera.createPlayerCamera + retroceso de cámara (solo visual; sin aim)
    │    ├─ render/renderer.renderWorld: fondo y rejilla → caras de coberturas + tanques + pickups
    │    │  → projectWorldFaces (culling, recorte, sombreado, niebla) → tracers → painter
-   │    ├─ render/periscope.drawPeriscope: máscara, retícula y marcas en el punto de mira, cañón
-   │    │  orientable, marca del rumbo del casco, anillo de recarga, fogonazo y marca de impacto
+   │    ├─ render/periscope.drawPeriscope: máscara, retícula y marcas en el punto de mira, marca
+   │    │  del rumbo del casco, anillo de recarga y marca de impacto (sin cañón dibujado)
    │    ├─ render/statusOverlay: aviso de pickup, overlay de daño y pantalla de destruido
    │    └─ panel temporal con semilla, enemigos, proyectiles, vida, recarga y efectos
    └─ (fase 8: HUD/radar DOM; fase 10: audio consume eventos)
@@ -305,11 +305,12 @@ El plan describe 5 macro-pasos (§6.3); este es el desglose real de la composici
    lejano primero) y pinta con el contexto (`fillStyle` + `fill`). Coberturas, tanques y tracers
    comparten orden: lo que está detrás de una cobertura intacta se pinta antes y queda tapado.
 6. **Overlay de periscopio.** `render/periscope.ts` pinta en canvas la máscara, la **retícula y las
-   marcas de distancia en el punto de mira del cañón**, el **cañón como trapecio que pivota desde la
-   mazorca** (abajo, fuera de pantalla) hacia la retícula, la marca tenue del **rumbo del casco** en
-   el centro, el **anillo de recarga** con segundos, el fogonazo en la punta del cañón y la marca de
-   impacto. **Decisión actual:** el overlay está en canvas, no es una viñeta CSS; el plan preveía
-   CSS y se revisará en la fase 8 si el HUD lo requiere.
+   marcas de distancia en el punto de mira**, la marca tenue del **rumbo del casco** en el centro, el
+   **anillo de recarga** con segundos y la marca de impacto. **Sin cañón dibujado** (decisión del
+   usuario, 2026-10-27): la retícula es la única referencia de puntería y se elimina el fogonazo del
+   arma; el retroceso de cámara y el tracer conservan el feedback. **Decisión actual:** el overlay
+   está en canvas, no es una viñeta CSS; el plan preveía CSS y se revisará en la fase 8 si el HUD lo
+   requiere.
 7. **Feedback de pantalla.** `overlayTint` tiñe de rojo al recibir daño; el aviso de pickup
    (`render/statusOverlay.ts`) muestra el efecto recogido; si el jugador ha muerto se pinta el
    overlay provisional «TANQUE DESTRUIDO» (la pantalla de resultados llega en la fase 9).
@@ -472,7 +473,7 @@ colisión se dividen en funciones pequeñas; si una regla no cabe sin anidar, se
 | IA demasiado precisa encarando al jugador | Arco de fuego ±15°, giro limitado y pausa de seguimiento al recargar | Mitigado (7.5) |
 | Dificultad mal calibrada | Balance en `config/tanks.ts`, IA en `balance.ts`, simulación headless y `?seed=` | Parcial (ajuste fase 9) |
 | Oclusión percibida como injusta | Enemigos con la misma LOS; coberturas destructibles y radar (fase 8) | Diseño |
-| Retícula/puntería descuadrada respecto al cañón | `resolveAim` unitario + cañón visual derivado del mismo punto de retícula; QA visual | Mitigado (bloque 6.5) |
+| Retícula/puntería descuadrada respecto a la dirección del disparo | `resolveAim` unitario y QA visual de la retícula (ya no hay cañón dibujado) | Mitigado (bloque 6.5) |
 | Cono de puntería demasiado estrecho o amplio | ±15° / ±4° en `AIM_LIMITS`, revisable con QA y ajuste de datos | Revisable |
 | Cursor del sistema visible distrayendo | Oculto sobre el canvas con CSS; la retícula es la referencia | Implementado |
 | Audio bloqueado por el navegador | Desbloqueo en el primer input; degradación silenciosa | Previsto (fase 10) |
@@ -496,8 +497,9 @@ colisión se dividen en funciones pequeñas; si una regla no cabe sin anidar, se
   alerta por estampido a 60 m, overlay rojo de daño, pantalla provisional de tanque destruido,
   ocultación por coberturas y ganchos de depuración.
 - **Bloque 6.5:** puntería con ratón cerrada — `systems/aim`, puntero en `InputState`, cableado de
-  entrada en `main.ts`, proyectiles con dirección 3D, impactos en suelo, cañón orientable y retícula
-  móvil en el periscopio, cámara con pitch base 0° y cursor oculto.
+  entrada en `main.ts`, proyectiles con dirección 3D, impactos en suelo y retícula móvil en el
+  periscopio, cámara con pitch base 0° y cursor oculto. El cañón 2D dibujado se retiró después
+  (ajuste de periscopio del 2026-10-27).
 - **Bloque 6.6:** colisión entre tanques cerrada — `world/entityCollision.ts` con bloqueadores
   circulares, `moveCircleWith` en `world/collision.ts`, integración en el movimiento del jugador y
   en el avance de la IA, separación de seguridad y tests de regresión de `BUG-001`.

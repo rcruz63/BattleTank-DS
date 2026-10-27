@@ -106,12 +106,12 @@ replica este límite de ±15°** (bloque 7.5): si el jugador no puede disparar d
   persona; previsto, se fija en la fase 8.
 - **Pantallas:** menú, briefing, pausa, resumen de misión y derrota/final de campaña.
 
-Estado actual (bloque 6.5): hay un HUD **temporal** con semilla, enemigos vivos, proyectiles, vida y
+Estado actual (bloque 7.5): hay un HUD **temporal** con semilla, enemigos vivos, proyectiles, vida y
 recarga. Ya existen en el periscopio la **retícula móvil** en el punto de mira, las marcas de
-distancia, el **cañón orientable** dibujado como trapecio, la **marca tenue del rumbo del casco** en
-el centro, el anillo de recarga con segundos, el fogonazo en la punta del cañón y la marca de
-impacto. El overlay rojo de daño y la pantalla provisional «TANQUE DESTRUIDO» están implementados.
-El HUD/radar definitivos llegan en la fase 8.
+distancia, la **marca tenue del rumbo del casco** en el centro, el anillo de recarga con segundos y
+la marca de impacto. **No se dibuja cañón ni fogonazo de arma** (decisión del usuario, 2026-10-27):
+la retícula basta para apuntar. El overlay rojo de daño y la pantalla provisional «TANQUE
+DESTRUIDO» están implementados. El HUD/radar definitivos llegan en la fase 8.
 
 ### Esquema ASCII (conceptual)
 
@@ -140,7 +140,7 @@ decimal (español) y **no deben depender solo del color**: los estados llevan ic
 ### Capas de pantalla
 
 1. Canvas 3D (1280×720 interno, escalado con letterboxing).
-2. Overlay de periscopio (máscara, retícula móvil, cañón orientable, casco y marcas). **Decisión
+2. Overlay de periscopio (máscara, retícula móvil, casco y marcas; sin cañón dibujado). **Decisión
    actual:** se pinta en el propio canvas (`render/periscope.ts`), no como viñeta CSS; el plan
    preveía CSS y se revisará en la fase 8 si el HUD lo requiere.
 3. HUD en DOM/CSS (vida, progreso, puntuación, recarga, avisos, iconos) — fase 8.
@@ -152,9 +152,9 @@ decimal (español) y **no deben depender solo del color**: los estados llevan ic
 - Cámara a **1,7 m** de altura sobre el tanque, **yaw = rumbo del tanque** (sin retardo lógico),
   **pitch base 0°** (el plan hablaba de ligeramente hacia abajo; se subió a 0 para que la retícula
   centrada sea un tiro horizontal) y FOV horizontal ≈ **72°**.
-- La imagen se enmarca con una máscara oscura pintada en el canvas; en el primer plano se dibujan el
-  cañón orientable y el borde del casco. **El overlay está en canvas, no en CSS** (decisión actual
-  desde la fase 4).
+- La imagen se enmarca con una máscara oscura pintada en el canvas; en el primer plano se dibuja el
+  borde del casco (sin cañón, decisión del usuario del 2026-10-27). **El overlay está en canvas, no
+  en CSS** (decisión actual desde la fase 4).
 - Retroceso de cámara al disparar (implementado): sube el pitch y la cámara retrocede unos
   centímetros durante un instante. Al recibir daño se tiñe la pantalla de rojo; la sacudida de cámara
   por impacto queda como deuda. Todos son efectos **visuales**: nunca cambian el rumbo lógico ni la
@@ -174,8 +174,9 @@ decimal (español) y **no deben depender solo del color**: los estados llevan ic
   casco no giran: solo apunta el cañón.
 - La retícula y las marcas de distancia se dibujan en la proyección del ángulo de puntería, no en la
   posición bruta del cursor; el cursor del sistema se oculta sobre el canvas.
-- El cañón se representa como un trapecio que pivota desde la mazorca (abajo, fuera de pantalla)
-  hacia la retícula; el fogonazo sale de la punta.
+- **No se dibuja el cañón:** la retícula y sus marcas son la referencia de puntería (decisión del
+  usuario, 2026-10-27). El disparo sigue saliendo de la boca del cañón real; el retroceso de cámara y
+  el tracer del proyectil dan el feedback del disparo.
 - El disparo usa la **dirección 3D** del cañón: el cabeceo influye de verdad. El proyectil sale del
   pivote de la torreta más el tubo.
 - Como el proyectil es 3D, un tiro elevado puede pasar por encima de un tanque y perderse, y los
@@ -402,11 +403,13 @@ Todo el sonido se **sintetiza con WebAudio**; no hay ficheros de audio ni músic
   `tanks.ts` y `AI_TUNING`.
 - **Sensibilidad del ratón:** el mapeo actual es lineal contra todo el canvas; no hay curvas,
   aceleración ni ajuste de sensibilidad. Si el QA lo pide, se convierte en opción de datos.
-- **Zonas de blindaje (planificado, bloque 7.5):** el cilindro de impacto de 2,2 m se mantiene; se
-  añaden zonas frontal/lateral/trasera con multiplicadores ×0,5/×1,0/×1,5. No hay zonas por oruga
-  ni torreta, ni daño direccional dentro de una misma cara.
-- **Alineación fina retícula-cañón:** comprobada con QA visual headless; si aparecen desajustes en
+- **Zonas de blindaje (implementadas, bloque 7.5):** el cilindro de impacto de 2,2 m se mantiene; las
+  zonas frontal/lateral/trasera aplican ×0,5/×1,0/×1,5. No hay zonas por oruga ni torreta, ni daño
+  direccional dentro de una misma cara.
+- **Alineación fina retícula-disparo:** comprobada con QA visual headless; si aparecen desajustes en
   resoluciones escaladas, revisar el mapeo canvas→píxeles en `bindMouseInput`.
+- **PLAN §7.7 describe el cañón dibujado:** el periscopio ya no lo pinta (decisión del usuario,
+  2026-10-27); falta sincronizar el plan cuando el usuario autorice tocar `PLAN.md`.
 
 ## 13. Balance de tanques (Segunda Guerra Mundial)
 

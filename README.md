@@ -83,8 +83,9 @@ npm run preview  # sirve dist/ para verificar el build
 | Depuración | `F3` | Previsto: overlay con fps, caras, celdas visibles y entidades. |
 
 No hay free-look (la cámara sigue al casco), ni torreta independiente, ni gamepad/móvil en 0.1.0.
-El cursor del sistema se oculta sobre el canvas; la retícula se dibuja en el punto de mira del cañón
-y en el centro queda una marca tenue del rumbo del casco. Mientras llega el HUD definitivo (fase 8),
+El cursor del sistema se oculta sobre el canvas; la retícula es la única referencia de puntería (el
+periscopio no dibuja el cañón) y en el centro queda una marca tenue del rumbo del casco. Mientras
+llega el HUD definitivo (fase 8),
 la pantalla muestra un texto temporal con semilla, enemigos vivos, proyectiles, vida y estado de
 recarga. Todos los detalles de diseño están en [`docs/GAME_DESIGN.md`](docs/GAME_DESIGN.md).
 

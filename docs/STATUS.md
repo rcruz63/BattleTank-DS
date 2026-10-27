@@ -1,7 +1,7 @@
 # Estado del proyecto — BattleTank-DS
 
 > **Actualizado:** 2026-10-27 · **Fase actual:** pausa de revisión; siguiente fase 8 (HUD)
-> **Último commit:** `feat(armor): blindaje direccional y flanqueo`
+> **Último commit:** `style(render): retirar el cañón 2D del periscopio`
 >
 > Este fichero es el punto de entrada para retomar el proyecto, sea otra persona, otro chat u
 > otro modelo. Se actualiza en **cada commit**. La verdad sobre el alcance está en el plan.
@@ -18,6 +18,11 @@
 
 ## Hecho
 
+- [x] **Ajuste de periscopio (2026-10-27).** Se retira el cañón 2D del overlay y su fogonazo (a
+      petición del usuario): la puntería se lee solo con la retícula. Se mantienen máscara, marcas de
+      rumbo y distancia, anillo de recarga y marca de impacto; el retroceso de cámara y el tracer
+      conservan el feedback del disparo. QA visual en Chrome headless con capturas antes/después; sin
+      cambios en el contrato de puntería ni en los tests (183 tests).
 - [x] **Bloque 7.5 — Blindaje direccional y flanqueo.** El daño se clasifica por zona respecto al
       rumbo del blanco (frontal ×0,5, lateral ×1,0, trasera ×1,5) y se aplica después del blindaje
       base y de las mejoras, igual para jugador y enemigos; la IA solo dispara dentro de ±15° de su
@@ -44,9 +49,10 @@
 - [x] **Bloque 6.5 — Puntería con ratón.** El cañón pivota sobre la mazorca en un cono de
       ±15° horizontal / ±4° vertical; la retícula sigue al puntero y el disparo sale en esa
       dirección (balística 3D, altura de blancos e impacto en suelo). Clic izquierdo o Espacio
-      disparan; recarga, marca de impacto y cañón dibujado se orientan a la retícula; el centro
-      conserva una marca tenue del rumbo del casco. La cámara pasa a pitch 0° y el movimiento no
-      cambia. Nuevo `systems/aim.ts`, entrada de ratón en `input.ts`, cableado en `main.ts` y
+      disparan; recarga, marca de impacto y cañón dibujado se orientaban a la retícula (el cañón
+      2D se retiró después); el centro conserva una marca tenue del rumbo del casco. La cámara pasa
+      a pitch 0° y el movimiento no cambia. Nuevo `systems/aim.ts`, entrada de ratón en `input.ts`,
+      cableado en `main.ts` y
       README/GAME_DESIGN/ARCHITECTURE/TESTING sincronizados. 132 tests en verde; QA visual
       headless con ratón a la derecha y clic.
 - [x] **Fase 6 — Enemigos e IA.** Panzer III y Tiger I con estado propio; percepción por muestreo
@@ -125,8 +131,12 @@
 - Reparto provisional de tipos de enemigo (`3 ligeros + 1 pesado`); la fase 9 lo sustituirá por el
   reparto de cada misión.
 - Pantalla de destrucción y texto de estado son provisionales (fases 8-9).
-- El cañón del jugador es un overlay 2D que pivota desde la mazorca; no hay modelo 3D del arma
-  en primera persona. Es suficiente para 0.1.0 y se puede mejorar tras la entrega.
+- **Sin cañón visible:** la puntería se lee solo con la retícula y no hay fogonazo en el cañón
+  (decisión del usuario, 2026-10-27); no hay modelo 3D del arma en primera persona. El retroceso de
+  cámara, la marca de impacto y el tracer mantienen el feedback del disparo.
+- **PLAN §7.7 sigue describiendo el cañón dibujado:** el cambio se ha registrado aquí, en
+  `CHANGELOG` y en `GAME_DESIGN`, pero `PLAN.md` no se toca sin autorización explícita; queda pendiente
+  sincronizarlo cuando el usuario lo apruebe.
 
 ## Decisiones y notas operativas
 
@@ -135,6 +145,7 @@
 - **QA del bloque 6.6:** además de los tests de regresión, se condujo el juego real en Chrome headless vía CDP (sin dependencias nuevas) para avanzar contra un enemigo: el jugador se detiene a 2,9 m (suma de radios 2,75 m + margen 0,15 m) y no lo cruza.
 - **QA de la fase 7:** se recogieron los tres pickups en Chrome headless vía CDP (botiquín de 40 a 70 PV, mejora de 100 a 120 de vida máxima, potencia con recarga de 1,56 s) y se verificaron con capturas el icono en el mundo, el aviso flotante y la línea de estado.
 - **QA del bloque 7.5:** en Chrome headless vía CDP, disparos al mismo Panzer III hicieron 60 de daño por la espalda y 20 de frente; la IA no disparó con el jugador a 90° del rumbo, mantuvo el heading durante 0,5 s de recarga y disparó al entrar en el arco de ±15°; se comprobaron las franjas de orientación (clara delante, roja detrás) con capturas.
+- **QA del ajuste de periscopio:** playtest en Chrome headless con capturas antes y después; la vista central queda despejada, la retícula sigue siendo legible y no hay errores de consola.
 - No hay `pnpm` instalado en la máquina; se usa **npm** (Node 24 / npm 11).
 - El audio se sintetiza con WebAudio: no habrá ficheros de audio ni assets externos.
 - La interfaz y la documentación van en español; los identificadores del código, en inglés.

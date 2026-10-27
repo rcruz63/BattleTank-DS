@@ -62,6 +62,10 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
   geometría de cajas compartida se extrae a `render/boxes.ts`.
 - La IA enemiga limita su fuego a un arco frontal de ±15° y deja de corregir el rumbo mientras
   recarga; `aimToleranceRadians` se sustituye por `fireArcDegrees`.
+- El periscopio deja de dibujar el cañón 2D y su fogonazo: la puntería se lee solo con la retícula
+  (decisión del usuario). Se mantienen la máscara, las marcas de rumbo y distancia, el anillo de
+  recarga y la marca de impacto; el retroceso de cámara y el tracer conservan el feedback del
+  disparo.
 
 ### Corregido
 

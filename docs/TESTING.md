@@ -75,7 +75,7 @@ DOM o WebAudio, el diseño que se está probando no está separado: extrae la l�
 | `render/background` | Fondo, horizonte y rejilla de suelo proyectada con una cámara fija. |
 | `render/painter` | Orden **de mayor a menor profundidad** (lo más lejano primero), desempate estable, secuencia de operaciones en el contexto simulado, no muta la entrada, presupuesto con el fixture denso. |
 | `render/renderer` | Composición del frame: fondo y rejilla antes que las caras; coberturas + tanques + pickups en una sola proyección + proyectiles añadidos; devuelve el número de caras pintadas. Test con contexto falso previsto. |
-| `render/periscope` | Validación manual/visual (usa el contexto completo, no solo `FaceCanvas`): retícula y marcas en `aimScreenX/Y`, cañón orientable sin tapar la zona útil, marca de rumbo del casco, anillo de recarga, fogonazo y marca de impacto. La posición de la retícula se prueba por separado en `systems/aim`. |
+| `render/periscope` | Validación manual/visual (usa el contexto completo, no solo `FaceCanvas`): retícula y marcas en `aimScreenX/Y`, marca de rumbo del casco, anillo de recarga y marca de impacto; no se dibuja cañón (la retícula es la referencia). La posición de la retícula se prueba por separado en `systems/aim`. |
 | `render/statusOverlay` | Validación manual/visual (contexto completo): panel temporal con semilla, vida, recarga y efectos; aviso flotante de pickup con desvanecimiento; pantalla provisional de destruido. |
 | `systems/loot` | Recogida solo a 2 m y una sola vez; cura 30 PV con tope; mejora +20 de vida máxima (y 20 PV) con reducción de daño multiplicativa acumulable ×3 y tope; potencia de 20 s que se renueva, con multiplicadores de daño ×1,75 y recarga ×0,65 y reversión al agotarse; texto del aviso; un jugador destruido no recoge. |
 | `systems/damage` | Impacto al jugador con blindaje base, mejoras acumuladas y zona direccional; impacto a enemigos con su blindaje y zona; balance 5/3/2 (Panzer III) y 8/4/3 (Tiger I) por frontal/lateral/trasero; muerte al llegar a 0; objetivos desconocidos o ya destruidos se ignoran. |
@@ -194,8 +194,8 @@ Marcar cada punto en el navegador; anotar semilla, fase y navegador usado. Los p
 - [ ] Las flechas no hacen scroll de la página.
 - [ ] El ratón mueve el cañón dentro del cono (±15° / ±4°) y la cámara **no** gira: el centro queda
       en el rumbo del casco.
-- [ ] La retícula sigue al puntero y el cañón dibujado apunta hacia ella; el cursor del sistema está
-      oculto sobre el canvas.
+- [ ] La retícula sigue al puntero y es la única referencia de puntería (no se dibuja cañón); el
+      cursor del sistema está oculto sobre el canvas.
 - [ ] El clic izquierdo y `Espacio` disparan; el tiro sale en la dirección de la retícula.
 - [ ] No se puede mirar libremente ni asomarse: la cámara es solidaria.
 - [ ] Colisión con coberturas y bordes: se desliza, no atraviesa, no se queda clavado en esquinas.
@@ -340,8 +340,9 @@ La entrega se acepta cuando se cumplen los doce criterios del plan
   coberturas inteligentes (deuda planificada).
 - **Ganchos de depuración** (`?seed`, `window.__BT__`): no forman parte de la API del juego y no se
   prueban como contrato; sí se usan en QA manual.
-- **Alineación retícula-cañón en pantalla:** la posición de la retícula es matemática pura y tiene
-  tests; el cañón dibujado y el cursor oculto son QA visual (headless y navegador), no unitario.
+- **Alineación retícula-disparo en pantalla:** la posición de la retícula es matemática pura y tiene
+  tests; la retícula dibujada, el cursor oculto y la ausencia de cañón son QA visual (headless y
+  navegador), no unitario.
 - **Sensibilidad y mapeo del ratón:** lineal contra el canvas; sin curvas ni opciones; a revisar con
   QA.
 - **Sin matriz de navegadores automatizada**: se prueba en un navegador de escritorio moderno.

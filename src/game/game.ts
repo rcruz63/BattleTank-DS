@@ -70,7 +70,6 @@ export interface Game {
 
 interface EffectsState {
   recoil: number;
-  muzzleFlash: number;
   hitMarker: number;
   damageFlash: number;
   pickupFlash: number;
@@ -97,7 +96,6 @@ const FIRE_ALERT_RADIUS = 60;
 function createEffects(): EffectsState {
   return {
     recoil: 0,
-    muzzleFlash: 0,
     hitMarker: 0,
     damageFlash: 0,
     pickupFlash: 0,
@@ -108,7 +106,6 @@ function createEffects(): EffectsState {
 
 function decayEffects(effects: EffectsState, stepSeconds: number): void {
   effects.recoil = Math.max(0, effects.recoil - stepSeconds * 4.5);
-  effects.muzzleFlash = Math.max(0, effects.muzzleFlash - stepSeconds * 7);
   effects.hitMarker = Math.max(0, effects.hitMarker - stepSeconds * 5);
   effects.damageFlash = Math.max(0, effects.damageFlash - stepSeconds * 2.5);
   effects.pickupFlash = Math.max(0, effects.pickupFlash - stepSeconds * 0.8);
@@ -163,7 +160,6 @@ function stepCombat(state: GameState, stepSeconds: number): void {
     });
     if (fired) {
       effects.recoil = 1;
-      effects.muzzleFlash = 1;
       alertEnemiesNear(enemies, player.position, FIRE_ALERT_RADIUS);
     }
   }
@@ -225,7 +221,6 @@ function renderGame(state: GameState, context: CanvasRenderingContext2D): void {
     reloadProgress: reloadProgress(player),
     reloadRemaining: player.reloadRemaining,
     ready: isWeaponReady(player),
-    muzzleFlash: effects.muzzleFlash,
     hitMarker: effects.hitMarker,
     aimScreenX: aim.screenX,
     aimScreenY: aim.screenY,
