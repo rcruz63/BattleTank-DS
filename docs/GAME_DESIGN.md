@@ -2,8 +2,8 @@
 
 Documento de diseño del vertical slice **0.1.0**. Se deriva del plan aprobado
 ([`PLAN.md`](PLAN.md), fuente de verdad del alcance); si hay conflicto, manda el plan y se corrige
-este documento. Estado: fases 0–6 cerradas (bootstrap, núcleo, render, mundo, jugador, combate e
-IA); la siguiente es la fase 7 (pickups). El detalle vivo está en [`STATUS.md`](STATUS.md).
+este documento. Estado: fases 0–6 y el bloque 6.5 (puntería con ratón) cerrados; la siguiente es la
+fase 7 (pickups). El detalle vivo está en [`STATUS.md`](STATUS.md).
 
 **Balance de tanques:** los números concretos (PV, velocidad, giro, recarga, daño, blindaje y
 velocidad de proyectil) viven en **`src/config/tanks.ts`**, que es la fuente de verdad. Este
@@ -11,7 +11,8 @@ documento describe roles y criterios de diseño; el ajuste fino de dificultad se
 
 - **Título provisional:** BATTLE TANK — PERISCOPIO.
 - **Ambientación:** frente occidental, 1944. Jugador aliado con un M4 Sherman contra carros del Eje.
-- **Cámara:** primera persona tipo periscopio, sin vista libre; casco y mira solidarios.
+- **Cámara:** primera persona tipo periscopio, sin vista libre; casco y cámara solidarios, y el cañón
+  apunta con el ratón dentro de un cono.
 - **Formato:** partidas cortas de acción, campaña de 3 misiones encadenadas.
 - **Plataforma:** navegador de escritorio, teclado, sin assets externos.
 
@@ -69,15 +70,16 @@ los resúmenes. No hay guardado a mitad de partida.
 |---|---|---|
 | Avanzar | `W` o `↑` | **Disponible.** Inercia ligera; el tanque avanza en la dirección de su rumbo. |
 | Retroceder | `S` o `↓` | **Disponible.** Marcha atrás con el mismo control. |
-| Girar | `A`/`D` o `←`/`→` | **Disponible.** Giran casco **y** mira a la vez; la cámara es solidaria, sin torreta independiente. |
-| Disparar | `Espacio` | **Disponible (fase 5).** Un disparo por pulsación; mantener no repite. Recarga de 2,4 s. |
+| Girar | `A`/`D` o `←`/`→` | **Disponible.** Gira el casco y con él la vista; no hay torreta independiente. |
+| Apuntar | Ratón | **Disponible (bloque 6.5).** Mueve el cañón dentro de ±15° horizontal y ±4° vertical respecto al rumbo del tanque. **La cámara no gira con el ratón.** |
+| Disparar | `Espacio` o clic izquierdo | **Disponible.** Un disparo por pulsación; mantener no repite. Recarga de 2,4 s. |
 | Pausa | `Esc` | Previsto (fase 8): congela la simulación y abre el menú. |
 | Silenciar | `M` | Previsto (fase 10). |
 | Depuración | `F3` | Previsto: overlay con fps, caras, celdas visibles y entidades. |
 
-No hay clic para disparar ni apuntado libre con el ratón, ni strafe, ni gamepad, ni controles
-táctiles en 0.1.0. Mientras no exista el HUD, la pantalla muestra un texto temporal con semilla,
-teclas y vida.
+No hay free-look ni apuntado fuera del cono, ni torreta independiente, ni strafe, ni gamepad, ni
+controles táctiles en 0.1.0. El cursor del sistema se oculta sobre el canvas. Mientras no exista el
+HUD, la pantalla muestra un texto temporal con semilla, teclas y vida.
 
 ## 4. HUD y capas
 
@@ -90,18 +92,20 @@ teclas y vida.
 - **Radar:** circular, abajo a la derecha, centrado en el tanque y orientado con el rumbo; alcance
   45 m, barrido animado. Enemigos como triángulos rojos, pickups como rombos verdes y coberturas
   como trazos tenues. No muestra el detalle del mapa.
-- **Recarga:** anillo de progreso alrededor de la mira + segundos restantes («1,4 s») mientras
-  recarga; un destello indica que el arma está lista.
+- **Recarga:** anillo de progreso alrededor de la retícula del cañón + segundos restantes («1,4 s»)
+  mientras recarga; un destello indica que el arma está lista.
 - **Efectos temporales:** iconos de potencia y de mejora activa con cuenta atrás.
 - **Avisos de estado:** mensajes breves (objetivo cumplido, daño crítico, recarga completada).
 - **Rumbo:** indicador discreto de orientación (brújula) para mitigar la desorientación en primera
   persona; previsto, se fija en la fase 8.
 - **Pantallas:** menú, briefing, pausa, resumen de misión y derrota/final de campaña.
 
-Estado actual (fase 6): hay un HUD **temporal** con semilla, enemigos vivos, proyectiles, vida y
-recarga. Ya existen en el periscopio el anillo de recarga con segundos, el fogonazo, la marca de
-impacto y el retroceso de cámara; el overlay rojo de daño y la pantalla provisional «TANQUE
-DESTRUIDO» están implementados. El HUD/radar definitivos llegan en la fase 8.
+Estado actual (bloque 6.5): hay un HUD **temporal** con semilla, enemigos vivos, proyectiles, vida y
+recarga. Ya existen en el periscopio la **retícula móvil** en el punto de mira, las marcas de
+distancia, el **cañón orientable** dibujado como trapecio, la **marca tenue del rumbo del casco** en
+el centro, el anillo de recarga con segundos, el fogonazo en la punta del cañón y la marca de
+impacto. El overlay rojo de daño y la pantalla provisional «TANQUE DESTRUIDO» están implementados.
+El HUD/radar definitivos llegan en la fase 8.
 
 ### Esquema ASCII (conceptual)
 
@@ -111,7 +115,7 @@ DESTRUIDO» están implementados. El HUD/radar definitivos llegan en la fase 8.
 │                                                                              │
 │                                                                              │
 │                          ╭─────────────────────╮                             │
-│                          │      mira ⊕         │   ← anillo de recarga       │
+│                          │    retícula ⊕       │   ← anillo de recarga       │
 │                          │      1,4 s          │                             │
 │                          ╰─────────────────────╯                             │
 │                                                                              │
@@ -123,15 +127,16 @@ DESTRUIDO» están implementados. El HUD/radar definitivos llegan en la fase 8.
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-Las posiciones son orientativas: la composición exacta se ajusta en la fase 8. Los textos usan coma
+Las posiciones son orientativas: la retícula se mueve con el ratón y la composición exacta se ajusta
+en la fase 8. Los textos usan coma
 decimal (español) y **no deben depender solo del color**: los estados llevan icono o forma.
 
 ### Capas de pantalla
 
 1. Canvas 3D (1280×720 interno, escalado con letterboxing).
-2. Overlay de periscopio (máscara, mira, cañón y casco). **Decisión actual:** se pinta en el propio
-   canvas (`render/periscope.ts`), no como viñeta CSS; el plan preveía CSS y se revisará en la fase 8
-   si el HUD lo requiere.
+2. Overlay de periscopio (máscara, retícula móvil, cañón orientable, casco y marcas). **Decisión
+   actual:** se pinta en el propio canvas (`render/periscope.ts`), no como viñeta CSS; el plan
+   preveía CSS y se revisará en la fase 8 si el HUD lo requiere.
 3. HUD en DOM/CSS (vida, progreso, puntuación, recarga, avisos, iconos) — fase 8.
 4. Radar en un canvas pequeño independiente — fase 8.
 5. Overlays de menú/briefing/pausa/resumen encima de todo — fases 8-9.
@@ -139,19 +144,38 @@ decimal (español) y **no deben depender solo del color**: los estados llevan ic
 ## 5. Visión de periscopio y oclusión
 
 - Cámara a **1,7 m** de altura sobre el tanque, **yaw = rumbo del tanque** (sin retardo lógico),
-  **pitch fijo** ligeramente hacia abajo y FOV horizontal ≈ **72°**.
-- La imagen se enmarca con una máscara oscura pintada en el canvas; la mira tiene marcas de
-  distancia y en el primer plano se dibujan la silueta del cañón y el borde del casco. **El overlay
-  está en canvas, no en CSS** (decisión actual desde la fase 4).
+  **pitch base 0°** (el plan hablaba de ligeramente hacia abajo; se subió a 0 para que la retícula
+  centrada sea un tiro horizontal) y FOV horizontal ≈ **72°**.
+- La imagen se enmarca con una máscara oscura pintada en el canvas; en el primer plano se dibujan el
+  cañón orientable y el borde del casco. **El overlay está en canvas, no en CSS** (decisión actual
+  desde la fase 4).
 - Retroceso de cámara al disparar (implementado): sube el pitch y la cámara retrocede unos
   centímetros durante un instante. Al recibir daño se tiñe la pantalla de rojo; la sacudida de cámara
   por impacto queda como deuda. Todos son efectos **visuales**: nunca cambian el rumbo lógico ni la
   simulación.
+- **La cámara no se mueve con el ratón**: apuntar es exclusivo del cañón. El centro de la pantalla
+  marca el rumbo del casco con una cruz tenue; la retícula del cañón se desplaza por el cono.
 - No hay vista por encima de las coberturas ni asomarse: la cámara está por debajo de la altura
   mínima de cobertura. La oclusión es **total mientras la cobertura está intacta**.
 - Las coberturas destruidas dejan escombros bajos: se ve (y se dispara) a través de ellas.
 - Los enemigos usan la misma línea de visión: no disparan a través de coberturas intactas. La
   oclusión es una regla simétrica, no una ventaja artificial del jugador.
+
+### Puntería del cañón (bloque 6.5)
+
+- El puntero del ratón se normaliza con el rectángulo del canvas y se mapea linealmente a un cono de
+  **±15° horizontal y ±4° vertical** respecto al rumbo del tanque (`AIM_LIMITS`). La cámara y el
+  casco no giran: solo apunta el cañón.
+- La retícula y las marcas de distancia se dibujan en la proyección del ángulo de puntería, no en la
+  posición bruta del cursor; el cursor del sistema se oculta sobre el canvas.
+- El cañón se representa como un trapecio que pivota desde la mazorca (abajo, fuera de pantalla)
+  hacia la retícula; el fogonazo sale de la punta.
+- El disparo usa la **dirección 3D** del cañón: el cabeceo influye de verdad. El proyectil sale del
+  pivote de la torreta más el tubo.
+- Como el proyectil es 3D, un tiro elevado puede pasar por encima de un tanque y perderse, y los
+  tiros bajos impactan en el suelo (`kind: 'ground'`). Los muros intactos siguen bloqueando.
+- No hay torreta independiente ni free-look: el casco, la cámara y el movimiento siguen siendo
+  solidarios.
 
 ## 6. Coberturas y materiales
 
@@ -324,6 +348,12 @@ Todo el sonido se **sintetiza con WebAudio**; no hay ficheros de audio ni músic
   feedback.
 - **Balance definitivo:** ajuste de dificultad previsto para la fase 9 sobre los valores de
   `tanks.ts` y `AI_TUNING`.
+- **Sensibilidad del ratón:** el mapeo actual es lineal contra todo el canvas; no hay curvas,
+  aceleración ni ajuste de sensibilidad. Si el QA lo pide, se convierte en opción de datos.
+- **Modelo de impacto de tanque:** cilindro de 2,2 m de alto y radio del tanque; no hay zonas
+  (oruga, torreta, lateral) ni daño direccional. Queda como deuda de profundidad de combate.
+- **Alineación fina retícula-cañón:** comprobada con QA visual headless; si aparecen desajustes en
+  resoluciones escaladas, revisar el mapeo canvas→píxeles en `bindMouseInput`.
 
 ## 13. Balance de tanques (Segunda Guerra Mundial)
 
@@ -364,7 +394,7 @@ No se implementa en esta entrega (deuda planificada, no olvido):
 - Efectos avanzados: sombras dinámicas, partículas GPU, post-proceso.
 - Pathfinding táctico avanzado (flanqueo coordinado, uso inteligente de coberturas) más allá de A*
   básico.
-- Vista libre, torreta independiente o apuntado con ratón.
+- Vista libre o torreta independiente. La puntería con ratón dentro del cono **sí** está incluida (bloque 6.5).
 
 Supuestos de alcance: una sola facción jugable (aliada), 3 misiones, título provisional y
 navegadores modernos de escritorio.

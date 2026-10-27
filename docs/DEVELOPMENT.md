@@ -19,6 +19,9 @@ Se derivan de [`PLAN.md`](PLAN.md) §9 y están alineadas con la configuración 
 - Comentarios en español, centrados en el **porqué**; código e identificadores en inglés.
 - Sin `any`, sin `@ts-ignore` y sin desactivar reglas sin justificarlo y registrarlo.
 - Sin código muerto, sin `TODO` sin dueño/fase y sin `console.log` de depuración permanente.
+- La puntería es matemática pura (`systems/aim.ts`); el cableado DOM de teclado y ratón vive en
+  `main.ts`, que inyecta un `InputState` en `createGame`. `game.ts` no enlaza eventos, para que los
+  tests puedan inyectar entrada sin DOM.
 - Antes de optimizar: respetar el presupuesto de rendimiento del renderer y medir con el contador de
   depuración (`F3`, previsto).
 
@@ -288,8 +291,9 @@ Detalle completo en [`TESTING.md`](TESTING.md); resumen de convenciones:
   2D simulado y fixtures de rejilla/cámara/caras; la IA, con rejilla, jugador y RNG inyectados.
 - Helpers compartidos en `tests/helpers/` (previsto) para no duplicar fixtures.
 - Los tests son código: también se leen, se refactorizan y no se dejan comentados.
-- Estado actual: **121 tests en 23 ficheros** (`tests/core`, `tests/world`, `tests/render`,
-  `tests/systems`, `tests/game`), incluidas las pruebas de LOS, A*, IA, modelos y oclusión.
+- Estado actual: **132 tests en 24 ficheros** (`tests/core`, `tests/world`, `tests/render`,
+  `tests/systems`, `tests/game`), incluidas las pruebas de puntería, LOS, A*, IA, modelos y
+  oclusión.
 
 ## 12. Si falla `npm run check`
 
@@ -328,8 +332,11 @@ Decisiones que este documento ha tenido que asumir; conviene cerrarlas y corregi
 - **Licencia:** no declarada; pendiente de decisión del usuario.
 - **Balance fase 6:** el balance real está en `src/config/tanks.ts` (Panzer III 100 PV; Tiger I
   140 PV y 10 % de blindaje); el ajuste de dificultad por misión queda para la fase 9.
+- **Puntería:** el cono de ratón (±15° / ±4°) y el mapeo lineal están en `AIM_LIMITS`/`aim.ts`; no
+  hay sensibilidad configurable ni curvas (ver GAME_DESIGN §12). El cursor se oculta con CSS.
 - **Pendientes de diseño:** ver [`GAME_DESIGN.md`](GAME_DESIGN.md#12-pendientes-de-diseño-para-el-lead)
-  (fórmula de puntuación, reducciones de daño de pickups, balance de misiones, reposición de IA…).
+  (fórmula de puntuación, reducciones de daño de pickups, balance de misiones, reposición de IA,
+  modelo de impacto de tanques…).
 
 ## 14. Ganchos de depuración
 

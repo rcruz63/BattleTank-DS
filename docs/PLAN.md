@@ -28,7 +28,7 @@ Entrega `0.1.0`: **vertical slice jugable completo** con 3 misiones encadenadas.
 | Perspectiva | Primera persona tipo periscopio, polígonos pseudo-3D planos (Canvas 2D) |
 | Stack | TypeScript + Vite + Canvas 2D + Vitest, sin dependencias en runtime |
 | Alcance 0.1.0 | Vertical slice: escenario generado, combate, IA, coberturas, pickups, HUD, misiones, audio |
-| Controles | Escritorio con teclado: `W/S` avanzar/retroceder, `A/D` girar tanque+mira, `Espacio`/clic disparar, `Esc` pausa, `M` silenciar |
+| Controles | `W/S` avanzar/retroceder, `A/D` girar tanque y vista, **ratón para apuntar el cañón en un cono de ±15° horizontal / ±4° vertical** (sin torreta independiente ni free-look), `Espacio`/clic izquierdo disparar, `Esc` pausa, `M` silenciar |
 | Idioma | Interfaz y documentación en español; identificadores, tipos y nombres de fichero en inglés |
 | Audio | Efectos sintetizados con WebAudio (sin ficheros de audio) |
 | Assets | Cero assets externos: geometría, tipografía e iconos procedurales/CSS |
@@ -289,8 +289,11 @@ geometría; el diseño evita intersecciones (celdas disjuntas) y lo asume como d
 
 - Proyectiles balísticos discretos (no hitscan) con velocidad, gravedad visual y vida útil;
   colisión con coberturas (daño) y tanques.
-- Recarga: 2,4 s base; anillo alrededor de la mira + segundos restantes en el HUD. La tecla de
+- Recarga: 2,4 s base; anillo alrededor de la retícula + segundos restantes en el HUD. La tecla de
   disparo no se repite automáticamente: hay que volver a pulsar.
+- **Puntería con ratón (bloque 6.5):** el cañón pivota sobre la mazorca dentro de un cono de
+  ±15° horizontal y ±4° vertical; la retícula sigue al puntero, el disparo sale en esa dirección
+  (balística 3D con impacto en suelo y altura de blancos) y el casco/cámara no giran con el ratón.
 - Daño del jugador: 40 por impacto (3 impactos a un ligero, 4 a un pesado con blindaje).
 - Feedback: fogonazo, retroceso de cámara, sacudida, marca de impacto, números flotantes de
   daño/puntos, escombros al destruir una cobertura.
@@ -342,8 +345,9 @@ Campaña de 3 misiones generadas con parámetros escalados (en `src/config/missi
 - **Radar**: circular, abajo a la derecha, centrado en el tanque y orientado con el rumbo;
   enemigos como triángulos rojos, pickups como rombos verdes, coberturas como trazos tenues.
   Alcance 45 m con barrido animado.
-- **Recarga**: anillo de progreso alrededor de la mira + «1,4 s» si está recargando; el arma
-  lista se marca con un destello.
+- **Recarga**: anillo de progreso alrededor de la retícula móvil + segundos si está recargando;
+  el arma lista se marca con un destello. La retícula sigue al ratón dentro del cono y el cañón
+  dibujado pivota desde la torreta hacia ella; una marca tenue en el centro indica el rumbo del casco.
 - Capas: canvas 3D → viñeta de periscopio (CSS) → HUD DOM → overlays de menú/briefing/resultados.
 - Accesibilidad mínima: textos legibles, contraste alto, sin depender solo del color (iconos).
 

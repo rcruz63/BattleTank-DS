@@ -11,7 +11,7 @@ son reglas deterministas sobre estado, los constructores de caras (`worldFaces`,
 `bulletFaces`) producen datos, `faces` los proyecta y solo el pintor toca el contrato gráfico
 (`FaceCanvas`). La composición del frame vive en `render/renderer.ts`; **no hay una escena unificada
 (`render/scene.ts`)**. La UI y el audio son adaptadores finos que se sustituyen por dobles. Estado:
-**121 tests en 23 ficheros** con las fases 0–6 cerradas.
+**132 tests en 24 ficheros** con las fases 0–6 y el bloque 6.5 (puntería con ratón) cerrados.
 
 | Nivel | Qué cubre | Herramienta | Cuándo |
 |---|---|---|---|
@@ -56,9 +56,10 @@ DOM o WebAudio, el diseño que se está probando no está separado: extrae la l�
 | `entities/player` | Creación desde `tanks.ts` y el spawn; rumbo solidario, velocidad, recarga, blindaje y vida inicial. Cubierto de forma indirecta por `movement` y `game`; test directo previsto. |
 | `entities/bullet` | Normalización de la dirección, valores por defecto de radio, dueño, daño y ciclo de vida inicial. |
 | `entities/enemy` | Creación del Panzer III/Tiger I desde `tanks.ts` y el spawn; vida, blindaje, radios y modo de IA inicial. |
-| `systems/input` | **W/S y ↑/↓** para el avance; **A/D y ←/→** para el giro; el disparo (`Espacio`) es un flanco que se consume; `clear` libera teclas y disparo pendiente. El adaptador de teclado evita el scroll con las flechas. |
+| `systems/input` | **W/S y ↑/↓** para el avance; **A/D y ←/→** para el giro; el puntero normalizado (`setPointer`, limitado a ±1) y el disparo como flanco (`Espacio`, `requestFire`); `clear` libera teclas, disparo y puntero. Los adaptadores DOM evitan el scroll con flechas y convierten coordenadas del canvas escalado y clic izquierdo. |
+| `systems/aim` | `resolveAim`: centro → tiro horizontal y retícula en el centro; derecha → giro máximo y retícula a la derecha; elevación → cabeceo y retícula arriba; puntero fuera de rango se limita al cono; gira con el rumbo del tanque; dirección siempre normalizada. |
 | `systems/movement` | Avance en el sentido de la mira, retroceso más lento, giro del casco y la mira a la vez, sin entrada no cambia nada, se detiene ante cobertura, normalización del ángulo. |
-| `systems/combat` | `isWeaponReady`/`reloadProgress`; recarga de 2,4 s; no dispara durante la recarga; un disparo crea un proyectil en la boca del cañón alineado con la mira; los proyectiles avanzan en subpasos, impactan en coberturas por altura y en objetivos, aplican daño y destruyen madera (1 impacto) y ladrillo (3); caducidad; filtrado por facción (sin fuego amigo). |
+| `systems/combat` | `isWeaponReady`/`reloadProgress`; recarga de 2,4 s; no dispara durante la recarga; el disparo sale del pivote de la torreta + 2,2 m de tubo, con la dirección 3D de la mira; los proyectiles avanzan en subpasos, impactan en coberturas por altura, en tanques (cilindro de 2,2 m) **y en el suelo**, aplican daño y destruyen madera (1 impacto) y ladrillo (3); un disparo alto pasa por encima de un tanque; caducidad; filtrado por facción. |
 | `systems/ai` | Dispara con LOS, encarado y tras recargar; no dispara a través de cobertura intacta; alertado sin LOS avanza con A*; se queda quieto si el jugador está destruido; `alertEnemiesNear` despierta solo a los cercanos al estampido. |
 | `render/camera` | Transformación mundo→cámara con yaw/posición conocidos; proyección del centro; focal según FOV; puntos detrás de cámara. |
 | `render/faces` | `projectWorldFaces`: descarte de caras traseras, recorte de plano cercano, proyección, profundidad media, sombreado por normal y niebla; cubierto vía `worldFaces`, `models` y la prueba de oclusión. |
@@ -70,12 +71,12 @@ DOM o WebAudio, el diseño que se está probando no está separado: extrae la l�
 | `render/background` | Fondo, horizonte y rejilla de suelo proyectada con una cámara fija. |
 | `render/painter` | Orden **de mayor a menor profundidad** (lo más lejano primero), desempate estable, secuencia de operaciones en el contexto simulado, no muta la entrada, presupuesto con el fixture denso. |
 | `render/renderer` | Composición del frame: fondo y rejilla antes que las caras; coberturas + tanques en una sola proyección + proyectiles añadidos; devuelve el número de caras pintadas. Test con contexto falso previsto. |
-| `render/periscope` | Validación manual/visual (usa el contexto completo, no solo `FaceCanvas`): máscara, mira, cañón y casco no tapan la zona útil. |
+| `render/periscope` | Validación manual/visual (usa el contexto completo, no solo `FaceCanvas`): retícula y marcas en `aimScreenX/Y`, cañón orientable sin tapar la zona útil, marca de rumbo del casco, anillo de recarga, fogonazo y marca de impacto. La posición de la retícula se prueba por separado en `systems/aim`. |
 | `systems/loot` (fase 7) | Efectos de pickups, topes, acumulación, caducidad y pérdida al morir. |
 | `systems/mission` / `systems/score` / `systems/progression` (fase 9) | Validación de misiones, progreso, victoria/derrota, puntuación y persistencia con almacenamiento falso. |
 | `ui` (parte pura, fase 8) | Formateo de segundos/puntos/porcentajes, umbrales de color de vida, matemática del radar, cuenta atrás de efectos. El DOM real no se prueba en unitarias. |
 | `audio` (fase 10) | Con un doble de `AudioBus`: mapeo de eventos a efectos, mute/volumen, no lanzar si no hay WebAudio. |
-| `game` | `createGame` con semilla e `InputState` inyectado: expone arena, jugador, enemigos y proyectiles; `update` responde a avance/giro/disparo y mueve la IA; `dispose` desengancha la entrada. En fases posteriores: máquina de estados, pausa y reinicio. |
+| `game` | `createGame` con semilla e `InputState` inyectado: expone arena, jugador, enemigos y proyectiles; `update` responde a avance/giro y resuelve la puntería con el puntero; el disparo sale con la dirección 3D del cañón (el ratón orienta el tiro); mueve la IA; `dispose` limpia la entrada. En fases posteriores: máquina de estados, pausa y reinicio. |
 
 ## 4. Renderer con contexto simulado
 
@@ -131,6 +132,8 @@ avanzan como en el juego real y se afirman invariantes. Escenarios mínimos:
 |---|---|
 | Movimiento y colisión | Con `InputState` inyectado: avanzar, girar, retroceder; se desliza y no atraviesa coberturas; el borde del mundo no se cruza. |
 | Disparo y recarga | Un disparo listo crea un proyectil; durante 2,4 s el arma no dispara; el flanco de entrada no repite fuego al mantener la tecla. |
+| Puntería | El puntero a la derecha inclina el cañón y el proyectil sale con dirección 3D coherente con `resolveAim`; el centro apunta al frente; la cámara no cambia de rumbo con el ratón. |
+| Tiro alto/suelo | Un disparo elevado puede pasar por encima de un tanque; uno bajo impacta en el suelo (`kind: 'ground'`) y no daña a nadie. |
 | Proyectil e impacto | Un proyectil avanza en subpasos, impacta en una cobertura y le aplica daño; madera cae al primer impacto y ladrillo al tercero; la cobertura destruida deja de bloquear el paso y los proyectiles pasan por encima de los escombros. |
 | Caducidad | Un proyectil que no impacta desaparece al superar su vida útil y no se simula para siempre. |
 | IA: percepción y ataque | Un enemigo con LOS, encarado y recargado dispara; sin LOS avanza con A*; no dispara a través de cobertura intacta; el estampido alerta solo a los enemigos a ≤ 60 m. |
@@ -176,9 +179,14 @@ Marcar cada punto en el navegador; anotar semilla, fase y navegador usado. Los p
 
 ### Movimiento y controles (fase 4)
 
-- [ ] `W`/`S` y `↑`/`↓` avanzan y retroceden con inercia; `A`/`D` y `←`/`→` giran tanque y mira a
+- [ ] `W`/`S` y `↑`/`↓` avanzan y retroceden con inercia; `A`/`D` y `←`/`→` giran tanque y vista a
       la vez.
 - [ ] Las flechas no hacen scroll de la página.
+- [ ] El ratón mueve el cañón dentro del cono (±15° / ±4°) y la cámara **no** gira: el centro queda
+      en el rumbo del casco.
+- [ ] La retícula sigue al puntero y el cañón dibujado apunta hacia ella; el cursor del sistema está
+      oculto sobre el canvas.
+- [ ] El clic izquierdo y `Espacio` disparan; el tiro sale en la dirección de la retícula.
 - [ ] No se puede mirar libremente ni asomarse: la cámara es solidaria.
 - [ ] Colisión con coberturas y bordes: se desliza, no atraviesa, no se queda clavado en esquinas.
 - [ ] Al disparar, la cámara retrocede un instante y vuelve; el rumbo lógico no cambia.
@@ -191,6 +199,8 @@ Marcar cada punto en el navegador; anotar semilla, fase y navegador usado. Los p
 - [ ] La recarga dura 2,4 s; el indicador definitivo llegará con el HUD **(fase 8)**.
 - [ ] El proyectil es visible (tracer) y respeta la oclusión: no atraviesa coberturas intactas, y
       los escombros no lo detienen.
+- [ ] Un tiro alto por encima de un tanque pasa de largo y cae al suelo; un tiro centrado impacta.
+- [ ] Recarga: anillo y segundos junto a la retícula; el anillo se dibuja en el punto de mira.
 - [ ] Madera cae con 1 impacto; ladrillo con 3; hormigón y acero no se destruyen.
 - [ ] Al destruir una cobertura se ve y se dispara a través; se puede pasar por la celda.
 - [ ] Los proyectiles enemigos hacen daño al jugador y el blindaje se nota (comparar Panzer III y
@@ -305,6 +315,10 @@ La entrega se acepta cuando se cumplen los diez criterios del plan
   coberturas inteligentes (deuda planificada).
 - **Ganchos de depuración** (`?seed`, `window.__BT__`): no forman parte de la API del juego y no se
   prueban como contrato; sí se usan en QA manual.
+- **Alineación retícula-cañón en pantalla:** la posición de la retícula es matemática pura y tiene
+  tests; el cañón dibujado y el cursor oculto son QA visual (headless y navegador), no unitario.
+- **Sensibilidad y mapeo del ratón:** lineal contra el canvas; sin curvas ni opciones; a revisar con
+  QA.
 - **Sin matriz de navegadores automatizada**: se prueba en un navegador de escritorio moderno.
 - **Artefactos cosméticos del painter's algorithm**: limitación aceptada ([`DECISIONS.md`](DECISIONS.md),
   ADR-002); no se eliminan con tests, solo se acotan con fixtures.
