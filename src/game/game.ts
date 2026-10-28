@@ -13,6 +13,8 @@ import type { PickupState } from '../entities/pickup';
 import { createPlayer, playerForward } from '../entities/player';
 import type { PlayerState } from '../entities/player';
 import { overlayTint } from '../render/canvas';
+import { drawCombatFeedback } from '../render/combatFeedback';
+import type { DamagePopup } from '../render/combatFeedback';
 import { drawPeriscope } from '../render/periscope';
 import type { PeriscopeState } from '../render/periscope';
 import { createPlayerCamera } from '../render/playerCamera';
@@ -33,7 +35,8 @@ import {
   updatePlayerWeapon,
   updateProjectiles,
 } from '../systems/combat';
-import { applyProjectileHit } from '../systems/damage';
+import type { ProjectileEvent } from '../systems/combat';
+import { resolveProjectileHit } from '../systems/damage';
 import { createInputState } from '../systems/input';
 import type { InputState } from '../systems/input';
 import {
@@ -46,6 +49,7 @@ import {
 } from '../systems/loot';
 import type { LootState } from '../systems/loot';
 import { updatePlayerMovement } from '../systems/movement';
+import { refreshEnemyVisibility } from '../systems/visibility';
 import { generateArena } from '../world/generate';
 import type { GeneratedArena, SpawnPoint } from '../world/types';
 
@@ -63,6 +67,7 @@ export interface Game {
   readonly pickups: readonly PickupState[];
   readonly loot: LootState;
   readonly bullets: readonly Bullet[];
+  readonly damagePopups: readonly DamagePopup[];
   update(stepSeconds: number): void;
   render(context: CanvasRenderingContext2D): void;
   dispose(): void;
@@ -88,10 +93,12 @@ interface GameState {
   readonly bullets: Bullet[];
   readonly aiRng: Rng;
   readonly effects: EffectsState;
+  readonly damagePopups: DamagePopup[];
   aim: ResolvedAim;
 }
 
 const FIRE_ALERT_RADIUS = 60;
+const DAMAGE_POPUP_LIFETIME = 1.1;
 
 function createEffects(): EffectsState {
   return {
@@ -129,6 +136,38 @@ function collectLoot(state: GameState): void {
   state.effects.pickupNotice = pickupEffectText(last.kind, state.loot);
   state.effects.pickupColor = PICKUP_COLORS[last.kind];
   state.effects.pickupFlash = 1;
+}
+
+function updateDamagePopups(popups: DamagePopup[], stepSeconds: number): void {
+  for (let index = popups.length - 1; index >= 0; index -= 1) {
+    const popup = popups[index];
+    if (!popup) continue;
+    popup.age += stepSeconds;
+    if (popup.age > DAMAGE_POPUP_LIFETIME) popups.splice(index, 1);
+  }
+}
+
+function resolveImpacts(state: GameState, impacts: ProjectileEvent[]): boolean {
+  let playerHit = false;
+  for (const impact of impacts) {
+    const result = resolveProjectileHit(impact, {
+      player: state.player,
+      enemies: state.enemies,
+      loot: state.loot,
+    });
+    if (result.playerHit) playerHit = true;
+    if (result.target === 'enemy' && result.damage > 0) {
+      state.damagePopups.push({
+        position: impact.position,
+        amount: result.damage,
+        zone: result.zone,
+        killed: result.killed,
+        age: 0,
+      });
+    }
+  }
+  if (impacts.some((impact) => impact.kind !== 'ground')) state.effects.hitMarker = 1;
+  return playerHit;
 }
 
 function stepCombat(state: GameState, stepSeconds: number): void {
@@ -182,13 +221,11 @@ function stepCombat(state: GameState, stepSeconds: number): void {
     targets: buildProjectileTargets(player, enemies),
   });
 
-  let playerHit = false;
-  for (const impact of impacts) {
-    if (applyProjectileHit(impact, { player, enemies, loot })) playerHit = true;
-  }
-  if (impacts.some((impact) => impact.kind !== 'ground')) effects.hitMarker = 1;
+  const playerHit = resolveImpacts(state, impacts);
   if (playerHit) effects.damageFlash = 1;
 
+  refreshEnemyVisibility(state.arena.grid, state.player, state.enemies);
+  updateDamagePopups(state.damagePopups, stepSeconds);
   decayEffects(effects, stepSeconds);
 }
 
@@ -216,6 +253,12 @@ function renderGame(state: GameState, context: CanvasRenderingContext2D): void {
   const baseCamera = createPlayerCamera(player.position, player.yaw);
   const camera = cameraWithRecoil(baseCamera, player, effects.recoil);
   renderWorld(context, { grid: arena.grid, camera, bullets, enemies, pickups });
+  drawCombatFeedback(context, {
+    camera,
+    viewport: VIEWPORT,
+    enemies,
+    popups: state.damagePopups,
+  });
 
   const periscopeState: PeriscopeState = {
     reloadProgress: reloadProgress(player),
@@ -237,13 +280,7 @@ function renderGame(state: GameState, context: CanvasRenderingContext2D): void {
   });
   if (!player.alive) drawDestroyedOverlay(context);
 
-  drawTemporaryStatus(context, {
-    seed,
-    player,
-    enemies,
-    bulletCount: bullets.length,
-    loot,
-  });
+  drawTemporaryStatus(context, { seed, player, enemies, loot });
 }
 
 function createGameState(options: GameOptions): GameState {
@@ -257,6 +294,7 @@ function createGameState(options: GameOptions): GameState {
     enemies: buildEnemyRoster(arena.enemySpawns),
     pickups: createPickups(arena.pickupSpawns),
     loot: createLootState(),
+    damagePopups: [],
     input: options.input ?? createInputState(),
     bullets: [],
     aiRng: createRng((seed ^ 0x9e3779b9) >>> 0),
@@ -276,6 +314,7 @@ export function createGame(options: GameOptions = {}): Game {
     pickups: state.pickups,
     loot: state.loot,
     bullets: state.bullets,
+    damagePopups: state.damagePopups,
 
     update: (stepSeconds) => stepCombat(state, stepSeconds),
     render: (context) => renderGame(state, context),

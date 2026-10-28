@@ -9,6 +9,9 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 ### Añadido
 
+- Feedback de combate: nombre y barra de vida sobre enemigos visibles (respetando la línea de
+  visión), números flotantes de daño con la zona del impacto («−20 FRONTAL») y destello del tanque
+  al recibir un impacto; `systems/damage.ts` devuelve un `DamageResult` reutilizable.
 - Blindaje direccional y flanqueo: el daño depende de la zona de impacto respecto al rumbo del
   blanco (frontal ×0,5, lateral ×1,0, trasera ×1,5) y se aplica después del blindaje base y de las
   mejoras, simétrico para jugador y enemigos; la IA solo dispara dentro de un arco de ±15° y
@@ -55,6 +58,11 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 ### Cambiado
 
+- El panel temporal de QA se reetiqueta: «Escenario #semilla · enemigos vivos X/Y», sin fase ni
+  proyectiles internos, con leyenda de blindaje y efectos activos; el HUD definitivo llega en la
+  fase 8.
+- El escenario por defecto pasa a **3 Panzer III** (sin Tiger) como arranque provisional alineado
+  con la misión 1; la fase 9 definirá el reparto por misión.
 - El cableado de entrada (teclado y ratón) se mueve de `game.ts` a `main.ts`; `createGame` acepta
   el estado de entrada inyectado y ya no enlaza eventos del DOM.
 - La aplicación de daño sale de `game.ts` a `systems/damage.ts` y los overlays temporales de canvas

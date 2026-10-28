@@ -16,7 +16,8 @@ export const ARENA_DEFAULTS = {
   cellSize: 4,
   obstacleDensity: 0.14,
   destructibleRatio: 0.72,
-  enemyCount: 4,
+  // Provisional: arranque tipo misión 1 (3 Panzer III); la fase 9 dará el reparto por misión.
+  enemyCount: 3,
   pickupCount: 4,
   minEnemyDistance: 20,
   minPickupDistance: 8,

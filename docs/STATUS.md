@@ -1,7 +1,7 @@
 # Estado del proyecto — BattleTank-DS
 
-> **Actualizado:** 2026-10-27 · **Fase actual:** pausa de revisión; siguiente fase 8 (HUD)
-> **Último commit:** `style(render): retirar el cañón 2D del periscopio`
+> **Actualizado:** 2026-10-28 · **Fase actual:** pausa de revisión; siguiente fase 8 (HUD)
+> **Último commit:** `fix(ux): aclarar panel temporal y feedback de impacto`
 >
 > Este fichero es el punto de entrada para retomar el proyecto, sea otra persona, otro chat u
 > otro modelo. Se actualiza en **cada commit**. La verdad sobre el alcance está en el plan.
@@ -18,6 +18,14 @@
 
 ## Hecho
 
+- [x] **Ajuste de claridad y arranque (2026-10-28).** Panel temporal reetiquetado («Escenario
+      #semilla · enemigos vivos X/Y», sin números internos de fase ni proyectiles) con leyenda de
+      blindaje (frente ×0,5 / lateral ×1 / espalda ×1,5). Arranque provisional alineado con la
+      misión 1: **3 Panzer III, sin Tiger**, hasta que la fase 9 defina el reparto por misión.
+      Feedback de combate: nombre y barra de vida sobre enemigos visibles (LOS, sin atravesar
+      coberturas), números flotantes de daño con zona («−20 FRONTAL») y destello del tanque al
+      recibir impacto; `systems/damage.ts` devuelve un `DamageResult` para desacoplar el feedback.
+      184 tests en 31 ficheros y QA visual headless.
 - [x] **Ajuste de periscopio (2026-10-27).** Se retira el cañón 2D del overlay y su fogonazo (a
       petición del usuario): la puntería se lee solo con la retícula. Se mantienen máscara, marcas de
       rumbo y distancia, anillo de recarga y marca de impacto; el retroceso de cámara y el tracer
@@ -93,8 +101,9 @@
 
 ## Incidencias conocidas
 
-- Ninguna abierta. `BUG-001` (el jugador atravesaba tanques enemigos) quedó resuelto en el bloque
-  6.6: ver «Hecho» y [`ARCHITECTURE.md`](ARCHITECTURE.md) §8.
+- Ninguna abierta. `BUG-001` quedó resuelto en el bloque 6.6. La confusión del panel temporal
+  («fase 7 / enemigos 3/4 / proyectiles 0») se resolvió el 2026-10-28 reetiquetándolo; era el HUD
+  temporal de QA, no el HUD final.
 
 ## Pendiente (por fases)
 
@@ -110,6 +119,7 @@
 | 6.6 | Colisión entre tanques (`BUG-001`) | Completada |
 | 7 | Pickups: cura, mejora y potencia | Completada |
 | 7.5 | Blindaje direccional y flanqueo | Completada |
+| 7.5.1 | Claridad de impacto y arranque inicial (hotfix) | Completada |
 | 8 | HUD: vida, progreso, puntuación, radar, recarga y pantallas | **Pendiente (siguiente)** |
 | 9 | Misiones: campaña de 3, escalado, victoria/derrota y persistencia | Pendiente |
 | 10 | Audio: efectos sintetizados WebAudio, volumen y mute | Pendiente |
@@ -121,15 +131,17 @@
   máximo, las reducciones de daño son multiplicativas y recoger una mejora con el tope ×3 la consume
   sin efecto. Confirmar en la fase 9.
 - **Feedback de pickups y de zona de impacto provisional:** el evento de impacto ya lleva la zona
-  (`front`/`side`/`rear`), pero los avisos viven en el canvas temporal hasta el HUD de la fase 8.
+  (`front`/`side`/`rear`); el daño flotante, la barra de vida y el destello ya están implementados
+  en canvas. El HUD definitivo de la fase 8 recogerá estos datos.
 - **Balance del blindaje pendiente de la fase 9:** multiplicadores y umbrales en `balance.ts`; hay
   que validar 5/3/2 y 8/4/3 y si la ventana de recarga de la IA resulta demasiado generosa.
 - **IA sin corregir rumbo al recargar:** implementado como ventana de flanqueo; revisar en la fase 9
   si hay que acortarla o mantenerla.
 - IA sin patrulla ni coordinación de flanqueo: los enemigos permanecen al acecho hasta ver u oír al
   jugador. Suficiente para 0.1.0; ampliable tras la entrega.
-- Reparto provisional de tipos de enemigo (`3 ligeros + 1 pesado`); la fase 9 lo sustituirá por el
-  reparto de cada misión.
+- Reparto provisional de tipos de enemigo (**3 Panzer III, sin pesado** desde el ajuste del
+  2026-10-28); la fase 9 lo sustituirá por el reparto de cada misión (el Tiger entrará en misiones
+  posteriores).
 - Pantalla de destrucción y texto de estado son provisionales (fases 8-9).
 - **Sin cañón visible:** la puntería se lee solo con la retícula y no hay fogonazo en el cañón
   (decisión del usuario, 2026-10-27); no hay modelo 3D del arma en primera persona. El retroceso de

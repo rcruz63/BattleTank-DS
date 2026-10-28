@@ -20,7 +20,6 @@ export interface TemporaryStatus {
   readonly seed: number;
   readonly player: PlayerState;
   readonly enemies: readonly EnemyState[];
-  readonly bulletCount: number;
   readonly loot: LootStatus;
 }
 
@@ -37,20 +36,23 @@ function lootLine(loot: LootStatus): string {
   return `mejora ×${loot.upgradeStacks} · potencia inactiva`;
 }
 
-/** Panel superior con semilla, enemigos, vida, recarga y efectos activos. */
+/**
+ * Panel superior temporal: escenario reproducible, enemigos, vida, recarga y efectos activos.
+ * No muestra números internos de fases ni proyectiles: eso es herramientas de desarrollo.
+ */
 export function drawTemporaryStatus(
   context: CanvasRenderingContext2D,
   status: TemporaryStatus,
 ): void {
-  const { seed, player, enemies, bulletCount, loot } = status;
+  const { seed, player, enemies, loot } = status;
   const alive = enemies.filter((enemy) => enemy.alive).length;
   context.fillStyle = 'rgba(4, 6, 5, 0.55)';
-  context.fillRect(24, 24, 620, 84);
+  context.fillRect(24, 24, 620, 108);
   context.fillStyle = PALETTE.texto;
   context.font = '16px monospace';
   context.textAlign = 'left';
   context.fillText(
-    `Semilla ${seed} · fase 7 · enemigos ${alive}/${enemies.length} · proyectiles ${bulletCount}`,
+    `Escenario #${seed} · enemigos vivos ${alive}/${enemies.length}`,
     36,
     48,
   );
@@ -64,6 +66,8 @@ export function drawTemporaryStatus(
   );
   context.fillStyle = PALETTE.texto;
   context.fillText(lootLine(loot), 36, 92);
+  context.fillStyle = PALETTE.textoTenue;
+  context.fillText('Blindaje: frente ×0,5 · lateral ×1 · espalda ×1,5', 36, 114);
 }
 
 /** Aviso flotante del último pickup recogido, con desvanecimiento. */

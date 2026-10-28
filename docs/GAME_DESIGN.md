@@ -3,8 +3,8 @@
 Documento de diseño del vertical slice **0.1.0**. Se deriva del plan aprobado
 ([`PLAN.md`](PLAN.md), fuente de verdad del alcance); si hay conflicto, manda el plan y se corrige
 este documento. Estado: fases 0–7 y los bloques 6.5 (puntería con ratón), 6.6 (colisión entre
-tanques) y 7.5 (blindaje direccional) cerrados; el siguiente es el HUD (fase 8). El detalle vivo está
-en [`STATUS.md`](STATUS.md).
+tanques), 7.5 (blindaje direccional) y el ajuste 7.5.1 (claridad/feedback) cerrados; el siguiente es
+el HUD (fase 8). El detalle vivo está en [`STATUS.md`](STATUS.md).
 
 **Balance de tanques:** los números concretos (PV, velocidad, giro, recarga, daño, blindaje y
 velocidad de proyectil) viven en **`src/config/tanks.ts`**, que es la fuente de verdad. Este
@@ -106,12 +106,13 @@ replica este límite de ±15°** (bloque 7.5): si el jugador no puede disparar d
   persona; previsto, se fija en la fase 8.
 - **Pantallas:** menú, briefing, pausa, resumen de misión y derrota/final de campaña.
 
-Estado actual (bloque 7.5): hay un HUD **temporal** con semilla, enemigos vivos, proyectiles, vida y
-recarga. Ya existen en el periscopio la **retícula móvil** en el punto de mira, las marcas de
-distancia, la **marca tenue del rumbo del casco** en el centro, el anillo de recarga con segundos y
-la marca de impacto. **No se dibuja cañón ni fogonazo de arma** (decisión del usuario, 2026-10-27):
-la retícula basta para apuntar. El overlay rojo de daño y la pantalla provisional «TANQUE
-DESTRUIDO» están implementados. El HUD/radar definitivos llegan en la fase 8.
+Estado actual (ajuste 7.5.1): el panel **temporal** muestra «Escenario #semilla · enemigos vivos
+X/Y», controles, vida/max, recarga, efectos de pickups y una leyenda de blindaje; ya no expone
+números internos de fase ni proyectiles. En el mundo se dibujan **barras de vida con nombre** sobre
+los enemigos visibles (respetando LOS), **números de daño flotantes con la zona** («−20 FRONTAL»)
+y un **destello** del tanque al recibir impacto. En el periscopio siguen la retícula móvil, las
+marcas de distancia, el rumbo del casco, el anillo de recarga y la marca de impacto; no hay cañón
+2D (decisión del usuario, 2026-10-27). El HUD/radar definitivos llegan en la fase 8.
 
 ### Esquema ASCII (conceptual)
 
@@ -294,6 +295,10 @@ aplicación en `systems/damage.ts`, arco de fuego y pausa de recarga en `systems
 
 ## 9. Misiones y dificultad
 
+**Arranque provisional (ajuste 7.5.1):** mientras no existan misiones, el escenario por defecto usa
+3 Panzer III (sin Tiger), alineado con la misión 1 del plan. La fase 9 introducirá el reparto real
+por misión.
+
 Campaña de 3 misiones generadas con parámetros escalados, definidos como datos en
 `src/config/missions.ts`:
 
@@ -370,8 +375,9 @@ Todo el sonido se **sintetiza con WebAudio**; no hay ficheros de audio ni músic
 - **Ventana de flanqueo de la IA (resuelto, bloque 7.5):** la IA mantiene el heading y no corrige el
   apuntado mientras recarga, y solo dispara dentro de ±15°; validar en la fase 9 si resulta demasiado
   generosa.
-- **Feedback de zona de impacto (fase 8):** el evento ya lleva `zone` (frontal/lateral/trasera); falta
-  mostrarlo en el HUD con el daño aplicado.
+- **Feedback de zona de impacto (resuelto en 7.5.1 para canvas):** el evento lleva `zone` y ya se
+  muestra el daño flotante con zona, además de barra de vida y destello; el HUD DOM de la fase 8
+  recogerá los mismos datos para su presentación definitiva.
 - **Cadencia escalada por misión:** el plan la menciona, pero la tabla de misiones no tiene
   parámetro; decidir si se añade columna/dato o se deja fuera de 0.1.0.
 - **Significado exacto de «densidad de coberturas»:** supuesto de trabajo, porcentaje de celdas

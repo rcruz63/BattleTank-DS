@@ -11,8 +11,8 @@ son reglas deterministas sobre estado, los constructores de caras (`worldFaces`,
 `bulletFaces`) producen datos, `faces` los proyecta y solo el pintor toca el contrato gráfico
 (`FaceCanvas`). La composición del frame vive en `render/renderer.ts`; **no hay una escena unificada
 (`render/scene.ts`)**. La UI y el audio son adaptadores finos que se sustituyen por dobles. Estado:
-**183 tests en 31 ficheros** con las fases 0–7 y los bloques 6.5 (puntería con ratón), 6.6
-(colisión entre tanques) y 7.5 (blindaje direccional) cerrados.
+**184 tests en 31 ficheros** con las fases 0–7 y los bloques 6.5 (puntería con ratón), 6.6
+(colisión entre tanques), 7.5 (blindaje direccional) y 7.5.1 (claridad/feedback) cerrados.
 
 | Nivel | Qué cubre | Herramienta | Cuándo |
 |---|---|---|---|
@@ -235,6 +235,14 @@ Marcar cada punto en el navegador; anotar semilla, fase y navegador usado. Los p
 - [ ] Los enemigos respetan la misma oclusión: no disparan a través de coberturas intactas.
 - [ ] Radar **(fase 8)**.
 
+### Feedback de combate (ajuste 7.5.1)
+
+- [ ] La barra de vida y el nombre aparecen sobre el enemigo visible; una cobertura intacta los oculta.
+- [ ] Un impacto frontal muestra «−20 FRONTAL», el lateral «−40 LATERAL» y el trasero «−60 TRASERO».
+- [ ] El tanque parpadea al recibir el impacto y el daño desaparece en ~1 s.
+- [ ] El arranque por defecto tiene 3 Panzer III (sin Tiger) mientras no existan misiones.
+- [ ] El panel superior dice «Escenario #… · enemigos vivos X/Y» y no muestra fases ni proyectiles.
+
 ### HUD (fase 8)
 
 - [ ] Vida con barra y número, color según porcentaje, legible; no tapa la mira.
@@ -384,4 +392,5 @@ anotan en [`DEVELOPMENT.md`](DEVELOPMENT.md#13-pendientes-y-supuestos-detectados
   congelado 0,5 s y disparo al entrar en el arco.
 - **Marcas de orientación (7.5, implementado):** `tests/render/models.test.ts` comprueba las 35 caras
   (7 cajas), que las franjas clara y roja giran con el rumbo y quedan en el frente y la espalda.
-- **HUD (fase 8, pendiente):** la zona de impacto se muestra con el daño correcto y no solo por color.
+- **HUD (fase 8, pendiente):** la zona de impacto ya se muestra en el canvas temporal con el daño
+  correcto; el HUD DOM definitivo deberá recogerla junto con el resto de indicadores.

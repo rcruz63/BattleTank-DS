@@ -31,6 +31,10 @@ export interface EnemyState {
   pathTimer: number;
   reactionTimer: number;
   muzzleFlash: number;
+  /** 0..1, destello blanco al recibir un impacto. */
+  hitFlash: number;
+  /** True si el jugador tiene línea de visión sobre él (para HUD/feedback). */
+  visibleToPlayer: boolean;
 }
 
 export function createEnemy(id: string, type: EnemyType, spawn: SpawnPoint): EnemyState {
@@ -57,5 +61,7 @@ export function createEnemy(id: string, type: EnemyType, spawn: SpawnPoint): Ene
     pathTimer: 0,
     reactionTimer: 0,
     muzzleFlash: 0,
+    hitFlash: 0,
+    visibleToPlayer: false,
   };
 }

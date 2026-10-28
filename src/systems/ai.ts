@@ -162,6 +162,7 @@ function tickEnemyTimers(enemy: EnemyState, stepSeconds: number): void {
   enemy.pathTimer = Math.max(0, enemy.pathTimer - stepSeconds);
   enemy.reactionTimer = Math.max(0, enemy.reactionTimer - stepSeconds);
   enemy.muzzleFlash = Math.max(0, enemy.muzzleFlash - stepSeconds * 6);
+  enemy.hitFlash = Math.max(0, enemy.hitFlash - stepSeconds * 3);
 }
 
 function perceive(enemy: EnemyState, context: AiContext): Perception {

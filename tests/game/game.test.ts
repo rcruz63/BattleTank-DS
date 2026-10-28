@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createGame } from '../../src/game/game';
 import { createInputState } from '../../src/systems/input';
 import { canCircleOccupy } from '../../src/world/collision';
+import { hasLineOfSight } from '../../src/world/los';
 import { planarDistance } from '../../src/world/geometry';
 
 describe('composición del juego', () => {
@@ -11,8 +12,9 @@ describe('composición del juego', () => {
     expect(game.arena.grid.seed).toBe(42);
     expect(game.player.health).toBeGreaterThan(0);
     expect(game.player.alive).toBe(true);
-    expect(game.enemies).toHaveLength(4);
+    expect(game.enemies).toHaveLength(3);
     expect(game.enemies.every((enemy) => enemy.alive)).toBe(true);
+    expect(game.enemies.every((enemy) => enemy.type === 'light')).toBe(true);
     game.dispose();
   });
 
@@ -132,6 +134,8 @@ describe('composición del juego', () => {
     game.update(1 / 60);
     expect(game.loot.powerRemaining).toBeGreaterThan(19);
 
+    // Volver al spawn (zona segura) para que la boca del cañón no quede dentro de una cobertura.
+    game.player.position = { ...game.arena.playerSpawn };
     input.handleKeyDown('Space');
     game.update(1 / 60);
     expect(game.bullets).toHaveLength(1);
@@ -208,6 +212,53 @@ describe('composición del juego', () => {
     const frontDamage = healthBeforeFront - enemy.health;
     expect(frontDamage).toBeCloseTo(game.player.damage * 0.5, 6);
     expect(rearDamage).toBeGreaterThan(frontDamage);
+
+    game.dispose();
+  });
+
+  it('muestra feedback de impacto y confirma la muerte del Panzer III', () => {
+    const input = createInputState();
+    const game = createGame({ seed: 42, input });
+    const enemy = game.enemies[0];
+    if (!enemy) throw new Error('La arena de prueba debe tener enemigos.');
+
+    const origin = game.player.position;
+    const distance = 16;
+    let placed = false;
+    for (let direction = 0; direction < 16 && !placed; direction += 1) {
+      const yaw = (direction * Math.PI) / 8;
+      const forward = { x: Math.sin(yaw), z: Math.cos(yaw) };
+      const target = {
+        x: origin.x + forward.x * distance,
+        z: origin.z + forward.z * distance,
+      };
+      if (!canCircleOccupy(game.arena.grid, target, enemy.radius)) continue;
+      if (!hasLineOfSight(game.arena.grid, origin, target)) continue;
+      game.player.yaw = yaw;
+      game.player.reloadRemaining = 0;
+      enemy.position = target;
+      enemy.yaw = yaw + Math.PI;
+      enemy.alerted = true;
+      enemy.reloadRemaining = 999;
+      placed = true;
+    }
+    expect(placed).toBe(true);
+
+    input.requestFire();
+    for (let step = 0; step < 20; step += 1) game.update(1 / 60);
+
+    expect(enemy.health).toBeLessThan(enemy.tank.maxHealth);
+    expect(enemy.hitFlash).toBeGreaterThan(0);
+    expect(enemy.visibleToPlayer).toBe(true);
+    expect(game.damagePopups.length).toBeGreaterThan(0);
+    expect(game.damagePopups[0]?.zone).toBe('front');
+
+    for (let shot = 0; shot < 4; shot += 1) {
+      game.player.reloadRemaining = 0;
+      input.requestFire();
+      for (let step = 0; step < 20; step += 1) game.update(1 / 60);
+    }
+    expect(enemy.alive).toBe(false);
 
     game.dispose();
   });

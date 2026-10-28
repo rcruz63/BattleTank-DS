@@ -1,6 +1,7 @@
 /** Modelos de tanques enemigos como cajas rotadas de polígonos planos. */
 
 import { PALETTE } from '../config/palette';
+import { mixHexColors } from './color';
 import type { Vec3 } from '../core/math';
 import type { EnemyState } from '../entities/enemy';
 import { boxFaces } from './boxes';
@@ -23,10 +24,18 @@ function offsetPoint(spec: OffsetPointSpec): Vec3 {
   };
 }
 
+/** Aclara el color base cuando el tanque acaba de recibir un impacto. */
+function hitTinted(color: string, hitFlash: number): string {
+  return hitFlash > 0.01 ? mixHexColors(color, '#ffffff', Math.min(0.55, hitFlash * 0.55)) : color;
+}
+
 /** Silueta del enemigo: casco, cadenas, torreta, cañón y marcas de orientación. */
 export function tankWorldFaces(enemy: EnemyState): WorldFace[] {
   const yaw = enemy.yaw;
-  const { hullColor, turretColor, trackColor, barrelColor } = enemy.tank;
+  const hullColor = hitTinted(enemy.tank.hullColor, enemy.hitFlash);
+  const turretColor = hitTinted(enemy.tank.turretColor, enemy.hitFlash);
+  const trackColor = hitTinted(enemy.tank.trackColor, enemy.hitFlash);
+  const barrelColor = hitTinted(enemy.tank.barrelColor, enemy.hitFlash);
 
   const hull = boxFaces({
     center: { x: enemy.position.x, y: 0.62, z: enemy.position.z },

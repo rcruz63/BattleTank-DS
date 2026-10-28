@@ -20,7 +20,7 @@ contratos descritos aquí son el acuerdo entre capas, no un inventario exhaustiv
 | Build y dev server | **Vite 8** (`base: './'`, `target: es2022`, `outDir: dist`, sourcemaps), puerto fijo 5173. |
 | Gráficos | **Canvas 2D** con resolución interna fija **1280×720** escalada por CSS con letterboxing (`index.html`). |
 | HUD | **DOM/CSS** sobre el canvas + un **canvas pequeño independiente** para el radar (fase 8). |
-| Tests | **Vitest** en entorno **Node** (`tests/**/*.test.ts`), sin jsdom; **183 tests en 31 ficheros**. |
+| Tests | **Vitest** en entorno **Node** (`tests/**/*.test.ts`), sin jsdom; **184 tests en 31 ficheros**. |
 | Calidad | **ESLint** (tamaño/complejidad) + **Prettier**; puerta `npm run check`. |
 | Runtime | **Cero dependencias** y **cero assets externos**: geometría procedural, tipografía del sistema, iconos CSS y audio WebAudio sintetizado. |
 | Persistencia | `localStorage` solo para récord y misión desbloqueada (fase 9). |
@@ -94,7 +94,8 @@ BattleTank-DS/
 │   │   ├── background.ts   #   cielo, horizonte y rejilla del suelo
 │   │   ├── painter.ts      #   ordenación y pintado de caras
 │   │   ├── renderer.ts     #   composición: coberturas + tanques + pickups + proyectiles
-│   │   ├── statusOverlay.ts #  panel temporal, aviso de pickup y pantalla de destruido
+│   │   ├── combatFeedback.ts # barras de vida, daño flotante con zona y destello
+│   │   ├── statusOverlay.ts #  panel temporal claro, aviso de pickup y pantalla de destruido
 │   │   └── periscope.ts    #   overlay: máscara, retícula móvil, recarga y marca de impacto
 │   ├── entities/           # datos y comportamiento local
 │   │   ├── player.ts       #   estado del tanque del jugador
@@ -108,6 +109,7 @@ BattleTank-DS/
 │   │   ├── combat.ts       #   recarga, disparo, proyectiles 3D y zona del impacto
 │   │   ├── damage.ts       #   impacto: blindaje base, mejoras, zona direccional y muerte
 │   │   ├── loot.ts         #   recogida, efectos y temporizadores de los pickups
+│   │   ├── visibility.ts   #   LOS/rango para decidir qué enemigos pueden mostrar barra de vida
 │   │   ├── armor.ts        #   clasificación de zona y multiplicadores de blindaje
 │   │   └── ai.ts           #   percepción, alerta, avance, arco de fuego y ataque
 │   ├── ui/
@@ -117,7 +119,7 @@ BattleTank-DS/
 │
 │   (previstos: config/missions.ts, systems/mission.ts, systems/score.ts, systems/progression.ts,
 │    ui/hud.ts, ui/radar.ts, ui/screens.ts, audio/synth.ts, audio/audio.ts, game/state.ts)
-├── tests/                  # espejo de src/ (31 ficheros, 183 tests) + integración headless
+├── tests/                  # espejo de src/ (31 ficheros, 184 tests) + integración headless
 ├── docs/
 └── dist/                   # build generado (no versionado)
 ```
@@ -311,11 +313,13 @@ El plan describe 5 macro-pasos (§6.3); este es el desglose real de la composici
    arma; el retroceso de cámara y el tracer conservan el feedback. **Decisión actual:** el overlay
    está en canvas, no es una viñeta CSS; el plan preveía CSS y se revisará en la fase 8 si el HUD lo
    requiere.
-7. **Feedback de pantalla.** `overlayTint` tiñe de rojo al recibir daño; el aviso de pickup
-   (`render/statusOverlay.ts`) muestra el efecto recogido; si el jugador ha muerto se pinta el
-   overlay provisional «TANQUE DESTRUIDO» (la pantalla de resultados llega en la fase 9).
-8. **Estado temporal.** Hasta que exista el HUD DOM, se dibuja un panel con semilla, fase, enemigos
-   vivos, proyectiles, vida, recarga y efectos activos (mejora ×N y potencia restante).
+7. **Feedback de pantalla.** `render/combatFeedback.ts` dibuja la barra de vida con nombre sobre
+   enemigos visibles y los números de daño con la zona del impacto; `overlayTint` tiñe de rojo al
+   recibir daño; el aviso de pickup (`render/statusOverlay.ts`) muestra el efecto recogido; si el
+   jugador ha muerto se pinta el overlay provisional «TANQUE DESTRUIDO» (resultados en la fase 9).
+8. **Estado temporal.** Hasta que exista el HUD DOM, se dibuja un panel con «Escenario #semilla ·
+   enemigos vivos X/Y», controles, vida, recarga, efectos y leyenda de blindaje. No muestra números
+   internos de fase ni proyectiles (ajuste 7.5.1).
 
 **Oclusión:** el test de `tests/render/occlusion.test.ts` comprueba que una cobertura intacta tapa al
 enemigo en el centro de la mira y que, al destruirla, la línea queda despejada.
@@ -508,7 +512,11 @@ colisión se dividen en funciones pequeñas; si una regla no cabe sin anidar, se
   de cura/mejora/potencia, aviso flotante y línea de estado temporal.
 - **Bloque 7.5:** blindaje direccional y flanqueo cerrados — `systems/armor.ts`, zona en el evento
   de impacto, aplicación en `systems/damage.ts`, arco de fuego y pausa de recarga en `systems/ai.ts`
-  y franjas de orientación en `render/models.ts`. **183 tests en 31 ficheros.**
+  y franjas de orientación en `render/models.ts`.
+- **Ajuste 7.5.1:** panel temporal reetiquetado, arranque con 3 Panzer III, barra/nombre de enemigo
+  visible por LOS, daño flotante con zona y destello de impacto; `systems/damage.ts` devuelve
+  `DamageResult` y `systems/visibility.ts` centraliza la visibilidad para feedback. **184 tests en
+  31 ficheros.**
 - **Siguiente trabajo (fase 8):** HUD/radar con vida, progreso, puntuación, recarga, zona de impacto
   y pantallas. Después: misiones, audio y pulido (fases 9–11).
 

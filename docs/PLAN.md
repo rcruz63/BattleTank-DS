@@ -517,12 +517,13 @@ Cada fase termina con `npm run check`, changelog + estado actualizados y **commi
 | 6.6 | Colisión entre tanques | Bloqueadores dinámicos jugador↔enemigo y enemigo↔enemigo; tests de regresión (`BUG-001`) | `fix(collision): bloquear el paso entre tanques` |
 | 7 | Pickups | Cura, mejora y potencia con efectos y feedback | `feat(loot): pickups de cura, mejora y potencia` |
 | 7.5 | Blindaje direccional y flanqueo | Zonas frontal/lateral/trasera, arco de fuego ±15°, ventanas de flanqueo de la IA y feedback de zona | `feat(armor): blindaje direccional y flanqueo` |
+| 7.5.1 | Claridad de impacto y arranque | Panel temporal claro, 3 ligeros por defecto, barra de vida, daño flotante con zona y destello | `fix(ux): aclarar panel temporal y feedback de impacto` |
 | 8 | HUD | Vida, progreso, puntuación, radar, recarga, pantallas y viñeta | `feat(hud): vida, progreso, puntuación, radar y recarga` |
 | 9 | Misiones | Campaña de 3 misiones, escalado, victoria/derrota y persistencia | `feat(mission): misiones escaladas y progresión de campaña` |
 | 10 | Audio | Efectos sintetizados, volumen y mute | `feat(audio): efectos sintetizados con WebAudio` |
 | 11 | Pulido y handoff | QA, rendimiento, documentación final, tag | `docs: documentación de handoff y guía de desarrollo` · `chore(release): 0.1.0` |
 
-Dependencias: 0→1→2→3→4→5→6→6.5→6.6→7→7.5→8→9→10→11. La documentación (GAME_DESIGN,
+Dependencias: 0→1→2→3→4→5→6→6.5→6.6→7→7.5→7.5.1→8→9→10→11. La documentación (GAME_DESIGN,
 ARCHITECTURE, STATUS, CHANGELOG) se redacta en paralelo desde la fase 1; las pruebas
 independientes de QA se incorporan desde la fase 4.
 
