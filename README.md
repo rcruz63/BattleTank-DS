@@ -15,9 +15,10 @@ técnica) en [`docs/STATUS.md`](docs/STATUS.md).
 ## Estado
 
 > **Versión objetivo: `0.1.0` (vertical slice jugable) — en desarrollo**, todavía no publicado.
-> Al redactarse este README las fases 0–7 y los bloques 6.5 (puntería con ratón), 6.6 (colisión
-> entre tanques), 7.5 (blindaje direccional y flanqueo) y el ajuste 7.5.1 (claridad/feedback) están
-> cerrados. El siguiente trabajo es el HUD/radar (fase 8). Ya hay un combate jugable:
+> Al redactarse este README las fases 0–8 y los bloques 6.5 (puntería con ratón), 6.6 (colisión
+> entre tanques), 7.5 (blindaje direccional y flanqueo), el ajuste 7.5.1 (claridad/feedback) y la
+> fase 8 (HUD/radar, pausa y puntuación) están cerrados. El siguiente trabajo son las misiones
+> (fase 9). Ya hay un combate jugable:
 > `WASD`/flechas mueven y giran el tanque, el ratón apunta el cañón dentro de un cono (la cámara y
 > el casco **no** giran con él), y `Espacio` o el clic izquierdo disparan con 2,4 s de recarga. Las
 > coberturas de madera y ladrillo se destruyen, los Panzer III y Tiger I esperan al acecho, detectan
@@ -28,7 +29,8 @@ técnica) en [`docs/STATUS.md`](docs/STATUS.md).
 > al recibir daño y una pantalla provisional de tanque destruido, y los tanques son sólidos: no se
 > atraviesan entre sí. Ya hay pickups de cura, mejora y potencia que se recogen al pasar por encima,
 > con aviso en pantalla. El arranque provisional usa **3 Panzer III** (sin Tiger) y los impactos se
-> ven con barra de vida, daño flotante por zona y destello. Faltan HUD funcional, misiones y audio. Consulta
+> ven con barra de vida, daño flotante por zona y destello. El HUD ya muestra vida, avance,
+> puntuación, recarga y radar, y `ESC` pausa. Faltan misiones y audio. Consulta
 > [`docs/STATUS.md`](docs/STATUS.md) para el estado exacto del día.
 
 El título «BATTLE TANK — PERISCOPIO» es provisional y puede cambiarse en un commit de
@@ -80,16 +82,16 @@ npm run preview  # sirve dist/ para verificar el build
 | Girar | `A` / `D` o `←` / `→` | **Disponible.** Gira el casco y con él la vista (sin torreta independiente). |
 | Apuntar | Ratón sobre el canvas | **Disponible.** Mueve el cañón dentro de un cono de ±15° horizontal y ±4° vertical respecto al rumbo del tanque. La cámara no gira con el ratón. |
 | Disparar | `Espacio` o clic izquierdo | **Disponible.** Un disparo por pulsación, sin fuego automático; recarga de 2,4 s. |
-| Pausa | `Esc` | Previsto (fase 8): menú de pausa, volumen y récord. |
+| Pausa | `Esc` | **Disponible.** Congela la simulación y muestra controles y semilla. |
 | Silenciar | `M` | Previsto (fase 10). |
 | Depuración | `F3` | Previsto: overlay con fps, caras, celdas visibles y entidades. |
 
 No hay free-look (la cámara sigue al casco), ni torreta independiente, ni gamepad/móvil en 0.1.0.
 El cursor del sistema se oculta sobre el canvas; la retícula es la única referencia de puntería (el
-periscopio no dibuja el cañón) y en el centro queda una marca tenue del rumbo del casco. Mientras
-llega el HUD definitivo (fase 8),
-la pantalla muestra un texto temporal con semilla, enemigos vivos, proyectiles, vida y estado de
-recarga. Todos los detalles de diseño están en [`docs/GAME_DESIGN.md`](docs/GAME_DESIGN.md).
+periscopio no dibuja el cañón) y en el centro queda una marca tenue del rumbo del casco. El HUD DOM
+muestra vida, avance de sector, puntuación, recarga, efectos y radar; los avisos de pickup aparecen
+en pantalla y `ESC` abre la pausa. Todos los detalles de diseño están en
+[`docs/GAME_DESIGN.md`](docs/GAME_DESIGN.md).
 
 ## Depuración
 
@@ -116,10 +118,10 @@ BattleTank-DS/
 │   ├── render/         # cámara, caras, modelos de tanques y pickups, painter, overlays y periscopio
 │   ├── entities/       # jugador, proyectil, enemigo y pickup
 │   ├── systems/        # entrada, puntería, movimiento, combate, IA, loot, daño y blindaje (misión y puntuación después)
-│   ├── ui/             # estilos base; HUD, radar y pantallas en la fase 8
+│   ├── ui/             # HUD DOM, modelo hudView, radar y pantallas (briefing en fase 9)
 │   ├── audio/          # efectos sintetizados con WebAudio (fase 10)
 │   └── game/           # composición actual (createGame); máquina de estados en fases 8-9
-├── tests/              # espejo de src/ (184 tests en 31 ficheros) + integración headless
+├── tests/              # espejo de src/ (194 tests en 33 ficheros) + integración headless
 ├── docs/               # plan, estado y documentación del proyecto
 └── dist/               # build generado (no versionado)
 ```
@@ -141,9 +143,10 @@ almacenamiento, el juego debe seguir funcionando sin persistencia (degradación 
 
 ## Limitaciones conocidas y siguiente paso
 
-- **HUD y avisos definitivos (fase 8):** los efectos de los pickups, la barra de vida del enemigo,
-  el daño flotante con zona y el destello ya existen en el canvas temporal; el HUD DOM recogerá la
-  presentación definitiva (vida, progreso, puntuación, radar y avisos).
+- **Pantallas de misión (fase 9):** el HUD y la pausa ya existen; briefing, resumen de misión,
+  récord y pantalla de derrota definitiva llegan con las misiones.
+- **Feedback de mundo:** barras de vida, daño flotante por zona y destello siguen dibujándose en el
+  canvas del mundo (no son DOM).
 - **`BUG-001` corregido en el bloque 6.6:** el jugador y los enemigos ya no se atraviesan; cada
   tanque vivo bloquea el paso del otro con la suma de radios más 0,15 m de separación de seguridad.
   Detalle y tests en [`docs/STATUS.md`](docs/STATUS.md) y [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) §8.

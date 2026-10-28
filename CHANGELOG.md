@@ -9,6 +9,11 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 ### Añadido
 
+- HUD DOM de la fase 8: vida con barra y valor, avance de sector en %, puntuación (100 Panzer III /
+  250 Tiger I), estado de recarga, efectos de mejora/potencia y avisos de pickup. Radar circular de
+  45 m orientado con el rumbo (coberturas tenues, enemigos rojos, pickups verdes), pausa con `ESC`,
+  pantalla de pausa con controles/semilla y viñeta CSS de periscopio. `ui/hudView` y `ui/radar` son
+  modelos puros testeados; `ui/hud` es el adaptador DOM.
 - Feedback de combate: nombre y barra de vida sobre enemigos visibles (respetando la línea de
   visión), números flotantes de daño con la zona del impacto («−20 FRONTAL») y destello del tanque
   al recibir un impacto; `systems/damage.ts` devuelve un `DamageResult` reutilizable.
@@ -58,6 +63,9 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 ### Cambiado
 
+- El panel temporal de canvas se elimina al entrar el HUD DOM; `render/statusOverlay.ts` queda solo
+  como pantalla provisional de tanque destruido. El aviso de pickup pasa de canvas al HUD y la
+  visibilidad/caducidad de feedback se agrupa en `systems/feedback.ts`.
 - El panel temporal de QA se reetiqueta: «Escenario #semilla · enemigos vivos X/Y», sin fase ni
   proyectiles internos, con leyenda de blindaje y efectos activos; el HUD definitivo llega en la
   fase 8.

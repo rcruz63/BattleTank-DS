@@ -2,9 +2,9 @@
 
 Documento de diseño del vertical slice **0.1.0**. Se deriva del plan aprobado
 ([`PLAN.md`](PLAN.md), fuente de verdad del alcance); si hay conflicto, manda el plan y se corrige
-este documento. Estado: fases 0–7 y los bloques 6.5 (puntería con ratón), 6.6 (colisión entre
-tanques), 7.5 (blindaje direccional) y el ajuste 7.5.1 (claridad/feedback) cerrados; el siguiente es
-el HUD (fase 8). El detalle vivo está en [`STATUS.md`](STATUS.md).
+este documento. Estado: fases 0–8 y los bloques 6.5 (puntería con ratón), 6.6 (colisión entre
+tanques), 7.5 (blindaje direccional) y el ajuste 7.5.1 (claridad/feedback) cerrados; el siguiente
+trabajo son las misiones (fase 9). El detalle vivo está en [`STATUS.md`](STATUS.md).
 
 **Balance de tanques:** los números concretos (PV, velocidad, giro, recarga, daño, blindaje y
 velocidad de proyectil) viven en **`src/config/tanks.ts`**, que es la fuente de verdad. Este
@@ -76,7 +76,7 @@ los resúmenes. No hay guardado a mitad de partida.
 | Girar | `A`/`D` o `←`/`→` | **Disponible.** Gira el casco y con él la vista; no hay torreta independiente. |
 | Apuntar | Ratón | **Disponible (bloque 6.5).** Mueve el cañón dentro de ±15° horizontal y ±4° vertical respecto al rumbo del tanque. **La cámara no gira con el ratón.** |
 | Disparar | `Espacio` o clic izquierdo | **Disponible.** Un disparo por pulsación; mantener no repite. Recarga de 2,4 s. |
-| Pausa | `Esc` | Previsto (fase 8): congela la simulación y abre el menú. |
+| Pausa | `Esc` | **Disponible (fase 8).** Congela la simulación y muestra la pantalla de pausa con controles y semilla. |
 | Silenciar | `M` | Previsto (fase 10). |
 | Depuración | `F3` | Previsto: overlay con fps, caras, celdas visibles y entidades. |
 
@@ -92,7 +92,8 @@ replica este límite de ±15°** (bloque 7.5): si el jugador no puede disparar d
 - **Vida:** barra + valor numérico, arriba a la izquierda. Cambia de color según el porcentaje.
 - **Avance del escenario:** barra superior centrada, solo porcentaje; sube al destruir enemigos y
   nunca muestra cuántos quedan.
-- **Puntuación:** marcador arriba a la derecha. El récord aparece en pausa y en los resúmenes.
+- **Puntuación:** marcador arriba a la derecha; en pausa se muestra la semilla y los controles. El
+  récord y los resúmenes llegan con la fase 9.
 - **Radar:** circular, abajo a la derecha, centrado en el tanque y orientado con el rumbo; alcance
   45 m, barrido animado. Enemigos como triángulos rojos, pickups como rombos verdes y coberturas
   como trazos tenues. No muestra el detalle del mapa.
@@ -100,19 +101,21 @@ replica este límite de ±15°** (bloque 7.5): si el jugador no puede disparar d
   mientras recarga; un destello indica que el arma está lista.
 - **Efectos temporales:** iconos de potencia y de mejora activa con cuenta atrás.
 - **Avisos de estado:** mensajes breves (objetivo cumplido, daño crítico, recarga completada).
-- **Zona de impacto:** aviso breve «FRONTAL / LATERAL / TRASERA» con el daño aplicado, ligado al
-  blindaje direccional ya implementado (fase 8).
-- **Rumbo:** indicador discreto de orientación (brújula) para mitigar la desorientación en primera
-  persona; previsto, se fija en la fase 8.
-- **Pantallas:** menú, briefing, pausa, resumen de misión y derrota/final de campaña.
+- **Zona de impacto:** aviso de daño flotante «FRONTAL / LATERAL / TRASERA» sobre el enemigo,
+  ligado al blindaje direccional implementado.
+- **Rumbo:** marca tenue del casco en el periscopio y radar orientado con el rumbo; una brújula
+  dedicada no entra en 0.1.0.
+- **Pantallas:** pausa implementada; menú/briefing, resumen de misión y derrota/final de campaña
+  se completan en la fase 9.
 
-Estado actual (ajuste 7.5.1): el panel **temporal** muestra «Escenario #semilla · enemigos vivos
-X/Y», controles, vida/max, recarga, efectos de pickups y una leyenda de blindaje; ya no expone
-números internos de fase ni proyectiles. En el mundo se dibujan **barras de vida con nombre** sobre
-los enemigos visibles (respetando LOS), **números de daño flotantes con la zona** («−20 FRONTAL»)
-y un **destello** del tanque al recibir impacto. En el periscopio siguen la retícula móvil, las
-marcas de distancia, el rumbo del casco, el anillo de recarga y la marca de impacto; no hay cañón
-2D (decisión del usuario, 2026-10-27). El HUD/radar definitivos llegan en la fase 8.
+Estado actual (fase 8): el **HUD DOM** muestra arriba a la izquierda «M4 SHERMAN», barra y valor
+de vida y recarga («LISTO» o segundos); arriba al centro, «AVANCE DE SECTOR» con porcentaje; arriba
+a la derecha, puntuación; abajo a la derecha, radar circular de 45 m orientado con el rumbo
+(coberturas tenues, enemigos rojos y pickups verdes). Los efectos de mejora/potencia aparecen bajo la
+vida y los avisos de pickup usan un toast DOM. `ESC` abre la pausa (congela simulación). En el mundo
+se mantienen las **barras de vida con nombre**, el **daño flotante con zona** y el **destello** de
+impacto; el periscopio mantiene retícula móvil, rumbo, anillo de recarga y marca de impacto.
+Briefing, resumen de misión, récord y pantalla de derrota definitiva llegan con las misiones (fase 9).
 
 ### Esquema ASCII (conceptual)
 
@@ -220,7 +223,7 @@ cobertura con material, altura y vida.
   garantizados por reparto determinista).
 - Se recogen al pasar por encima: radio de 2 m.
 - No reaparecen. Al morir se pierden todos los acumulados de la misión.
-- El HUD muestra icono y cuenta atrás de los efectos temporales **(fase 8)**; hasta entonces el
+- El HUD muestra icono y cuenta atrás de los efectos temporales;
   aviso flotante y la línea de estado temporal muestran el efecto y el temporizador.
 - **Implementado en la fase 7:** datos y balance en `config/pickups.ts`, reglas en `systems/loot.ts`
   y modelo procedural en `render/pickupFaces.ts`.
@@ -286,12 +289,12 @@ aplicación en `systems/damage.ts`, arco de fuego y pausa de recarga en `systems
 - **Ventanas de flanqueo:** mientras recargan no corrigen el rumbo; el giro limitado y la pausa de
   seguimiento permiten al jugador ganar el lado o la espalda. A validar con simulación.
 - **Legibilidad:** marcas de orientación en el modelo (frontal vs trasera) y aviso de zona en el HUD
-  (fase 8). Sin ellas el multiplicador sería invisible e injusto.
+  en el mundo y en el radar; sin ellas el multiplicador sería invisible e injusto.
 - **Balance previsto:** Sherman vs Panzer III **5/3/2** y vs Tiger I **8/4/3** (frontal/lateral/
   trasera), a recalibrar en la fase 9 con simulación headless.
 - **Pruebas (implementadas):** clasificación de zona pura, multiplicadores por zona, arco de fuego
   enemigo, IA que no dispara fuera del arco y no corrige rumbo al recargar, simetría jugador/enemigos
-  y balance 5/3/2 y 8/4/3; queda el feedback de zona en el HUD (fase 8).
+  y balance 5/3/2 y 8/4/3; el daño flotante con zona ya está implementado.
 
 ## 9. Misiones y dificultad
 
@@ -376,8 +379,8 @@ Todo el sonido se **sintetiza con WebAudio**; no hay ficheros de audio ni músic
   apuntado mientras recarga, y solo dispara dentro de ±15°; validar en la fase 9 si resulta demasiado
   generosa.
 - **Feedback de zona de impacto (resuelto en 7.5.1 para canvas):** el evento lleva `zone` y ya se
-  muestra el daño flotante con zona, además de barra de vida y destello; el HUD DOM de la fase 8
-  recogerá los mismos datos para su presentación definitiva.
+  muestra el daño flotante con zona, además de barra de vida y destello; el HUD DOM recoge vida,
+  avance, puntuación, recarga, efectos y radar.
 - **Cadencia escalada por misión:** el plan la menciona, pero la tabla de misiones no tiene
   parámetro; decidir si se añade columna/dato o se deja fuera de 0.1.0.
 - **Significado exacto de «densidad de coberturas»:** supuesto de trabajo, porcentaje de celdas

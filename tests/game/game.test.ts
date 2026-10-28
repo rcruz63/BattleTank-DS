@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createGame } from '../../src/game/game';
 import { createInputState } from '../../src/systems/input';
+import { buildHudView } from '../../src/ui/hudView';
 import { canCircleOccupy } from '../../src/world/collision';
 import { hasLineOfSight } from '../../src/world/los';
 import { planarDistance } from '../../src/world/geometry';
@@ -15,6 +16,8 @@ describe('composición del juego', () => {
     expect(game.enemies).toHaveLength(3);
     expect(game.enemies.every((enemy) => enemy.alive)).toBe(true);
     expect(game.enemies.every((enemy) => enemy.type === 'light')).toBe(true);
+    expect(game.getHudData().score).toBe(0);
+    expect(game.getHudData().paused).toBe(false);
     game.dispose();
   });
 
@@ -259,6 +262,30 @@ describe('composición del juego', () => {
       for (let step = 0; step < 20; step += 1) game.update(1 / 60);
     }
     expect(enemy.alive).toBe(false);
+    expect(game.getHudData().score).toBe(100);
+    expect(buildHudView(game.getHudData()).progress.percent).toBeGreaterThan(0);
+
+    game.dispose();
+  });
+
+  it('pausa con ESC y congela la simulación', () => {
+    const input = createInputState();
+    const game = createGame({ seed: 42, input });
+    const start = { ...game.player.position };
+
+    input.handleKeyDown('Escape');
+    game.update(1 / 60);
+    expect(game.getHudData().paused).toBe(true);
+
+    input.handleKeyDown('KeyW');
+    for (let step = 0; step < 30; step += 1) game.update(1 / 60);
+    expect(game.player.position).toEqual(start);
+
+    input.handleKeyUp('Escape');
+    input.handleKeyUp('KeyW');
+    input.handleKeyDown('Escape');
+    game.update(1 / 60);
+    expect(game.getHudData().paused).toBe(false);
 
     game.dispose();
   });

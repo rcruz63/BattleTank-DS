@@ -63,7 +63,7 @@ implementación no van aquí, solo las decisiones.
   - (+) Texto legible y escalable, accesibilidad básica y estilos baratos; separación clara entre
     render 3D y UI; el radar se puede probar con matemáticas puras.
   - (−) Dos sistemas de dibujo que coordinar; riesgo de que la UI mute estado si no se respeta el
-    contrato; la composición exacta (capas, tamaños) se ajusta en la fase 8.
+    contrato; la composición exacta se ajustó al implementar el HUD (fase 8).
   - Revisar si el rendimiento del DOM por frame se vuelve un problema (no debería con actualizaciones
     puntuales).
 
@@ -165,7 +165,7 @@ implementación no van aquí, solo las decisiones.
     trasera ×1,5; umbrales ±60°/120°. Simétrico para jugador y enemigos.
   - Arco de fuego enemigo de ±15° respecto a su rumbo: no disparan por los lados ni por detrás.
   - Mientras recargan no corrigen el rumbo (ventana de flanqueo), además del giro limitado.
-  - Marcas de orientación en el modelo enemigo y feedback de zona de impacto en el HUD (fase 8).
+  - Marcas de orientación en el modelo enemigo y feedback de zona (daño flotante en el mundo).
   - Implementación en el bloque 7.5, después de `BUG-001` (6.6) y de pickups (7).
 - **Consecuencias:**
   - (+) El flanqueo pasa a ser la respuesta eficiente al frontal; el combate gana profundidad y la

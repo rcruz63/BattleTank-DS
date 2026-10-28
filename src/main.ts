@@ -3,6 +3,8 @@ import { createFrameStepper, runAnimationLoop } from './core/loop';
 import { createGame } from './game/game';
 import { getGameCanvas, getGameContext, VIEWPORT } from './render/canvas';
 import { bindKeyboardInput, bindMouseInput, createInputState } from './systems/input';
+import { createHud } from './ui/hud';
+import { buildHudView } from './ui/hudView';
 
 /** Semilla reproducible vía `?seed=123` para depurar escenarios concretos. */
 function seedFromUrl(): number | undefined {
@@ -30,6 +32,7 @@ function boot(): void {
 
   try {
     const game = createGame({ seed: seedFromUrl(), input });
+    const hud = createHud();
     // Gancho de depuración/QA: inspeccionar o recolocar el estado desde la consola.
     window.__BT__ = game;
 
@@ -37,7 +40,10 @@ function boot(): void {
       fixedStepSeconds: 1 / 60,
       maxFrameSeconds: 0.25,
       onUpdate: (stepSeconds) => game.update(stepSeconds),
-      onRender: () => game.render(context),
+      onRender: () => {
+        game.render(context);
+        hud.update(buildHudView(game.getHudData()));
+      },
     });
 
     const stop = runAnimationLoop(stepper);

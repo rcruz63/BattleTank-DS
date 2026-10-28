@@ -1,7 +1,7 @@
 # Estado del proyecto — BattleTank-DS
 
-> **Actualizado:** 2026-10-28 · **Fase actual:** pausa de revisión; siguiente fase 8 (HUD)
-> **Último commit:** `fix(ux): aclarar panel temporal y feedback de impacto`
+> **Actualizado:** 2026-10-28 · **Fase actual:** pausa de revisión; siguiente fase 9 (misiones)
+> **Último commit:** `feat(hud): HUD, radar, pausa y puntuación`
 >
 > Este fichero es el punto de entrada para retomar el proyecto, sea otra persona, otro chat u
 > otro modelo. Se actualiza en **cada commit**. La verdad sobre el alcance está en el plan.
@@ -11,13 +11,20 @@
 1. Lee [`docs/PLAN.md`](PLAN.md) (alcance y fases) y este estado.
 2. `npm install` y `npm run check` para confirmar que la base está sana.
 3. `npm run dev` y abre `http://localhost:5173`.
-4. Lee «Incidencias conocidas» antes de elegir tarea: el siguiente trabajo es el HUD/radar (fase 8);
-   pickups (7), blindaje direccional (7.5) y `BUG-001` (6.6) ya están cerrados.
+4. Lee «Incidencias conocidas» antes de elegir tarea: el siguiente trabajo son las misiones (fase 9);
+   HUD/radar (8), pickups (7), blindaje direccional (7.5) y `BUG-001` (6.6) ya están cerrados.
 5. Sigue el flujo de [`docs/DEVELOPMENT.md`](DEVELOPMENT.md): tests → `npm run check` → changelog
    → estado → commit.
 
 ## Hecho
 
+- [x] **Fase 8 — HUD y radar.** HUD DOM superpuesto al canvas: vida con barra y valor que cambia
+      de color, avance de sector en % (sin revelar enemigos restantes), puntuación (100 Panzer III /
+      250 Tiger I), estado de recarga, efectos activos y avisos de pickup. Radar circular de 45 m
+      orientado con el rumbo: coberturas tenues, enemigos como triángulos y pickups como rombos.
+      Pausa con `ESC` que congela la simulación; pantalla de pausa con controles y semilla.
+      Se retira el panel temporal de canvas y el aviso de pickup pasa a DOM. Viñeta CSS de
+      periscopio. 194 tests en 33 ficheros y QA visual headless (HUD y pausa).
 - [x] **Ajuste de claridad y arranque (2026-10-28).** Panel temporal reetiquetado («Escenario
       #semilla · enemigos vivos X/Y», sin números internos de fase ni proyectiles) con leyenda de
       blindaje (frente ×0,5 / lateral ×1 / espalda ×1,5). Arranque provisional alineado con la
@@ -96,8 +103,8 @@
 
 ## En curso
 
-- Ninguna tarea en curso: **pausa acordada**. Próximo trabajo: **fase 8** (HUD, radar, avisos de
-  zona de impacto y pantallas).
+- Ninguna tarea en curso: **pausa acordada**. Próximo trabajo: **fase 9** (misiones, dificultad,
+  victoria/derrota y persistencia).
 
 ## Incidencias conocidas
 
@@ -120,8 +127,8 @@
 | 7 | Pickups: cura, mejora y potencia | Completada |
 | 7.5 | Blindaje direccional y flanqueo | Completada |
 | 7.5.1 | Claridad de impacto y arranque inicial (hotfix) | Completada |
-| 8 | HUD: vida, progreso, puntuación, radar, recarga y pantallas | **Pendiente (siguiente)** |
-| 9 | Misiones: campaña de 3, escalado, victoria/derrota y persistencia | Pendiente |
+| 8 | HUD: vida, progreso, puntuación, radar, recarga y pausa | Completada |
+| 9 | Misiones: campaña de 3, escalado, victoria/derrota y persistencia | **Pendiente (siguiente)** |
 | 10 | Audio: efectos sintetizados WebAudio, volumen y mute | Pendiente |
 | 11 | Pulido, QA, rendimiento, documentación final y tag `v0.1.0` | Pendiente |
 
@@ -130,9 +137,8 @@
 - **Supuestos de pickups pendientes de validar:** la mejora cura también los 20 PV al subir el
   máximo, las reducciones de daño son multiplicativas y recoger una mejora con el tope ×3 la consume
   sin efecto. Confirmar en la fase 9.
-- **Feedback de pickups y de zona de impacto provisional:** el evento de impacto ya lleva la zona
-  (`front`/`side`/`rear`); el daño flotante, la barra de vida y el destello ya están implementados
-  en canvas. El HUD definitivo de la fase 8 recogerá estos datos.
+- **HUD definitivo pendiente de misiones:** el HUD de la fase 8 ya muestra vida, avance,
+  puntuación, recarga, efectos y radar; briefing, resumen de misión y récord llegan en la fase 9.
 - **Balance del blindaje pendiente de la fase 9:** multiplicadores y umbrales en `balance.ts`; hay
   que validar 5/3/2 y 8/4/3 y si la ventana de recarga de la IA resulta demasiado generosa.
 - **IA sin corregir rumbo al recargar:** implementado como ventana de flanqueo; revisar en la fase 9
@@ -153,7 +159,7 @@
 ## Decisiones y notas operativas
 
 - **Flujo de trabajo acordado con el usuario:** pausa al cerrar cada fase para revisión/intervención. Se retoma con «continúa la fase N» o «continúa el bloque N».
-- **Cambios aprobados 2026-10-27:** corregir `BUG-001` (6.6) y añadir blindaje direccional/flanqueo (7.5). Registrados en `PLAN.md` §2/§12 y `DECISIONS.md` ADR-009. Ambos bloques y la fase 7 están cerrados; el siguiente trabajo es el HUD (fase 8).
+- **Cambios aprobados 2026-10-27:** corregir `BUG-001` (6.6) y añadir blindaje direccional/flanqueo (7.5). Registrados en `PLAN.md` §2/§12 y `DECISIONS.md` ADR-009. Los bloques 6.6/7.5, la fase 7 y el HUD (fase 8) están cerrados; el siguiente trabajo son las misiones (fase 9).
 - **QA del bloque 6.6:** además de los tests de regresión, se condujo el juego real en Chrome headless vía CDP (sin dependencias nuevas) para avanzar contra un enemigo: el jugador se detiene a 2,9 m (suma de radios 2,75 m + margen 0,15 m) y no lo cruza.
 - **QA de la fase 7:** se recogieron los tres pickups en Chrome headless vía CDP (botiquín de 40 a 70 PV, mejora de 100 a 120 de vida máxima, potencia con recarga de 1,56 s) y se verificaron con capturas el icono en el mundo, el aviso flotante y la línea de estado.
 - **QA del bloque 7.5:** en Chrome headless vía CDP, disparos al mismo Panzer III hicieron 60 de daño por la espalda y 20 de frente; la IA no disparó con el jugador a 90° del rumbo, mantuvo el heading durante 0,5 s de recarga y disparó al entrar en el arco de ±15°; se comprobaron las franjas de orientación (clara delante, roja detrás) con capturas.

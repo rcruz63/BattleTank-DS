@@ -13,13 +13,66 @@
   </head>
   <body>
     <main id="app">
-      <canvas
-        id="game-canvas"
-        width="1280"
-        height="720"
-        aria-label="Vista del periscopio del tanque"
-      ></canvas>
-      <div id="hud-root" aria-live="polite"></div>
+      <div id="game-frame">
+        <canvas
+          id="game-canvas"
+          width="1280"
+          height="720"
+          aria-label="Vista del periscopio del tanque"
+        ></canvas>
+
+        <div id="hud-root">
+          <section class="hud-panel hud-vitals" aria-label="Estado del tanque">
+            <div class="hud-kicker">M4 SHERMAN</div>
+            <div class="hud-health" role="progressbar" aria-label="Vida">
+              <div id="hud-health-fill" class="hud-health-fill alta"></div>
+            </div>
+            <div class="hud-line">
+              <span id="hud-health-text">100 / 100</span>
+              <span id="hud-reload-text" class="ready">LISTO</span>
+            </div>
+            <div id="hud-effects" class="hud-effects" hidden>
+              <span id="hud-effects-upgrade" class="hud-effect hud-effect--upgrade"></span>
+              <span id="hud-effects-power" class="hud-effect hud-effect--power"></span>
+            </div>
+          </section>
+
+          <section class="hud-progress" aria-label="Avance del sector">
+            <div class="hud-progress-head">
+              <span>AVANCE DE SECTOR</span>
+              <span id="hud-progress-text">0 %</span>
+            </div>
+            <div class="hud-progress-track">
+              <div id="hud-progress-fill"></div>
+            </div>
+          </section>
+
+          <section class="hud-score" aria-label="Puntuación">
+            <div class="hud-kicker">PUNTOS</div>
+            <div id="hud-score-text">0</div>
+          </section>
+
+          <section class="hud-radar" aria-label="Radar">
+            <div class="hud-radar-title">RADAR</div>
+            <canvas id="hud-radar" width="180" height="180"></canvas>
+            <div class="hud-radar-range">45 m</div>
+          </section>
+
+          <div id="hud-toast" class="hud-toast" hidden></div>
+
+          <div id="hud-pause" class="hud-pause" hidden>
+            <div class="hud-pause-card">
+              <div class="hud-kicker">BATTLE TANK — PERISCOPIO</div>
+              <h1>PAUSA</h1>
+              <p>ESC para continuar</p>
+              <p class="hud-controls">
+                W/S mover · A/D girar · ratón apuntar · clic o ESPACIO disparar
+              </p>
+              <p id="hud-pause-seed" class="hud-seed"></p>
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
     <script type="module" src="/src/main.ts"></script>
   </body>

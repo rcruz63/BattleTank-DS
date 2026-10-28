@@ -18,6 +18,8 @@ export interface InputSnapshot {
   readonly aimX: number;
   /** Puntero normalizado: -1 (abajo) .. 1 (arriba). */
   readonly aimY: number;
+  /** Flanco de pausa (ESC). */
+  readonly pause: boolean;
 }
 
 export interface InputState {
@@ -34,6 +36,7 @@ const BACKWARD_KEYS = new Set(['KeyS', 'ArrowDown']);
 const LEFT_KEYS = new Set(['KeyA', 'ArrowLeft']);
 const RIGHT_KEYS = new Set(['KeyD', 'ArrowRight']);
 const FIRE_KEY = 'Space';
+const PAUSE_KEY = 'Escape';
 
 function axis(
   positive: ReadonlySet<string>,
@@ -48,6 +51,7 @@ function axis(
 export function createInputState(): InputState {
   const held = new Set<string>();
   let fireQueued = false;
+  let pauseQueued = false;
   let aimX = 0;
   let aimY = 0;
 
@@ -59,12 +63,15 @@ export function createInputState(): InputState {
         fire: fireQueued,
         aimX,
         aimY,
+        pause: pauseQueued,
       };
       fireQueued = false;
+      pauseQueued = false;
       return snapshot;
     },
     handleKeyDown: (code) => {
       if (code === FIRE_KEY && !held.has(FIRE_KEY)) fireQueued = true;
+      if (code === PAUSE_KEY && !held.has(PAUSE_KEY)) pauseQueued = true;
       held.add(code);
     },
     handleKeyUp: (code) => {
@@ -80,6 +87,7 @@ export function createInputState(): InputState {
     clear: () => {
       held.clear();
       fireQueued = false;
+      pauseQueued = false;
       aimX = 0;
       aimY = 0;
     },
@@ -96,6 +104,7 @@ const GAME_KEYS = new Set([
   'ArrowLeft',
   'ArrowRight',
   'Space',
+  'Escape',
 ]);
 
 /** Conecta el estado al teclado. Devuelve la función para desconectar. */

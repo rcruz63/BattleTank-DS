@@ -11,7 +11,7 @@ son reglas deterministas sobre estado, los constructores de caras (`worldFaces`,
 `bulletFaces`) producen datos, `faces` los proyecta y solo el pintor toca el contrato gráfico
 (`FaceCanvas`). La composición del frame vive en `render/renderer.ts`; **no hay una escena unificada
 (`render/scene.ts`)**. La UI y el audio son adaptadores finos que se sustituyen por dobles. Estado:
-**184 tests en 31 ficheros** con las fases 0–7 y los bloques 6.5 (puntería con ratón), 6.6
+**194 tests en 33 ficheros** con las fases 0–8 y los bloques 6.5 (puntería con ratón), 6.6
 (colisión entre tanques), 7.5 (blindaje direccional) y 7.5.1 (claridad/feedback) cerrados.
 
 | Nivel | Qué cubre | Herramienta | Cuándo |
@@ -76,12 +76,12 @@ DOM o WebAudio, el diseño que se está probando no está separado: extrae la l�
 | `render/painter` | Orden **de mayor a menor profundidad** (lo más lejano primero), desempate estable, secuencia de operaciones en el contexto simulado, no muta la entrada, presupuesto con el fixture denso. |
 | `render/renderer` | Composición del frame: fondo y rejilla antes que las caras; coberturas + tanques + pickups en una sola proyección + proyectiles añadidos; devuelve el número de caras pintadas. Test con contexto falso previsto. |
 | `render/periscope` | Validación manual/visual (usa el contexto completo, no solo `FaceCanvas`): retícula y marcas en `aimScreenX/Y`, marca de rumbo del casco, anillo de recarga y marca de impacto; no se dibuja cañón (la retícula es la referencia). La posición de la retícula se prueba por separado en `systems/aim`. |
-| `render/statusOverlay` | Validación manual/visual (contexto completo): panel temporal con semilla, vida, recarga y efectos; aviso flotante de pickup con desvanecimiento; pantalla provisional de destruido. |
+| `render/statusOverlay` | Validación manual/visual (contexto completo): pantalla provisional de tanque destruido. El HUD, el radar y los avisos de pickup se validan en `ui` (parte pura) y QA visual. |
 | `systems/loot` | Recogida solo a 2 m y una sola vez; cura 30 PV con tope; mejora +20 de vida máxima (y 20 PV) con reducción de daño multiplicativa acumulable ×3 y tope; potencia de 20 s que se renueva, con multiplicadores de daño ×1,75 y recarga ×0,65 y reversión al agotarse; texto del aviso; un jugador destruido no recoge. |
 | `systems/damage` | Impacto al jugador con blindaje base, mejoras acumuladas y zona direccional; impacto a enemigos con su blindaje y zona; balance 5/3/2 (Panzer III) y 8/4/3 (Tiger I) por frontal/lateral/trasero; muerte al llegar a 0; objetivos desconocidos o ya destruidos se ignoran. |
 | `systems/armor` | Clasificación frontal/lateral/trasera con umbrales inclusivos ±60°/120°, giro con el rumbo del blanco y multiplicadores ×0,5/×1,0/×1,5; el arco de fuego enemigo coincide con el cono del jugador (`AIM_LIMITS`). |
 | `systems/mission` / `systems/score` / `systems/progression` (fase 9) | Validación de misiones, progreso, victoria/derrota, puntuación y persistencia con almacenamiento falso. |
-| `ui` (parte pura, fase 8) | Formateo de segundos/puntos/porcentajes, umbrales de color de vida, matemática del radar, cuenta atrás de efectos. El DOM real no se prueba en unitarias. |
+| `ui` (parte pura) | `hudView` (vida/nivel, avance, recarga, efectos, avisos) y `radar` (contactos girados con el rumbo, alcance, paredes). El DOM real no se prueba en unitarias; se valida con QA visual. |
 | `audio` (fase 10) | Con un doble de `AudioBus`: mapeo de eventos a efectos, mute/volumen, no lanzar si no hay WebAudio. |
 | `game` | `createGame` con semilla e `InputState` inyectado: expone arena, jugador, enemigos, pickups, loot y proyectiles; `update` responde a avance/giro y resuelve la puntería con el puntero; el disparo sale con la dirección 3D del cañón (el ratón orienta el tiro); mueve la IA; el jugador no atraviesa a un enemigo colocado delante (`BUG-001`); recoge pickups con su efecto (cura, vida máxima/reducción y potencia con recarga acortada), que no reaparecen; el mismo disparo hace 60 por la espalda y 20 de frente a un Panzer III (zona + blindaje); `dispose` limpia la entrada. En fases posteriores: máquina de estados, pausa y reinicio. |
 
@@ -204,12 +204,12 @@ Marcar cada punto en el navegador; anotar semilla, fase y navegador usado. Los p
       (`BUG-001`, bloque 6.6).
 - [ ] Al disparar, la cámara retrocede un instante y vuelve; el rumbo lógico no cambia.
 - [ ] Al recibir daño se ve el tinte rojo; al morir aparece la pantalla provisional «TANQUE DESTRUIDO».
-- [ ] `Esc` pausa y `M` silencia **(fases 8/10)**.
+- [ ] `Esc` pausa y reanuda; `M` silencia **(fase 10)**.
 
 ### Combate (fase 5)
 
 - [ ] `Espacio` dispara una vez por pulsación; mantener pulsado no repite fuego.
-- [ ] La recarga dura 2,4 s; el indicador definitivo llegará con el HUD **(fase 8)**.
+- [ ] La recarga dura 2,4 s; el HUD y el anillo del periscopio muestran segundos y «LISTO».
 - [ ] El proyectil es visible (tracer) y respeta la oclusión: no atraviesa coberturas intactas, y
       los escombros no lo detienen.
 - [ ] Un tiro alto por encima de un tanque pasa de largo y cae al suelo; un tiro centrado impacta.
@@ -233,7 +233,6 @@ Marcar cada punto en el navegador; anotar semilla, fase y navegador usado. Los p
 - [ ] En esquinas y con la cobertura pegada a la cámara no aparecen huecos ni artefactos graves.
 - [ ] Los enemigos quedan ocultos tras una cobertura intacta y son visibles al destruirla.
 - [ ] Los enemigos respetan la misma oclusión: no disparan a través de coberturas intactas.
-- [ ] Radar **(fase 8)**.
 
 ### Feedback de combate (ajuste 7.5.1)
 
@@ -241,16 +240,17 @@ Marcar cada punto en el navegador; anotar semilla, fase y navegador usado. Los p
 - [ ] Un impacto frontal muestra «−20 FRONTAL», el lateral «−40 LATERAL» y el trasero «−60 TRASERO».
 - [ ] El tanque parpadea al recibir el impacto y el daño desaparece en ~1 s.
 - [ ] El arranque por defecto tiene 3 Panzer III (sin Tiger) mientras no existan misiones.
-- [ ] El panel superior dice «Escenario #… · enemigos vivos X/Y» y no muestra fases ni proyectiles.
+- [ ] El HUD muestra vida, avance, puntuación, recarga y radar sin tapar la mira.
 
-### HUD (fase 8)
+### HUD y radar (fase 8)
 
 - [ ] Vida con barra y número, color según porcentaje, legible; no tapa la mira.
 - [ ] Progreso solo en porcentaje y sube al destruir enemigos; nunca muestra cuántos quedan.
-- [ ] Puntuación visible y correcta; récord en pausa/resumen.
-- [ ] Recarga: anillo y segundos restantes (ya visibles en el periscopio); destello al estar lista
-      y HUD completo **(fase 8)**.
-- [ ] Iconos y cuenta atrás de potencia/mejora; avisos de estado legibles.
+- [ ] Puntuación correcta (100 Panzer III / 250 Tiger I); el récord y el resumen llegan en fase 9.
+- [ ] Recarga: «LISTO» o segundos en el HUD, además del anillo del periscopio.
+- [ ] Efectos de mejora/potencia con texto y cuenta atrás; avisos de pickup legibles.
+- [ ] `ESC` congela la simulación, abre la pausa con controles/semilla y reanuda con `ESC`.
+- [ ] Viñeta y paneles no tapan la retícula ni el centro de la mira.
 - [ ] Contraste alto y estados distinguibles sin depender solo del color.
 
 ### Radar (fase 8)
@@ -258,6 +258,7 @@ Marcar cada punto en el navegador; anotar semilla, fase y navegador usado. Los p
 - [ ] Circular, abajo a la derecha, centrado en el tanque y orientado con el rumbo.
 - [ ] Alcance 45 m y barrido animado; enemigos, pickups y coberturas con los símbolos previstos.
 - [ ] No desvela el detalle del escenario ni la posición exacta fuera de alcance.
+- [ ] Al girar el tanque, el radar gira con él y el frente queda arriba.
 
 ### Audio (fase 10)
 
@@ -286,8 +287,8 @@ Marcar cada punto en el navegador; anotar semilla, fase y navegador usado. Los p
       recogen al pasar a menos de 2 m y no reaparecen.
 - [ ] Botiquín cura 30 PV sin superar el máximo; la mejora sube +20 la vida máxima y reduce el daño
       recibido (acumulable ×3); la potencia da daño ×1,75 y recarga −35 % durante 20 s (se renueva).
-- [ ] El aviso flotante y la línea de estado muestran el efecto y el temporizador (HUD definitivo en
-      la fase 8); al morir se pierden los acumulados.
+- [ ] El aviso de pickup y el HUD muestran el efecto y el temporizador; al morir se pierden los
+      acumulados.
 - [ ] Los pickups respetan la oclusión y desaparecen al recogerse.
 
 ### Rendimiento
@@ -322,8 +323,8 @@ La entrega se acepta cuando se cumplen los doce criterios del plan
 | 3 | Campaña de 3 misiones con dificultad creciente y reinicio tras morir. | Integración + QA manual. |
 | 4 | Cámara solidaria con el tanque, sin vista libre, solo periscopio. | QA manual + test de cámara. |
 | 5 | Escenario procedural reproducible por semilla, con coberturas destructibles e indestructibles; no se ve a través de las intactas y sí de las destruidas. | Tests de generación/colisión + aserción de oclusión del renderer + QA manual. |
-| 6 | HUD con vida, porcentaje de avance, puntuación, radar y estado de recarga. | Tests de helpers + QA manual. |
-| 7 | Los tres pickups existen, se recogen y su efecto es perceptible y visible en el HUD. | Tests de `config/pickups`, `entities/pickup`, `systems/loot`, `systems/damage`, `render/pickupFaces` e integración de `game` + QA manual. **Implementado en la fase 7; el HUD definitivo llega en la fase 8.** |
+| 6 | HUD con vida, porcentaje de avance, puntuación, radar y estado de recarga. | Tests de `ui/hudView`, `ui/radar` y `game` + QA manual. **Implementado en la fase 8.** |
+| 7 | Los tres pickups existen, se recogen y su efecto es perceptible y visible en el HUD. | Tests de `config/pickups`, `entities/pickup`, `systems/loot`, `systems/damage`, `render/pickupFaces`, `ui/hudView` e integración de `game` + QA manual. **Implementado en las fases 7-8.** |
 | 8 | Efectos de sonido sintetizados, volumen y silencio. | Tests del adaptador + QA manual. |
 | 9 | Documentación completa y `docs/STATUS.md` exacto en la entrega. | Revisión del Lead sobre la documentación. |
 | 10 | Historial de commits convencionales y changelog coherente; etiqueta `v0.1.0`. | Revisión de `git log`, `CHANGELOG.md` y el tag. |
@@ -392,5 +393,5 @@ anotan en [`DEVELOPMENT.md`](DEVELOPMENT.md#13-pendientes-y-supuestos-detectados
   congelado 0,5 s y disparo al entrar en el arco.
 - **Marcas de orientación (7.5, implementado):** `tests/render/models.test.ts` comprueba las 35 caras
   (7 cajas), que las franjas clara y roja giran con el rumbo y quedan en el frente y la espalda.
-- **HUD (fase 8, pendiente):** la zona de impacto ya se muestra en el canvas temporal con el daño
-  correcto; el HUD DOM definitivo deberá recogerla junto con el resto de indicadores.
+- **HUD (fase 8):** vida, avance, puntuación, recarga, efectos, radar y pausa implementados. La zona
+  de impacto sigue en el canvas del mundo; el récord y los resúmenes de misión llegan en la fase 9.

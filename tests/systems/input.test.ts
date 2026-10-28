@@ -55,6 +55,19 @@ describe('entrada de teclado', () => {
     expect(input.snapshot().fire).toBe(false);
   });
 
+  it('ESC produce un flanco de pausa', () => {
+    const input = createInputState();
+    expect(input.snapshot().pause).toBe(false);
+    input.handleKeyDown('Escape');
+    expect(input.snapshot().pause).toBe(true);
+    expect(input.snapshot().pause).toBe(false);
+    input.handleKeyDown('Escape');
+    expect(input.snapshot().pause).toBe(false);
+    input.handleKeyUp('Escape');
+    input.handleKeyDown('Escape');
+    expect(input.snapshot().pause).toBe(true);
+  });
+
   it('clear libera teclas y disparo pendiente', () => {
     const input = createInputState();
     input.handleKeyDown('KeyW');

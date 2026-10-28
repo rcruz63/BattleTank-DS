@@ -4,9 +4,9 @@ Arquitectura del vertical slice **0.1.0**. Se deriva de [`PLAN.md`](PLAN.md) §5
 contratos descritos aquí son el acuerdo entre capas, no un inventario exhaustivo del código.
 
 > **Convención de estado.** **«Implementado»** = existe y está cubierto por tests; **«previsto»** =
-> diseñado y acordado, todavía sin escribir. A fecha de redacción las fases 0–7 y los bloques 6.5
+> diseñado y acordado, todavía sin escribir. A fecha de redacción las fases 0–8 y los bloques 6.5
 > (puntería con ratón), 6.6 (colisión entre tanques) y 7.5 (blindaje direccional) están cerrados; la
-> siguiente es la fase 8 (HUD/radar). El inventario vivo está en [`STATUS.md`](STATUS.md), no aquí.
+> siguiente es la fase 9 (misiones). El inventario vivo está en [`STATUS.md`](STATUS.md), no aquí.
 >
 > **Las firmas concretas no se fijan en prosa.** Cada capa cierra sus tipos en sus `types.ts` (o en
 > el propio módulo); este documento fija responsabilidades, dependencias permitidas y flujo de datos.
@@ -19,8 +19,8 @@ contratos descritos aquí son el acuerdo entre capas, no un inventario exhaustiv
 | Lenguaje | **TypeScript estricto**: `strict`, `noUncheckedIndexedAccess`, `noUnusedLocals`, `noUnusedParameters`, `noFallthroughCasesInSwitch`, `verbatimModuleSyntax`, `isolatedModules`. |
 | Build y dev server | **Vite 8** (`base: './'`, `target: es2022`, `outDir: dist`, sourcemaps), puerto fijo 5173. |
 | Gráficos | **Canvas 2D** con resolución interna fija **1280×720** escalada por CSS con letterboxing (`index.html`). |
-| HUD | **DOM/CSS** sobre el canvas + un **canvas pequeño independiente** para el radar (fase 8). |
-| Tests | **Vitest** en entorno **Node** (`tests/**/*.test.ts`), sin jsdom; **184 tests en 31 ficheros**. |
+| HUD | **DOM/CSS** sobre el canvas + un **canvas pequeño independiente** para el radar (implementado). |
+| Tests | **Vitest** en entorno **Node** (`tests/**/*.test.ts`), sin jsdom; **194 tests en 33 ficheros**. |
 | Calidad | **ESLint** (tamaño/complejidad) + **Prettier**; puerta `npm run check`. |
 | Runtime | **Cero dependencias** y **cero assets externos**: geometría procedural, tipografía del sistema, iconos CSS y audio WebAudio sintetizado. |
 | Persistencia | `localStorage` solo para récord y misión desbloqueada (fase 9). |
@@ -95,7 +95,7 @@ BattleTank-DS/
 │   │   ├── painter.ts      #   ordenación y pintado de caras
 │   │   ├── renderer.ts     #   composición: coberturas + tanques + pickups + proyectiles
 │   │   ├── combatFeedback.ts # barras de vida, daño flotante con zona y destello
-│   │   ├── statusOverlay.ts #  panel temporal claro, aviso de pickup y pantalla de destruido
+│   │   └── statusOverlay.ts #  pantalla provisional de tanque destruido
 │   │   └── periscope.ts    #   overlay: máscara, retícula móvil, recarga y marca de impacto
 │   ├── entities/           # datos y comportamiento local
 │   │   ├── player.ts       #   estado del tanque del jugador
@@ -109,17 +109,20 @@ BattleTank-DS/
 │   │   ├── combat.ts       #   recarga, disparo, proyectiles 3D y zona del impacto
 │   │   ├── damage.ts       #   impacto: blindaje base, mejoras, zona direccional y muerte
 │   │   ├── loot.ts         #   recogida, efectos y temporizadores de los pickups
-│   │   ├── visibility.ts   #   LOS/rango para decidir qué enemigos pueden mostrar barra de vida
+│   │   ├── feedback.ts     #   visibilidad de enemigos y caducidad de daños flotantes
 │   │   ├── armor.ts        #   clasificación de zona y multiplicadores de blindaje
 │   │   └── ai.ts           #   percepción, alerta, avance, arco de fuego y ataque
 │   ├── ui/
-│   │   └── styles.css      #   estilos base del shell y el HUD
+│   │   ├── styles.css      #   estilos base, paneles, pausa y viñeta del HUD
+│   │   ├── hud.ts          #   adaptador DOM: barras, recarga, efectos, avisos, pausa y radar
+│   │   ├── hudView.ts      #   modelo puro del HUD (vida/nivel, avance, recarga, efectos, radar)
+│   │   └── radar.ts        #   modelo puro de contactos + pintado del radar circular
 │   └── game/
-│       └── game.ts         #   composición: arena, jugadores, IA, puntería, efectos, render
+│       └── game.ts         #   composición: arena, jugadores, IA, puntería, efectos, render, HUD
 │
 │   (previstos: config/missions.ts, systems/mission.ts, systems/score.ts, systems/progression.ts,
-│    ui/hud.ts, ui/radar.ts, ui/screens.ts, audio/synth.ts, audio/audio.ts, game/state.ts)
-├── tests/                  # espejo de src/ (31 ficheros, 184 tests) + integración headless
+│    ui/screens.ts, audio/synth.ts, audio/audio.ts, game/state.ts)
+├── tests/                  # espejo de src/ (33 ficheros, 194 tests) + integración headless
 ├── docs/
 └── dist/                   # build generado (no versionado)
 ```
@@ -129,11 +132,12 @@ caras de mundo de coberturas (`worldFaces.ts`) y tanques (`models.ts`), las proy
 pasada** con `faces.ts`, añade los tracers de proyectiles (`bulletFaces.ts`) y deja que `painter.ts`
 ordene y pinte. `buildWorldFaces` sigue existiendo como atajo para tests de proyección.
 
-A fecha de redacción las fases 0–7 y los bloques 6.5, 6.6 y 7.5 están cerrados: el jugador se
+A fecha de redacción las fases 0–8 y los bloques 6.5, 6.6 y 7.5 están cerrados: el jugador se
 mueve, apunta y dispara dentro del cono, no puede atravesar tanques, recoge pickups con sus efectos
 y el combate premia el flanqueo; las coberturas se destruyen, los enemigos esperan/avanzan/atacan con
-LOS y A* y solo disparan dentro de su arco frontal. El siguiente trabajo es la **fase 8**
-(HUD/radar); después, misiones, audio y pulido.
+LOS y A* y solo disparan dentro de su arco frontal. El HUD DOM muestra vida, avance, puntuación,
+recarga, efectos y radar, y `ESC` pausa. El siguiente trabajo son las **misiones (fase 9)**; después,
+audio y pulido.
 
 ### Responsabilidades por módulo
 
@@ -200,7 +204,7 @@ tipado en `global.d.ts`; `game.ts` no enlaza eventos, de modo que los tests inye
   blanco (frontal ≤60°, lateral ≤120°, trasera >120°) con la dirección del proyectil y devuelve
   ×0,5/×1,0/×1,5. `systems/combat` adjunta `zone` al `ProjectileEvent`; `systems/damage` aplica el
   multiplicador **después** del blindaje base y de las mejoras. Es simétrico para jugador y
-  enemigos; el HUD de la fase 8 mostrará la zona. La IA solo dispara si el jugador está dentro de su
+  enemigos; el daño flotante ya muestra la zona. La IA solo dispara si el jugador está dentro de su
   arco de ±15° y no corrige el rumbo mientras recarga. Valores en `config/balance.ts`.
 - **Dirección de dependencias permitida** (cada flecha es «importa a»; sin ciclos):
 
@@ -222,8 +226,8 @@ main.ts: createInputState → bindKeyboardInput + bindMouseInput(canvas) → cre
 requestAnimationFrame
 └─ core/loop.advance(now): acumula tiempo y ejecuta N pasos fijos (con tope por frame)
    ├─ por paso: game.update(dt)
-   │    ├─ systems/input.snapshot(): avance (W/S, ↑/↓), giro (A/D, ←/→), flanco de disparo y
-   │    │  puntero normalizado (aimX/aimY)
+   │    ├─ systems/input.snapshot(): avance (W/S, ↑/↓), giro (A/D, ←/→), flanco de disparo,
+   │    │  puntero normalizado (aimX/aimY) y flanco de pausa (ESC)
    │    ├─ systems/movement.updatePlayerMovement: giro solidario + avance con colisión deslizante
    │    │  contra la rejilla y contra los tanques enemigos vivos
    │    ├─ systems/aim.resolveAim: rumbo del casco + puntero → dirección 3D del cañón y punto de
@@ -236,16 +240,20 @@ requestAnimationFrame
    │    │  tanques (altura 2,2 m) o suelo, zona de blindaje, daño/destrucción y eventos
    │    ├─ systems/loot.updateLoot + collectPickups: temporizadores y recogida a 2 m con su efecto
    │    ├─ systems/damage.applyProjectileHit: blindaje base + mejoras + zona, vida/muerte y flash
-   │    └─ (fases 8–9: HUD, progresión de misión, puntuación y persistencia)
+   │    └─ (fases 9: progresión de misión, puntuación de campaña y persistencia)
    ├─ game.render(context)
    │    ├─ render/playerCamera.createPlayerCamera + retroceso de cámara (solo visual; sin aim)
    │    ├─ render/renderer.renderWorld: fondo y rejilla → caras de coberturas + tanques + pickups
    │    │  → projectWorldFaces (culling, recorte, sombreado, niebla) → tracers → painter
    │    ├─ render/periscope.drawPeriscope: máscara, retícula y marcas en el punto de mira, marca
    │    │  del rumbo del casco, anillo de recarga y marca de impacto (sin cañón dibujado)
-   │    ├─ render/statusOverlay: aviso de pickup, overlay de daño y pantalla de destruido
-   │    └─ panel temporal con semilla, enemigos, proyectiles, vida, recarga y efectos
-   └─ (fase 8: HUD/radar DOM; fase 10: audio consume eventos)
+   │    ├─ render/statusOverlay: overlay de tanque destruido (pantalla definitiva en fase 9)
+   │    └─ render/combatFeedback: barras de vida y daños flotantes del mundo
+   ├─ ui.hud.update(buildHudView(game.getHudData()))
+   │    ├─ barras de vida/avance, puntuación, recarga, efectos y aviso de pickup (DOM/CSS)
+   │    ├─ ui.radar: contactos a 45 m orientados con el rumbo y barrido animado (canvas)
+   │    └─ pantalla de pausa con controles y semilla (ESC congela la simulación)
+   └─ (fase 10: audio consume eventos)
 ```
 
 - **Paso fijo:** la simulación avanza en incrementos idénticos (`core/loop.ts`, 1/60 s en el
@@ -285,7 +293,7 @@ requestAnimationFrame
   escalado por CSS); la retícula se dibuja en la proyección del ángulo y no en la posición del ratón.
   El cursor del sistema se oculta sobre el canvas (`cursor: none`).
 - **Escalado:** canvas interno fijo 1280×720 escalado por CSS con letterboxing. La UI vive en DOM
-  encima y el radar tendrá su propio canvas (fase 8).
+  encima y el radar usa su propio canvas.
 
 ## 7. Pipeline de render, paso a paso
 
@@ -311,7 +319,7 @@ El plan describe 5 macro-pasos (§6.3); este es el desglose real de la composici
    **anillo de recarga** con segundos y la marca de impacto. **Sin cañón dibujado** (decisión del
    usuario, 2026-10-27): la retícula es la única referencia de puntería y se elimina el fogonazo del
    arma; el retroceso de cámara y el tracer conservan el feedback. **Decisión actual:** el overlay
-   está en canvas, no es una viñeta CSS; el plan preveía CSS y se revisará en la fase 8 si el HUD lo
+   está en canvas y la viñeta de periscopio se añade como capa CSS.
    requiere.
 7. **Feedback de pantalla.** `render/combatFeedback.ts` dibuja la barra de vida con nombre sobre
    enemigos visibles y los números de daño con la zona del impacto; `overlayTint` tiñe de rojo al
@@ -368,7 +376,7 @@ hay z-buffer. Los empates de profundidad conservan el orden de entrada (el `sort
   recogen al pasar a menos de 2 m, no reaparecen y no bloquean el movimiento. Los datos y efectos
   están en `config/pickups.ts`; `systems/loot` aplica la cura (+30 PV), la mejora (+20 de vida
   máxima, +20 PV y −10 % de daño recibido acumulable ×3) y la potencia (20 s de daño ×1,75 y recarga
-  ×0,65, renovable). El aviso y la línea de estado son provisionales hasta el HUD (fase 8).
+  ×0,65, renovable). El aviso de pickup y los efectos temporales se muestran en el HUD DOM.
 - **Proyectiles:** `Bullet` lleva dirección 3D normalizada; el del jugador sale del pivote de la
   torreta (1,55 m de alto, 1,1 m al frente) más 2,2 m de tubo, en la dirección de la mira. Los
   impactos pueden ser contra cobertura, contra tanque (cilindro de 2,2 m de alto) o contra el suelo;
@@ -437,7 +445,7 @@ No hay escena unificada: construir caras es una función pura, proyectarlas es o
   formación actual (4 enemigos) son ~140 caras, holgado dentro del presupuesto.
 - **Coste de los pickups:** ~30 caras por pickup (marca, caja e icono) y 4 unidades ⇒ ~120 caras,
   también dentro del presupuesto.
-- **Depuración:** `F3` con fps, caras, celdas visibles y entidades es previsto; hoy el panel temporal
+- **Depuración:** `F3` con fps, caras, celdas visibles y entidades es previsto; hoy el HUD
   muestra enemigos, proyectiles, vida y recarga.
 - **Degradación:** si se excede, primero distancia de dibujado y culling más agresivo; después,
   reutilizar arreglos. El presupuesto es una restricción de diseño.
@@ -476,7 +484,7 @@ colisión se dividen en funciones pequeñas; si una regla no cabe sin anidar, se
 | Blindaje direccional desequilibra la dificultad | Multiplicadores/umbrales en `balance.ts`; tests de impactos por zona y simulación en fase 9 | Implementado (7.5); balance a validar en fase 9 |
 | IA demasiado precisa encarando al jugador | Arco de fuego ±15°, giro limitado y pausa de seguimiento al recargar | Mitigado (7.5) |
 | Dificultad mal calibrada | Balance en `config/tanks.ts`, IA en `balance.ts`, simulación headless y `?seed=` | Parcial (ajuste fase 9) |
-| Oclusión percibida como injusta | Enemigos con la misma LOS; coberturas destructibles y radar (fase 8) | Diseño |
+| Oclusión percibida como injusta | Enemigos con la misma LOS; coberturas destructibles y radar | Implementado |
 | Retícula/puntería descuadrada respecto a la dirección del disparo | `resolveAim` unitario y QA visual de la retícula (ya no hay cañón dibujado) | Mitigado (bloque 6.5) |
 | Cono de puntería demasiado estrecho o amplio | ±15° / ±4° en `AIM_LIMITS`, revisable con QA y ajuste de datos | Revisable |
 | Cursor del sistema visible distrayendo | Oculto sobre el canvas con CSS; la retícula es la referencia | Implementado |
@@ -515,10 +523,12 @@ colisión se dividen en funciones pequeñas; si una regla no cabe sin anidar, se
   y franjas de orientación en `render/models.ts`.
 - **Ajuste 7.5.1:** panel temporal reetiquetado, arranque con 3 Panzer III, barra/nombre de enemigo
   visible por LOS, daño flotante con zona y destello de impacto; `systems/damage.ts` devuelve
-  `DamageResult` y `systems/visibility.ts` centraliza la visibilidad para feedback. **184 tests en
+  `DamageResult` y `systems/feedback.ts` centraliza visibilidad y caducidad de daños. **184 tests en
   31 ficheros.**
-- **Siguiente trabajo (fase 8):** HUD/radar con vida, progreso, puntuación, recarga, zona de impacto
-  y pantallas. Después: misiones, audio y pulido (fases 9–11).
+- **Fase 8:** HUD/radar cerrada — HUD DOM con vida, avance, puntuación, recarga y efectos; radar de
+  45 m; pausa con ESC; puntuación por tipo de enemigo; viñeta CSS. **194 tests en 33 ficheros.**
+- **Siguiente trabajo (fase 9):** misiones, dificultad, victoria/derrota, récord/persistencia y
+  pantallas de briefing/resumen. Después: audio y pulido (fases 10–11).
 
 El inventario real, commit a commit, está en [`STATUS.md`](STATUS.md); el orden y entregables de
 cada fase, en [`PLAN.md`](PLAN.md) §12.

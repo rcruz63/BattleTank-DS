@@ -44,6 +44,12 @@ export const COMBAT = {
   recoilKickRadians: 0.055,
 } as const;
 
+/** Puntuación por destruir cada tipo de enemigo (bonus de misión llegará en la fase 9). */
+export const SCORE_REWARDS = {
+  light: 100,
+  heavy: 250,
+} as const;
+
 /** Radio de colisión de los tanques enemigos (m). */
 export const ENEMY_RADIUS = 1.4;
 
