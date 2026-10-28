@@ -2,6 +2,7 @@ import './ui/styles.css';
 import { createFrameStepper, runAnimationLoop } from './core/loop';
 import { createGame } from './game/game';
 import { getGameCanvas, getGameContext, VIEWPORT } from './render/canvas';
+import { createAudioBus } from './audio/audio';
 import { bindKeyboardInput, bindMouseInput, createInputState } from './systems/input';
 import { createHud } from './ui/hud';
 import { buildHudView } from './ui/hudView';
@@ -27,11 +28,12 @@ function boot(): void {
   const canvas = getGameCanvas();
   const context = getGameContext();
   const input = createInputState();
+  const audio = createAudioBus();
   const unbindKeyboard = bindKeyboardInput(input);
   const unbindMouse = bindMouseInput(input, canvas);
 
   try {
-    const game = createGame({ seed: seedFromUrl(), input, autoStart: false });
+    const game = createGame({ seed: seedFromUrl(), input, audio, autoStart: false });
     const hud = createHud();
     // Gancho de depuración/QA: inspeccionar o recolocar el estado desde la consola.
     window.__BT__ = game;
@@ -52,6 +54,7 @@ function boot(): void {
       unbindKeyboard();
       unbindMouse();
       game.dispose();
+      audio.dispose();
     });
   } catch (error) {
     unbindKeyboard();

@@ -1,5 +1,7 @@
 /** Composición del juego: campaña, estado, entrada, simulación y render. */
 
+import { DEFAULT_VOLUME, createSilentAudioBus } from '../audio/audio';
+import type { AudioBus } from '../audio/audio';
 import { MISSIONS } from '../config/missions';
 import type { MissionPhase } from '../config/missions';
 import type { Bullet } from '../entities/bullet';
@@ -26,6 +28,8 @@ export interface GameOptions {
   readonly input?: InputState;
   /** true: empieza a jugar la misión 1 directamente (tests). false: briefing del HUD. */
   readonly autoStart?: boolean;
+  /** Bus de audio inyectable; por defecto, uno silencioso (tests). */
+  readonly audio?: AudioBus;
 }
 
 export interface Game {
@@ -54,6 +58,9 @@ function createGameState(options: GameOptions): GameState {
     : Math.min(progression.unlockedMission, MISSIONS.length - 1);
   const session = createMissionSession(startIndex, baseSeed);
   session.phase = autoStart ? 'playing' : 'briefing';
+  const audio = options.audio ?? createSilentAudioBus();
+  audio.setMuted(false);
+  audio.setVolume(DEFAULT_VOLUME);
 
   return {
     baseSeed,
@@ -64,6 +71,9 @@ function createGameState(options: GameOptions): GameState {
     progression,
     campaignScore: 0,
     paused: false,
+    audio,
+    audioMuted: false,
+    audioVolume: DEFAULT_VOLUME,
   };
 }
 
@@ -106,6 +116,7 @@ export function createGame(options: GameOptions = {}): Game {
     render: (context) => renderGame(state, context),
 
     dispose: () => {
+      state.audio.setEngine(0);
       state.input.clear();
     },
   };

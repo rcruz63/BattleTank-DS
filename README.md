@@ -15,10 +15,10 @@ técnica) en [`docs/STATUS.md`](docs/STATUS.md).
 ## Estado
 
 > **Versión objetivo: `0.1.0` (vertical slice jugable) — en desarrollo**, todavía no publicado.
-> Al redactarse este README las fases 0–9 y los bloques 6.5 (puntería con ratón), 6.6 (colisión
-> entre tanques), 7.5 (blindaje direccional y flanqueo), el ajuste 7.5.1 (claridad/feedback), la
-> fase 8 (HUD/radar, pausa y puntuación) y la fase 9 (campaña) están cerrados. El siguiente trabajo
-> es el audio (fase 10). Ya hay un combate jugable:
+> Al redactarse este README las fases 0–10 y los bloques 6.5 (puntería con ratón), 6.6 (colisión
+> entre tanques), 7.5 (blindaje direccional y flanqueo), el ajuste 7.5.1 (claridad/feedback), las
+> fases 8 (HUD/radar, pausa y puntuación), 9 (campaña) y 10 (audio) están cerradas. El siguiente
+> trabajo es el pulido y la entrega (fase 11). Ya hay un combate jugable:
 > `WASD`/flechas mueven y giran el tanque, el ratón apunta el cañón dentro de un cono (la cámara y
 > el casco **no** giran con él), y `Espacio` o el clic izquierdo disparan con 2,4 s de recarga. Las
 > coberturas de madera y ladrillo se destruyen, los Panzer III y Tiger I esperan al acecho, detectan
@@ -31,8 +31,9 @@ técnica) en [`docs/STATUS.md`](docs/STATUS.md).
 > con aviso en pantalla. La campaña empieza con **3 Panzer III** en la misión 1 y los impactos se
 > ven con barra de vida, daño flotante por zona y destello. El HUD ya muestra vida, avance,
 > puntuación, recarga y radar, y `ESC` pausa. La campaña encadena tres misiones con briefing,
-> resumen, victoria/derrota y persistencia de récord/desbloqueo. Falta audio. Consulta
-> [`docs/STATUS.md`](docs/STATUS.md) para el estado exacto del día.
+> resumen, victoria/derrota y persistencia de récord/desbloqueo. El audio está sintetizado con
+> WebAudio (motor, cañón, impactos, recarga, pickups y UI), con `M` para silenciar y `−`/`+` para el
+> volumen. Falta pulido/entrega. Consulta [`docs/STATUS.md`](docs/STATUS.md) para el estado exacto.
 
 El título «BATTLE TANK — PERISCOPIO» es provisional y puede cambiarse en un commit de
 documentación. La interfaz y la documentación van en español; los identificadores, tipos y nombres
@@ -85,7 +86,8 @@ npm run preview  # sirve dist/ para verificar el build
 | Disparar | `Espacio` o clic izquierdo | **Disponible.** Un disparo por pulsación, sin fuego automático; recarga de 2,4 s. |
 | Pausa | `Esc` | **Disponible.** Congela la simulación y muestra controles y semilla. |
 | Confirmar pantallas | `Enter` | **Disponible.** Despliega, continúa tras una misión o reintenta. |
-| Silenciar | `M` | Previsto (fase 10). |
+| Silenciar | `M` | **Disponible.** Alterna mute; el HUD muestra `SILENCIADO`. |
+| Volumen | `−` / `+` | **Disponible.** Ajusta el volumen maestro; se muestra en el HUD/pausa. |
 | Depuración | `F3` | Previsto: overlay con fps, caras, celdas visibles y entidades. |
 
 No hay free-look (la cámara sigue al casco), ni torreta independiente, ni gamepad/móvil en 0.1.0.
@@ -121,9 +123,9 @@ BattleTank-DS/
 │   ├── entities/       # jugador, proyectil, enemigo y pickup
 │   ├── systems/        # entrada, puntería, movimiento, combate, IA, loot, daño y blindaje (misión y puntuación después)
 │   ├── ui/             # HUD DOM, modelo hudView, radar y pantallas de campaña
-│   ├── audio/          # efectos sintetizados con WebAudio (fase 10)
+│   ├── audio/          # bus WebAudio y síntesis procedural de efectos
 │   └── game/           # composición actual (createGame); máquina de estados en fases 8-9
-├── tests/              # espejo de src/ (203 tests en 36 ficheros) + integración headless
+├── tests/              # espejo de src/ (211 tests en 38 ficheros) + integración headless
 ├── docs/               # plan, estado y documentación del proyecto
 └── dist/               # build generado (no versionado)
 ```

@@ -520,7 +520,7 @@ Cada fase termina con `npm run check`, changelog + estado actualizados y **commi
 | 7.5.1 | Claridad de impacto y arranque | Panel temporal claro, 3 ligeros por defecto, barra de vida, daño flotante con zona y destello | `fix(ux): aclarar panel temporal y feedback de impacto` |
 | 8 | HUD y radar | HUD DOM (vida, avance, puntuación, recarga, efectos), radar, pausa, viñeta | `feat(hud): HUD, radar, pausa y puntuación` |
 | 9 | Campaña | 3 misiones, briefing/resultados, escalado, victoria/derrota y persistencia | `feat(mission): campaña, briefing, resultados y persistencia` |
-| 10 | Audio | Efectos sintetizados, volumen y mute | `feat(audio): efectos sintetizados con WebAudio` |
+| 10 | Audio | Efectos sintetizados, volumen y mute | `feat(audio): audio sintetizado, mute y volumen` |
 | 11 | Pulido y handoff | QA, rendimiento, documentación final, tag | `docs: documentación de handoff y guía de desarrollo` · `chore(release): 0.1.0` |
 
 Dependencias: 0→1→2→3→4→5→6→6.5→6.6→7→7.5→7.5.1→8→9→10→11. La documentación (GAME_DESIGN,

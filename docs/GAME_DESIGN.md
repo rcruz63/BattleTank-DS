@@ -2,9 +2,9 @@
 
 Documento de diseño del vertical slice **0.1.0**. Se deriva del plan aprobado
 ([`PLAN.md`](PLAN.md), fuente de verdad del alcance); si hay conflicto, manda el plan y se corrige
-este documento. Estado: fases 0–9 y los bloques 6.5 (puntería con ratón), 6.6 (colisión entre
+este documento. Estado: fases 0–10 y los bloques 6.5 (puntería con ratón), 6.6 (colisión entre
 tanques), 7.5 (blindaje direccional) y el ajuste 7.5.1 (claridad/feedback) cerrados; el siguiente
-trabajo es el audio (fase 10). El detalle vivo está en [`STATUS.md`](STATUS.md).
+trabajo es el pulido y la entrega (fase 11). El detalle vivo está en [`STATUS.md`](STATUS.md).
 
 **Balance de tanques:** los números concretos (PV, velocidad, giro, recarga, daño, blindaje y
 velocidad de proyectil) viven en **`src/config/tanks.ts`**, que es la fuente de verdad. Este
@@ -78,6 +78,8 @@ los resúmenes. No hay guardado a mitad de partida.
 | Disparar | `Espacio` o clic izquierdo | **Disponible.** Un disparo por pulsación; mantener no repite. Recarga de 2,4 s. |
 | Pausa | `Esc` | **Disponible.** Congela la simulación y muestra la pantalla de pausa con controles y semilla. |
 | Confirmar pantallas | `Enter` | **Disponible.** Avanza el briefing, el resumen de misión o el reintento. |
+| Silenciar | `M` | **Disponible.** Alterna mute; el estado se ve en el HUD y en pausa. |
+| Volumen | `−` / `+` | **Disponible.** Ajusta el volumen maestro; se muestra en el HUD/pausa. |
 | Silenciar | `M` | Previsto (fase 10). |
 | Depuración | `F3` | Previsto: overlay con fps, caras, celdas visibles y entidades. |
 
@@ -349,7 +351,8 @@ oclusión y pasillos) y una IA más precisa, rápida y letal.
 
 ## 11. Audio
 
-Todo el sonido se **sintetiza con WebAudio**; no hay ficheros de audio ni música en 0.1.0.
+**Implementado en la fase 10.** Todo el sonido se **sintetiza con WebAudio**; no hay ficheros
+de audio ni música en 0.1.0.
 
 | Fuente | Comportamiento |
 |---|---|
@@ -361,8 +364,9 @@ Todo el sonido se **sintetiza con WebAudio**; no hay ficheros de audio ni músic
 | UI | Clics de menú, pausa y avisos. |
 | Ambiente | Viento filtrado de fondo. |
 
-- El `AudioContext` se desbloquea en el primer input del usuario (política de los navegadores).
-- `M` silencia y vuelve a activar; el volumen maestro se ajusta en la pausa.
+- El `AudioContext` se desbloquea con el primer gesto del usuario (política de los navegadores).
+- `M` silencia y vuelve a activar; `−`/`+` ajustan el volumen maestro (también en pausa, con el
+  porcentaje visible).
 - Si WebAudio no está disponible, el juego funciona en silencio (degradación silenciosa).
 - Módulo aislado tras una interfaz de audio sustituible por un doble en tests.
 

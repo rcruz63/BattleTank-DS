@@ -1,6 +1,7 @@
 /** Simulación de la partida: jugador, IA, combate, campaña y cambios de fase. */
 
 import { SCORE_REWARDS, VIEWPORT } from '../config/balance';
+import { clampVolume } from '../audio/audio';
 import { MISSIONS } from '../config/missions';
 import { PALETTE } from '../config/palette';
 import { alertEnemiesNear, updateEnemies } from '../systems/ai';
@@ -36,6 +37,7 @@ function collectLoot(state: GameState): void {
   const last = collected[collected.length - 1];
   if (!last) return;
   state.effects.pickupNotice = pickupEffectText(last.kind, session.loot);
+  state.audio.play('pickup');
   state.effects.pickupColor =
     last.kind === 'health'
       ? PALETTE.pickupCura
@@ -50,33 +52,46 @@ function awardKill(state: GameState, targetId: string): void {
   if (enemy) state.campaignScore += SCORE_REWARDS[enemy.type];
 }
 
-function resolveImpacts(state: GameState, impacts: ProjectileEvent[]): boolean {
+function applyImpact(state: GameState, impact: ProjectileEvent): boolean {
   const session = state.session;
-  let playerHit = false;
-
-  for (const impact of impacts) {
-    const result = resolveProjectileHit(impact, {
-      player: session.player,
-      enemies: session.enemies,
-      loot: session.loot,
-    });
-    if (result.playerHit) {
-      playerHit = true;
-      session.damageTaken += result.damage;
-    }
-    if (result.target === 'enemy' && result.damage > 0) {
-      session.shotsHit += 1;
-      session.damagePopups.push({
-        position: impact.position,
-        amount: result.damage,
-        zone: result.zone,
-        killed: result.killed,
-        age: 0,
-      });
-      if (result.killed && result.targetId) awardKill(state, result.targetId);
-    }
+  const result = resolveProjectileHit(impact, {
+    player: session.player,
+    enemies: session.enemies,
+    loot: session.loot,
+  });
+  if (result.playerHit) {
+    session.damageTaken += result.damage;
+    state.audio.play('damage');
   }
+  if (result.target === 'enemy' && result.damage > 0) {
+    session.shotsHit += 1;
+    state.audio.play(result.killed ? 'explosion' : 'impact');
+    session.damagePopups.push({
+      position: impact.position,
+      amount: result.damage,
+      zone: result.zone,
+      killed: result.killed,
+      age: 0,
+    });
+    if (result.killed && result.targetId) awardKill(state, result.targetId);
+  }
+  return result.playerHit;
+}
 
+function playCoverAudio(state: GameState, impacts: ProjectileEvent[]): void {
+  if (impacts.some((impact) => impact.kind === 'cover' && impact.destroyedCover)) {
+    state.audio.play('explosion');
+    return;
+  }
+  if (impacts.some((impact) => impact.kind === 'cover')) state.audio.play('impact');
+}
+
+function resolveImpacts(state: GameState, impacts: ProjectileEvent[]): boolean {
+  let playerHit = false;
+  for (const impact of impacts) {
+    if (applyImpact(state, impact)) playerHit = true;
+  }
+  playCoverAudio(state, impacts);
   if (impacts.some((impact) => impact.kind !== 'ground')) state.effects.hitMarker = 1;
   return playerHit;
 }
@@ -84,6 +99,7 @@ function resolveImpacts(state: GameState, impacts: ProjectileEvent[]): boolean {
 function updatePlayerStep(state: GameState, snapshot: InputSnapshot, stepSeconds: number): void {
   const session = state.session;
   if (!session.player.alive) return;
+  const wasReloading = session.player.reloadRemaining > 0;
 
   updatePlayerMovement({
     player: session.player,
@@ -106,11 +122,13 @@ function updatePlayerStep(state: GameState, snapshot: InputSnapshot, stepSeconds
     damageMultiplier: damageMultiplier(session.loot),
     reloadMultiplier: reloadMultiplier(session.loot),
   });
-  if (!fired) return;
-
-  session.shotsFired += 1;
-  state.effects.recoil = 1;
-  alertEnemiesNear(session.enemies, session.player.position, FIRE_ALERT_RADIUS);
+  if (fired) {
+    session.shotsFired += 1;
+    state.effects.recoil = 1;
+    state.audio.play('fire');
+    alertEnemiesNear(session.enemies, session.player.position, FIRE_ALERT_RADIUS);
+  }
+  if (wasReloading && session.player.reloadRemaining <= 0) state.audio.play('reload');
 }
 
 function updateEnemyStep(state: GameState, stepSeconds: number): void {
@@ -210,19 +228,44 @@ function evaluateMission(state: GameState): void {
 }
 
 /** Avanza la partida un paso de simulación o resuelve una pantalla de campaña. */
+function applyAudioInput(state: GameState, snapshot: InputSnapshot): void {
+  if (snapshot.mute) {
+    state.audioMuted = !state.audioMuted;
+    state.audio.setMuted(state.audioMuted);
+    state.audio.play('ui');
+  }
+  if (snapshot.volumeDelta !== 0) {
+    state.audioVolume = clampVolume(state.audioVolume + snapshot.volumeDelta * 0.1);
+    state.audio.setVolume(state.audioVolume);
+    state.audio.play('ui');
+  }
+}
+
 export function stepCombat(state: GameState, stepSeconds: number): void {
   const snapshot = state.input.snapshot();
   const session = state.session;
+  applyAudioInput(state, snapshot);
 
   if (session.phase !== 'playing') {
-    if (snapshot.confirm) advanceScreen(state);
+    state.audio.setEngine(0);
+    if (snapshot.confirm) {
+      state.audio.play('ui');
+      advanceScreen(state);
+    }
     return;
   }
 
-  if (snapshot.pause) state.paused = !state.paused;
-  if (state.paused) return;
+  if (snapshot.pause) {
+    state.paused = !state.paused;
+    state.audio.play('ui');
+  }
+  if (state.paused) {
+    state.audio.setEngine(0);
+    return;
+  }
 
   session.elapsedSeconds += stepSeconds;
   advanceSimulation(state, snapshot, stepSeconds);
   evaluateMission(state);
+  state.audio.setEngine(session.player.alive && session.phase === 'playing' ? Math.abs(snapshot.forward) : 0);
 }

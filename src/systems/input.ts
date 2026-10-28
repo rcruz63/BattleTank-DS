@@ -22,6 +22,10 @@ export interface InputSnapshot {
   readonly pause: boolean;
   /** Flanco de confirmación de pantalla (ENTER). */
   readonly confirm: boolean;
+  /** Flanco de silencio (M). */
+  readonly mute: boolean;
+  /** -1 baja volumen, 1 sube, 0 sin cambio (− / +). */
+  readonly volumeDelta: number;
 }
 
 export interface InputState {
@@ -40,6 +44,75 @@ const RIGHT_KEYS = new Set(['KeyD', 'ArrowRight']);
 const FIRE_KEY = 'Space';
 const PAUSE_KEY = 'Escape';
 const CONFIRM_KEY = 'Enter';
+const MUTE_KEY = 'KeyM';
+const VOLUME_DOWN_KEY = 'Minus';
+const VOLUME_UP_KEY = 'Equal';
+
+interface InputEdges {
+  readonly held: Set<string>;
+  fireQueued: boolean;
+  pauseQueued: boolean;
+  confirmQueued: boolean;
+  muteQueued: boolean;
+  volumeDelta: number;
+  aimX: number;
+  aimY: number;
+}
+
+function createEdges(): InputEdges {
+  return {
+    held: new Set<string>(),
+    fireQueued: false,
+    pauseQueued: false,
+    confirmQueued: false,
+    muteQueued: false,
+    volumeDelta: 0,
+    aimX: 0,
+    aimY: 0,
+  };
+}
+
+function resetEdges(edges: InputEdges): void {
+  edges.held.clear();
+  edges.fireQueued = false;
+  edges.pauseQueued = false;
+  edges.confirmQueued = false;
+  edges.muteQueued = false;
+  edges.volumeDelta = 0;
+  edges.aimX = 0;
+  edges.aimY = 0;
+}
+
+function queueOnce(
+  held: ReadonlySet<string>,
+  code: string,
+  expected: string,
+  action: () => void,
+): void {
+  if (code === expected && !held.has(expected)) action();
+}
+
+function press(edges: InputEdges, code: string): void {
+  queueOnce(edges.held, code, FIRE_KEY, () => {
+    edges.fireQueued = true;
+  });
+  queueOnce(edges.held, code, PAUSE_KEY, () => {
+    edges.pauseQueued = true;
+  });
+  queueOnce(edges.held, code, CONFIRM_KEY, () => {
+    edges.confirmQueued = true;
+  });
+  queueOnce(edges.held, code, MUTE_KEY, () => {
+    edges.muteQueued = true;
+  });
+  queueOnce(edges.held, code, VOLUME_DOWN_KEY, () => {
+    edges.volumeDelta = -1;
+  });
+  queueOnce(edges.held, code, VOLUME_UP_KEY, () => {
+    edges.volumeDelta = 1;
+  });
+  edges.held.add(code);
+}
 
 function axis(
   positive: ReadonlySet<string>,
@@ -51,54 +124,41 @@ function axis(
   return forward - backward;
 }
 
+function takeSnapshot(edges: InputEdges): InputSnapshot {
+  const snapshot: InputSnapshot = {
+    forward: axis(FORWARD_KEYS, BACKWARD_KEYS, edges.held),
+    turn: axis(RIGHT_KEYS, LEFT_KEYS, edges.held),
+    fire: edges.fireQueued,
+    aimX: edges.aimX,
+    aimY: edges.aimY,
+    pause: edges.pauseQueued,
+    confirm: edges.confirmQueued,
+    mute: edges.muteQueued,
+    volumeDelta: edges.volumeDelta,
+  };
+  edges.fireQueued = false;
+  edges.pauseQueued = false;
+  edges.confirmQueued = false;
+  edges.muteQueued = false;
+  edges.volumeDelta = 0;
+  return snapshot;
+}
+
 export function createInputState(): InputState {
-  const held = new Set<string>();
-  let fireQueued = false;
-  let pauseQueued = false;
-  let confirmQueued = false;
-  let aimX = 0;
-  let aimY = 0;
+  const edges = createEdges();
 
   return {
-    snapshot: () => {
-      const snapshot: InputSnapshot = {
-        forward: axis(FORWARD_KEYS, BACKWARD_KEYS, held),
-        turn: axis(RIGHT_KEYS, LEFT_KEYS, held),
-        fire: fireQueued,
-        aimX,
-        aimY,
-        pause: pauseQueued,
-        confirm: confirmQueued,
-      };
-      fireQueued = false;
-      pauseQueued = false;
-      confirmQueued = false;
-      return snapshot;
-    },
-    handleKeyDown: (code) => {
-      if (code === FIRE_KEY && !held.has(FIRE_KEY)) fireQueued = true;
-      if (code === PAUSE_KEY && !held.has(PAUSE_KEY)) pauseQueued = true;
-      if (code === CONFIRM_KEY && !held.has(CONFIRM_KEY)) confirmQueued = true;
-      held.add(code);
-    },
-    handleKeyUp: (code) => {
-      held.delete(code);
-    },
+    snapshot: () => takeSnapshot(edges),
+    handleKeyDown: (code) => press(edges, code),
+    handleKeyUp: (code) => edges.held.delete(code),
     setPointer: (x, y) => {
-      aimX = clamp(x, -1, 1);
-      aimY = clamp(y, -1, 1);
+      edges.aimX = clamp(x, -1, 1);
+      edges.aimY = clamp(y, -1, 1);
     },
     requestFire: () => {
-      fireQueued = true;
+      edges.fireQueued = true;
     },
-    clear: () => {
-      held.clear();
-      fireQueued = false;
-      pauseQueued = false;
-      confirmQueued = false;
-      aimX = 0;
-      aimY = 0;
-    },
+    clear: () => resetEdges(edges),
   };
 }
 
@@ -114,6 +174,9 @@ const GAME_KEYS = new Set([
   'Space',
   'Escape',
   'Enter',
+  'KeyM',
+  'Minus',
+  'Equal',
 ]);
 
 /** Conecta el estado al teclado. Devuelve la función para desconectar. */

@@ -2,6 +2,7 @@
 
 import { PALETTE } from '../config/palette';
 import { createRng } from '../core/rng';
+import type { AudioBus } from '../audio/audio';
 import type { Rng } from '../core/rng';
 import type { InputState } from '../systems/input';
 import type { Progression } from '../systems/progression';
@@ -25,6 +26,9 @@ export interface GameState {
   progression: Progression;
   campaignScore: number;
   paused: boolean;
+  readonly audio: AudioBus;
+  audioMuted: boolean;
+  audioVolume: number;
 }
 
 const EFFECT_RATE = {

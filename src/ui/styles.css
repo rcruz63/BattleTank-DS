@@ -217,6 +217,22 @@ body {
   text-shadow: 0 1px 0 #000;
 }
 
+.hud-audio {
+  margin-top: 3px;
+  font: 9px var(--fuente-mono);
+  letter-spacing: 0.06em;
+  color: var(--texto-tenue);
+}
+
+.hud-audio.muted {
+  color: var(--peligro);
+}
+
+.hud-volume {
+  font: 10px var(--fuente-mono) !important;
+  color: var(--texto-tenue) !important;
+}
+
 .hud-radar {
   position: absolute;
   right: 22px;

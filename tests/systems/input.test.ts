@@ -80,4 +80,20 @@ describe('entrada de teclado', () => {
     expect(snapshot.aimX).toBe(0);
     expect(snapshot.aimY).toBe(0);
   });
+
+  it('expone los flancos de silencio y volumen', () => {
+    const input = createInputState();
+    input.handleKeyDown('KeyM');
+    expect(input.snapshot().mute).toBe(true);
+    expect(input.snapshot().mute).toBe(false);
+
+    input.handleKeyDown('Minus');
+    expect(input.snapshot().volumeDelta).toBe(-1);
+    input.handleKeyUp('Minus');
+    input.handleKeyDown('Equal');
+    expect(input.snapshot().volumeDelta).toBe(1);
+    input.handleKeyUp('Equal');
+    expect(input.snapshot().volumeDelta).toBe(0);
+  });
+
 });

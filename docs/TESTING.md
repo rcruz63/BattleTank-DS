@@ -11,9 +11,9 @@ son reglas deterministas sobre estado, los constructores de caras (`worldFaces`,
 `bulletFaces`) producen datos, `faces` los proyecta y solo el pintor toca el contrato gráfico
 (`FaceCanvas`). La composición del frame vive en `render/renderer.ts`; **no hay una escena unificada
 (`render/scene.ts`)**. La UI y el audio son adaptadores finos que se sustituyen por dobles. Estado:
-**203 tests en 36 ficheros** con las fases 0–9 y los bloques 6.5 (puntería con ratón), 6.6
-(colisión entre tanques), 7.5 (blindaje direccional), 7.5.1 (claridad/feedback) y la fase 9
-(campaña) cerrados.
+**211 tests en 38 ficheros** con las fases 0–10 y los bloques 6.5 (puntería con ratón), 6.6
+(colisión entre tanques), 7.5 (blindaje direccional), 7.5.1 (claridad/feedback), la fase 9
+(campaña) y la fase 10 (audio) cerrados.
 
 | Nivel | Qué cubre | Herramienta | Cuándo |
 |---|---|---|---|
@@ -77,7 +77,6 @@ DOM o WebAudio, el diseño que se está probando no está separado: extrae la l�
 | `render/painter` | Orden **de mayor a menor profundidad** (lo más lejano primero), desempate estable, secuencia de operaciones en el contexto simulado, no muta la entrada, presupuesto con el fixture denso. |
 | `render/renderer` | Composición del frame: fondo y rejilla antes que las caras; coberturas + tanques + pickups en una sola proyección + proyectiles añadidos; devuelve el número de caras pintadas. Test con contexto falso previsto. |
 | `render/periscope` | Validación manual/visual (usa el contexto completo, no solo `FaceCanvas`): retícula y marcas en `aimScreenX/Y`, marca de rumbo del casco, anillo de recarga y marca de impacto; no se dibuja cañón (la retícula es la referencia). La posición de la retícula se prueba por separado en `systems/aim`. |
-| `render/statusOverlay` | Validación manual/visual (contexto completo): pantalla provisional de tanque destruido. El HUD, el radar y los avisos de pickup se validan en `ui` (parte pura) y QA visual. |
 | `systems/loot` | Recogida solo a 2 m y una sola vez; cura 30 PV con tope; mejora +20 de vida máxima (y 20 PV) con reducción de daño multiplicativa acumulable ×3 y tope; potencia de 20 s que se renueva, con multiplicadores de daño ×1,75 y recarga ×0,65 y reversión al agotarse; texto del aviso; un jugador destruido no recoge. |
 | `systems/damage` | Impacto al jugador con blindaje base, mejoras acumuladas y zona direccional; impacto a enemigos con su blindaje y zona; balance 5/3/2 (Panzer III) y 8/4/3 (Tiger I) por frontal/lateral/trasero; muerte al llegar a 0; objetivos desconocidos o ya destruidos se ignoran. |
 | `systems/armor` | Clasificación frontal/lateral/trasera con umbrales inclusivos ±60°/120°, giro con el rumbo del blanco y multiplicadores ×0,5/×1,0/×1,5; el arco de fuego enemigo coincide con el cono del jugador (`AIM_LIMITS`). |
@@ -272,12 +271,14 @@ Marcar cada punto en el navegador; anotar semilla, fase y navegador usado. Los p
 - [ ] El récord y la misión desbloqueada sobreviven a recargar la página (localStorage).
 - [ ] Con `localStorage` bloqueado el juego funciona sin persistencia y sin errores.
 
-### Audio (fase 10)
+### Audio (fase 10, implementado)
 
 - [ ] Se desbloquea en el primer input y no hay errores de autoplay.
 - [ ] Motor con pitch según velocidad; cañonazo, impacto/explosión, recarga, pickup y UI audibles.
-- [ ] `M` silencia y reactiva; volumen maestro en pausa; sin saturación.
+- [ ] `M` silencia/reactiva y el HUD lo refleja; `−`/`+` ajustan el volumen y se ve en pausa.
 - [ ] Si se bloquea WebAudio, el juego sigue en silencio sin romperse.
+- [ ] Tests: `tests/audio/audio.test.ts` (bus silencioso/fallback) y `tests/game/audio.test.ts`
+      (cañón, recarga, pickup, mute/volumen, motor); `tests/systems/input` cubre los flancos.
 
 ### Enemigos e IA (fase 6)
 

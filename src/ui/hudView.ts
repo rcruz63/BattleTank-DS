@@ -38,6 +38,8 @@ export interface HudData {
   readonly unlockedMission: number;
   readonly stats: HudStats;
   readonly paused: boolean;
+  readonly muted: boolean;
+  readonly volume: number;
   readonly notice: HudNotice;
 }
 
@@ -72,6 +74,12 @@ export interface HudView {
     readonly power: string | null;
   };
   readonly paused: boolean;
+  readonly drive: string;
+  readonly audio: {
+    readonly muted: boolean;
+    readonly text: string;
+    readonly volume: number;
+  };
   readonly seed: number;
   readonly screen: HudScreen | null;
   readonly notice: { readonly text: string; readonly color: string; readonly alpha: number } | null;
@@ -159,6 +167,7 @@ function buildScreen(data: HudData): HudScreen | null {
 /** Construye la vista del HUD; no toca el DOM ni el estado. */
 export function buildHudView(data: HudData): HudView {
   const { player, enemies, pickups, loot, grid, score, paused, notice, seed } = data;
+  const volumePercent = Math.round(clamp(data.volume, 0, 1) * 100);
   const healthFraction = player.maxHealth > 0 ? clamp(player.health / player.maxHealth, 0, 1) : 0;
   const destroyed = enemies.filter((enemy) => !enemy.alive).length;
   const total = enemies.length;
@@ -190,6 +199,12 @@ export function buildHudView(data: HudData): HudView {
         loot.powerRemaining > 0 ? `Potencia ${Math.ceil(loot.powerRemaining)} s` : null,
     },
     paused,
+    drive: 'M4 SHERMAN',
+    audio: {
+      muted: data.muted,
+      text: data.muted ? 'SILENCIADO' : `SONIDO ${volumePercent} %`,
+      volume: volumePercent,
+    },
     seed,
     screen: buildScreen(data),
     notice: noticeVisible

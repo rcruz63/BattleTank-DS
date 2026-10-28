@@ -26,6 +26,8 @@ export function getHudData(state: GameState): HudData {
       elapsedSeconds: session.elapsedSeconds,
     },
     paused: state.paused,
+    muted: state.audioMuted,
+    volume: state.audioVolume,
     notice: {
       text: state.effects.pickupNotice,
       color: state.effects.pickupColor,

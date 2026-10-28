@@ -1,7 +1,7 @@
 # Estado del proyecto — BattleTank-DS
 
-> **Actualizado:** 2026-10-28 · **Fase actual:** pausa de revisión; siguiente fase 10 (audio)
-> **Último commit:** `feat(mission): campaña, briefing, resultados y persistencia`
+> **Actualizado:** 2026-10-28 · **Fase actual:** pausa de revisión; siguiente fase 11 (pulido y entrega)
+> **Último commit:** `feat(audio): audio sintetizado, mute y volumen`
 >
 > Este fichero es el punto de entrada para retomar el proyecto, sea otra persona, otro chat u
 > otro modelo. Se actualiza en **cada commit**. La verdad sobre el alcance está en el plan.
@@ -11,14 +11,20 @@
 1. Lee [`docs/PLAN.md`](PLAN.md) (alcance y fases) y este estado.
 2. `npm install` y `npm run check` para confirmar que la base está sana.
 3. `npm run dev` y abre `http://localhost:5273`.
-4. Lee «Incidencias conocidas» antes de elegir tarea: el siguiente trabajo es el audio (fase 10);
-   campaña (9), HUD/radar (8), pickups (7), blindaje direccional (7.5) y `BUG-001` (6.6) ya están
-   cerrados.
+4. Lee «Incidencias conocidas» antes de elegir tarea: el siguiente trabajo es el pulido/entrega
+   (fase 11); audio (10), campaña (9), HUD/radar (8), pickups (7), blindaje direccional (7.5) y
+   `BUG-001` (6.6) ya están cerrados.
 5. Sigue el flujo de [`docs/DEVELOPMENT.md`](DEVELOPMENT.md): tests → `npm run check` → changelog
    → estado → commit.
 
 ## Hecho
 
+- [x] **Fase 10 — Audio sintetizado.** Bus WebAudio sin assets: motor con pitch/volumen ligados a la
+      velocidad, cañonazo, impactos/explosiones, daño recibido, recarga lista, pickups, UI y viento
+      de fondo. El `AudioContext` se desbloquea con el primer gesto; si WebAudio no existe se usa un
+      bus silencioso. `M` silencia y `−`/`+` ajustan el volumen (visible en el HUD y en pausa);
+      `AudioBus` es inyectable, así que los tests usan un doble. 211 tests en 38 ficheros y QA visual
+      del indicador/pausa.
 - [x] **Fase 9 — Campaña, briefing y resultados.** Tres misiones con dificultad creciente (3, 5 y 6
       enemigos; el Tiger entra en la 2 y la 3), escenario propio por misión y tuning de IA por
       misión (reacción, dispersión y daño). Flujo de fases: briefing → partida → victoria/derrota →
@@ -113,8 +119,8 @@
 
 ## En curso
 
-- Ninguna tarea en curso: **pausa acordada**. Próximo trabajo: **fase 10** (audio sintetizado con
-  WebAudio).
+- Ninguna tarea en curso: **pausa acordada**. Próximo trabajo: **fase 11** (QA final, rendimiento,
+  documentación de entrega y tag `v0.1.0`).
 
 ## Incidencias conocidas
 
@@ -139,8 +145,8 @@
 | 7.5.1 | Claridad de impacto y arranque inicial (hotfix) | Completada |
 | 8 | HUD: vida, progreso, puntuación, radar, recarga y pausa | Completada |
 | 9 | Campaña: 3 misiones, briefing, resultados y persistencia | Completada |
-| 10 | Audio: efectos sintetizados WebAudio, volumen y mute | **Pendiente (siguiente)** |
-| 11 | Pulido, QA, rendimiento, documentación final y tag `v0.1.0` | Pendiente |
+| 10 | Audio: efectos sintetizados WebAudio, volumen y mute | Completada |
+| 11 | Pulido, QA, rendimiento, documentación final y tag `v0.1.0` | **Pendiente (siguiente)** |
 
 ## Deuda técnica registrada
 
@@ -170,7 +176,7 @@
 ## Decisiones y notas operativas
 
 - **Flujo de trabajo acordado con el usuario:** pausa al cerrar cada fase para revisión/intervención. Se retoma con «continúa la fase N» o «continúa el bloque N».
-- **Cambios aprobados 2026-10-27:** corregir `BUG-001` (6.6) y añadir blindaje direccional/flanqueo (7.5). Registrados en `PLAN.md` §2/§12 y `DECISIONS.md` ADR-009. Bloques 6.6/7.5, fases 7, 8 y 9 cerrados; siguiente: audio (fase 10).
+- **Cambios aprobados 2026-10-27:** corregir `BUG-001` (6.6) y añadir blindaje direccional/flanqueo (7.5). Registrados en `PLAN.md` §2/§12 y `DECISIONS.md` ADR-009. Bloques 6.6/7.5 y fases 7, 8, 9 y 10 cerrados; siguiente: pulido/entrega (fase 11).
 - **QA del bloque 6.6:** además de los tests de regresión, se condujo el juego real en Chrome headless vía CDP (sin dependencias nuevas) para avanzar contra un enemigo: el jugador se detiene a 2,9 m (suma de radios 2,75 m + margen 0,15 m) y no lo cruza.
 - **QA de la fase 7:** se recogieron los tres pickups en Chrome headless vía CDP (botiquín de 40 a 70 PV, mejora de 100 a 120 de vida máxima, potencia con recarga de 1,56 s) y se verificaron con capturas el icono en el mundo, el aviso flotante y la línea de estado.
 - **QA del bloque 7.5:** en Chrome headless vía CDP, disparos al mismo Panzer III hicieron 60 de daño por la espalda y 20 de frente; la IA no disparó con el jugador a 90° del rumbo, mantuvo el heading durante 0,5 s de recarga y disparó al entrar en el arco de ±15°; se comprobaron las franjas de orientación (clara delante, roja detrás) con capturas.
@@ -178,7 +184,9 @@
 - No hay `pnpm` instalado en la máquina; se usa **npm** (Node 24 / npm 11).
 - Puertos propios para evitar conflictos con otros desarrollos en paralelo: **dev 5273** y
   **preview 5274** (antes 5173). Se pueden sobreescribir con `npm run dev -- --port 5280`.
-- El audio se sintetiza con WebAudio: no habrá ficheros de audio ni assets externos.
+- El audio se sintetiza con WebAudio: no hay ficheros de audio ni assets externos. El bus es
+  inyectable y cae a silencio si el navegador no lo permite. La escucha final en un navegador real
+  queda como QA manual de la fase 11 (el QA headless solo comprueba HUD/eventos).
 - La interfaz y la documentación van en español; los identificadores del código, en inglés.
 - `main.ts` arranca el juego real (`createGame`): WASD/flechas para moverse, ratón para apuntar,
   clic o Espacio para disparar. El HUD funcional y la pantalla de resultados llegan en las fases

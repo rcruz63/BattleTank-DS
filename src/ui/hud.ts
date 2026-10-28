@@ -37,10 +37,17 @@ interface ScreenElements {
   readonly action: HTMLDivElement;
 }
 
-interface HudElements extends VitalsElements, ProgressElements, EffectsElements, PauseElements, ScreenElements {
+interface HudElements
+  extends VitalsElements,
+    ProgressElements,
+    EffectsElements,
+    PauseElements,
+    ScreenElements {
   readonly scoreText: HTMLDivElement;
   readonly toast: HTMLDivElement;
   readonly missionLabel: HTMLDivElement;
+  readonly audioText: HTMLDivElement;
+  readonly volumeText: HTMLParagraphElement;
   readonly radarContext: CanvasRenderingContext2D;
 }
 
@@ -74,12 +81,21 @@ function queryEffects(root: ParentNode): EffectsElements {
   };
 }
 
-function queryPause(root: ParentNode): PauseElements & { toast: HTMLDivElement; missionLabel: HTMLDivElement } {
+function queryPause(
+  root: ParentNode,
+): PauseElements & {
+  toast: HTMLDivElement;
+  missionLabel: HTMLDivElement;
+  audioText: HTMLDivElement;
+  volumeText: HTMLParagraphElement;
+} {
   return {
     pause: mustFind<HTMLDivElement>(root, '#hud-pause'),
     pauseSeed: mustFind<HTMLParagraphElement>(root, '#hud-pause-seed'),
     toast: mustFind<HTMLDivElement>(root, '#hud-toast'),
     missionLabel: mustFind<HTMLDivElement>(root, '#hud-mission'),
+    audioText: mustFind<HTMLDivElement>(root, '#hud-audio'),
+    volumeText: mustFind<HTMLParagraphElement>(root, '#hud-volume'),
   };
 }
 
@@ -160,6 +176,17 @@ function updateScreen(view: HudView, elements: ScreenElements): void {
   );
 }
 
+function updateAudio(
+  view: HudView,
+  elements: { audioText: HTMLDivElement; volumeText: HTMLParagraphElement },
+): void {
+  elements.audioText.textContent = view.audio.text;
+  elements.audioText.classList.toggle('muted', view.audio.muted);
+  elements.volumeText.textContent = view.audio.muted
+    ? 'SILENCIADO · M para activar · − / + ajustar'
+    : `Volumen ${view.audio.volume} % · M silenciar · − / + ajustar`;
+}
+
 function updateNotice(view: HudView, toast: HTMLDivElement): void {
   if (!view.notice) {
     toast.hidden = true;
@@ -177,6 +204,7 @@ function updateHud(elements: HudElements, view: HudView): void {
   updateEffects(view, elements);
   updatePause(view, elements);
   updateNotice(view, elements.toast);
+  updateAudio(view, elements);
   elements.missionLabel.textContent = view.missionLabel;
   updateScreen(view, elements);
   drawRadar(elements.radarContext, view.radar, performance.now() / 1000);

@@ -291,7 +291,7 @@ Detalle completo en [`TESTING.md`](TESTING.md); resumen de convenciones:
   2D simulado y fixtures de rejilla/cámara/caras; la IA, con rejilla, jugador y RNG inyectados.
 - Helpers compartidos en `tests/helpers/` (previsto) para no duplicar fixtures.
 - Los tests son código: también se leen, se refactorizan y no se dejan comentados.
-- Estado actual: **203 tests en 36 ficheros** (`tests/core`, `tests/world`, `tests/render`,
+- Estado actual: **211 tests en 38 ficheros** (`tests/core`, `tests/world`, `tests/render`,
   `tests/systems`, `tests/game`, `tests/config` y `tests/entities`), incluidas las pruebas de
   puntería, LOS, A*, IA, modelos, oclusión, colisión entre tanques, pickups y blindaje direccional.
 

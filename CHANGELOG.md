@@ -9,6 +9,11 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 ### Añadido
 
+- Audio sintetizado con WebAudio y sin assets: motor con pitch/volumen según velocidad, cañonazo,
+  impactos/explosiones, daño, recarga lista, pickups, UI y viento de fondo. Bus inyectable con
+  degradación silenciosa, desbloqueo en el primer gesto y fallback si WebAudio no existe. `M`
+  silencia y `−`/`+` ajustan el volumen; el HUD muestra `SONIDO n %`/`SILENCIADO` y la pausa el
+  volumen. Tests del bus/eventos y QA visual del HUD/pausa.
 - Campaña de 3 misiones con dificultad creciente y tuning de IA propio: escenarios de 20×20, 22×22 y
   24×24, de 3 a 6 enemigos (Tiger desde la misión 2), coberturas más densas, reacción/dispersión/daño
   escalados. Briefing, resumen de misión, derrota, campaña completada y flujo con `ENTER`; puntuación
