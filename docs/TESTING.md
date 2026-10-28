@@ -11,8 +11,9 @@ son reglas deterministas sobre estado, los constructores de caras (`worldFaces`,
 `bulletFaces`) producen datos, `faces` los proyecta y solo el pintor toca el contrato gráfico
 (`FaceCanvas`). La composición del frame vive en `render/renderer.ts`; **no hay una escena unificada
 (`render/scene.ts`)**. La UI y el audio son adaptadores finos que se sustituyen por dobles. Estado:
-**194 tests en 33 ficheros** con las fases 0–8 y los bloques 6.5 (puntería con ratón), 6.6
-(colisión entre tanques), 7.5 (blindaje direccional) y 7.5.1 (claridad/feedback) cerrados.
+**203 tests en 36 ficheros** con las fases 0–9 y los bloques 6.5 (puntería con ratón), 6.6
+(colisión entre tanques), 7.5 (blindaje direccional), 7.5.1 (claridad/feedback) y la fase 9
+(campaña) cerrados.
 
 | Nivel | Qué cubre | Herramienta | Cuándo |
 |---|---|---|---|
@@ -80,10 +81,10 @@ DOM o WebAudio, el diseño que se está probando no está separado: extrae la l�
 | `systems/loot` | Recogida solo a 2 m y una sola vez; cura 30 PV con tope; mejora +20 de vida máxima (y 20 PV) con reducción de daño multiplicativa acumulable ×3 y tope; potencia de 20 s que se renueva, con multiplicadores de daño ×1,75 y recarga ×0,65 y reversión al agotarse; texto del aviso; un jugador destruido no recoge. |
 | `systems/damage` | Impacto al jugador con blindaje base, mejoras acumuladas y zona direccional; impacto a enemigos con su blindaje y zona; balance 5/3/2 (Panzer III) y 8/4/3 (Tiger I) por frontal/lateral/trasero; muerte al llegar a 0; objetivos desconocidos o ya destruidos se ignoran. |
 | `systems/armor` | Clasificación frontal/lateral/trasera con umbrales inclusivos ±60°/120°, giro con el rumbo del blanco y multiplicadores ×0,5/×1,0/×1,5; el arco de fuego enemigo coincide con el cono del jugador (`AIM_LIMITS`). |
-| `systems/mission` / `systems/score` / `systems/progression` (fase 9) | Validación de misiones, progreso, victoria/derrota, puntuación y persistencia con almacenamiento falso. |
+| `systems/mission` / `systems/progression` | Parámetros de arena, reparto de enemigos, semillas y bonus; récord/desbloqueo con almacenamiento falso. |
 | `ui` (parte pura) | `hudView` (vida/nivel, avance, recarga, efectos, avisos) y `radar` (contactos girados con el rumbo, alcance, paredes). El DOM real no se prueba en unitarias; se valida con QA visual. |
 | `audio` (fase 10) | Con un doble de `AudioBus`: mapeo de eventos a efectos, mute/volumen, no lanzar si no hay WebAudio. |
-| `game` | `createGame` con semilla e `InputState` inyectado: expone arena, jugador, enemigos, pickups, loot y proyectiles; `update` responde a avance/giro y resuelve la puntería con el puntero; el disparo sale con la dirección 3D del cañón (el ratón orienta el tiro); mueve la IA; el jugador no atraviesa a un enemigo colocado delante (`BUG-001`); recoge pickups con su efecto (cura, vida máxima/reducción y potencia con recarga acortada), que no reaparecen; el mismo disparo hace 60 por la espalda y 20 de frente a un Panzer III (zona + blindaje); `dispose` limpia la entrada. En fases posteriores: máquina de estados, pausa y reinicio. |
+| `game` | `createGame` con semilla e `InputState` inyectado: expone arena, jugador, enemigos, pickups, loot y proyectiles; `update` responde a avance/giro y resuelve la puntería con el puntero; el disparo sale con la dirección 3D del cañón (el ratón orienta el tiro); mueve la IA; el jugador no atraviesa a un enemigo colocado delante (`BUG-001`); recoge pickups con su efecto (cura, vida máxima/reducción y potencia con recarga acortada), que no reaparecen; el mismo disparo hace 60 por la espalda y 20 de frente a un Panzer III (zona + blindaje); `dispose` limpia la entrada. Campaña: briefing/confirmación, victoria y siguiente misión, derrota y reintento, campaña completada; pausa y reinicio. |
 
 ## 4. Renderer con contexto simulado
 
@@ -246,7 +247,7 @@ Marcar cada punto en el navegador; anotar semilla, fase y navegador usado. Los p
 
 - [ ] Vida con barra y número, color según porcentaje, legible; no tapa la mira.
 - [ ] Progreso solo en porcentaje y sube al destruir enemigos; nunca muestra cuántos quedan.
-- [ ] Puntuación correcta (100 Panzer III / 250 Tiger I); el récord y el resumen llegan en fase 9.
+- [ ] Puntuación correcta (100 Panzer III / 250 Tiger I + bonus de misión); récord y resumen visibles.
 - [ ] Recarga: «LISTO» o segundos en el HUD, además del anillo del periscopio.
 - [ ] Efectos de mejora/potencia con texto y cuenta atrás; avisos de pickup legibles.
 - [ ] `ESC` congela la simulación, abre la pausa con controles/semilla y reanuda con `ESC`.
@@ -259,6 +260,17 @@ Marcar cada punto en el navegador; anotar semilla, fase y navegador usado. Los p
 - [ ] Alcance 45 m y barrido animado; enemigos, pickups y coberturas con los símbolos previstos.
 - [ ] No desvela el detalle del escenario ni la posición exacta fuera de alcance.
 - [ ] Al girar el tanque, el radar gira con él y el frente queda arriba.
+
+### Campaña y persistencia (fase 9)
+
+- [ ] El arranque muestra el briefing de la misión desbloqueada; `ENTER` despliega.
+- [ ] El HUD muestra la misión actual y el avance de la misión en %.
+- [ ] Al destruir todos los enemigos aparece el resumen con puntos, precisión, tiempo y daño.
+- [ ] `ENTER` pasa al briefing de la siguiente misión (Tiger en la 2 y la 3).
+- [ ] Al morir aparece «TANQUE DESTRUIDO»; `ENTER` reintenta la misma misión con la puntuación a cero.
+- [ ] Al completar la tercera misión aparece «CAMPAÑA COMPLETADA» y se puede empezar otra.
+- [ ] El récord y la misión desbloqueada sobreviven a recargar la página (localStorage).
+- [ ] Con `localStorage` bloqueado el juego funciona sin persistencia y sin errores.
 
 ### Audio (fase 10)
 
@@ -320,7 +332,7 @@ La entrega se acepta cuando se cumplen los doce criterios del plan
 |---|---|---|
 | 1 | `npm run dev` da un juego jugable y `npm run build` un `dist/` servible. | Manual + `npm run preview`. |
 | 2 | `npm run check` pasa sin errores. | Puerta local; obligatoria antes del tag. |
-| 3 | Campaña de 3 misiones con dificultad creciente y reinicio tras morir. | Integración + QA manual. |
+| 3 | Campaña de 3 misiones con dificultad creciente y reinicio tras morir. | Tests de `config/missions`, `systems/mission`, `systems/progression` y `tests/game/campaign` + QA manual. **Implementado en la fase 9.** |
 | 4 | Cámara solidaria con el tanque, sin vista libre, solo periscopio. | QA manual + test de cámara. |
 | 5 | Escenario procedural reproducible por semilla, con coberturas destructibles e indestructibles; no se ve a través de las intactas y sí de las destruidas. | Tests de generación/colisión + aserción de oclusión del renderer + QA manual. |
 | 6 | HUD con vida, porcentaje de avance, puntuación, radar y estado de recarga. | Tests de `ui/hudView`, `ui/radar` y `game` + QA manual. **Implementado en la fase 8.** |
@@ -393,5 +405,5 @@ anotan en [`DEVELOPMENT.md`](DEVELOPMENT.md#13-pendientes-y-supuestos-detectados
   congelado 0,5 s y disparo al entrar en el arco.
 - **Marcas de orientación (7.5, implementado):** `tests/render/models.test.ts` comprueba las 35 caras
   (7 cajas), que las franjas clara y roja giran con el rumbo y quedan en el frente y la espalda.
-- **HUD (fase 8):** vida, avance, puntuación, recarga, efectos, radar y pausa implementados. La zona
-  de impacto sigue en el canvas del mundo; el récord y los resúmenes de misión llegan en la fase 9.
+- **HUD y campaña:** vida, avance, puntuación, recarga, efectos, radar y pausa implementados. La
+  zona de impacto sigue en el canvas del mundo; la campaña y los resúmenes ya están implementados.

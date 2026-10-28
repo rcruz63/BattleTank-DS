@@ -31,7 +31,7 @@ function boot(): void {
   const unbindMouse = bindMouseInput(input, canvas);
 
   try {
-    const game = createGame({ seed: seedFromUrl(), input });
+    const game = createGame({ seed: seedFromUrl(), input, autoStart: false });
     const hud = createHud();
     // Gancho de depuración/QA: inspeccionar o recolocar el estado desde la consola.
     window.__BT__ = game;

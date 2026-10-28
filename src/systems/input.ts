@@ -20,6 +20,8 @@ export interface InputSnapshot {
   readonly aimY: number;
   /** Flanco de pausa (ESC). */
   readonly pause: boolean;
+  /** Flanco de confirmación de pantalla (ENTER). */
+  readonly confirm: boolean;
 }
 
 export interface InputState {
@@ -37,6 +39,7 @@ const LEFT_KEYS = new Set(['KeyA', 'ArrowLeft']);
 const RIGHT_KEYS = new Set(['KeyD', 'ArrowRight']);
 const FIRE_KEY = 'Space';
 const PAUSE_KEY = 'Escape';
+const CONFIRM_KEY = 'Enter';
 
 function axis(
   positive: ReadonlySet<string>,
@@ -52,6 +55,7 @@ export function createInputState(): InputState {
   const held = new Set<string>();
   let fireQueued = false;
   let pauseQueued = false;
+  let confirmQueued = false;
   let aimX = 0;
   let aimY = 0;
 
@@ -64,14 +68,17 @@ export function createInputState(): InputState {
         aimX,
         aimY,
         pause: pauseQueued,
+        confirm: confirmQueued,
       };
       fireQueued = false;
       pauseQueued = false;
+      confirmQueued = false;
       return snapshot;
     },
     handleKeyDown: (code) => {
       if (code === FIRE_KEY && !held.has(FIRE_KEY)) fireQueued = true;
       if (code === PAUSE_KEY && !held.has(PAUSE_KEY)) pauseQueued = true;
+      if (code === CONFIRM_KEY && !held.has(CONFIRM_KEY)) confirmQueued = true;
       held.add(code);
     },
     handleKeyUp: (code) => {
@@ -88,6 +95,7 @@ export function createInputState(): InputState {
       held.clear();
       fireQueued = false;
       pauseQueued = false;
+      confirmQueued = false;
       aimX = 0;
       aimY = 0;
     },
@@ -105,6 +113,7 @@ const GAME_KEYS = new Set([
   'ArrowRight',
   'Space',
   'Escape',
+  'Enter',
 ]);
 
 /** Conecta el estado al teclado. Devuelve la función para desconectar. */

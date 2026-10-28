@@ -21,12 +21,31 @@ import { hasLineOfSight } from '../world/los';
 import { findPath } from '../world/pathfind';
 import type { CellPoint, WorldGrid, WorldPoint } from '../world/types';
 
+export interface AiTuning {
+  readonly reactionSeconds?: number;
+  readonly fireSpreadRadians?: number;
+  readonly damageMultiplier?: number;
+}
+
 export interface AiContext {
   readonly grid: WorldGrid;
   readonly player: PlayerState;
   readonly stepSeconds: number;
   readonly rng: Rng;
   readonly bullets: Bullet[];
+  readonly tuning?: AiTuning;
+}
+
+function reactionSeconds(context: AiContext): number {
+  return context.tuning?.reactionSeconds ?? AI_TUNING.reactionSeconds;
+}
+
+function fireSpread(context: AiContext): number {
+  return context.tuning?.fireSpreadRadians ?? AI_TUNING.fireSpreadRadians;
+}
+
+function damageMultiplier(context: AiContext): number {
+  return context.tuning?.damageMultiplier ?? 1;
 }
 
 function aimAngle(from: WorldPoint, to: WorldPoint): number {
@@ -46,7 +65,7 @@ export function alertEnemiesNear(enemies: readonly EnemyState[], point: WorldPoi
 
 function fireEnemyBullet(enemy: EnemyState, context: AiContext): void {
   const baseAngle = aimAngle(enemy.position, context.player.position);
-  const spread = context.rng.range(-1, 1) * AI_TUNING.fireSpreadRadians;
+  const spread = context.rng.range(-1, 1) * fireSpread(context);
   const angle = baseAngle + spread;
   const direction = { x: Math.sin(angle), y: 0, z: Math.cos(angle) };
   const offset = enemy.radius + 0.9;
@@ -60,7 +79,7 @@ function fireEnemyBullet(enemy: EnemyState, context: AiContext): void {
       },
       direction,
       speed: enemy.shellSpeed,
-      damage: enemy.damage,
+      damage: enemy.damage * damageMultiplier(context),
       owner: 'enemy',
     }),
   );
@@ -173,10 +192,10 @@ function perceive(enemy: EnemyState, context: AiContext): Perception {
   return { seesPlayer, distance };
 }
 
-function updateAwareness(enemy: EnemyState, perception: Perception): void {
+function updateAwareness(enemy: EnemyState, perception: Perception, context: AiContext): void {
   if (!perception.seesPlayer || enemy.alerted) return;
   enemy.alerted = true;
-  enemy.reactionTimer = AI_TUNING.reactionSeconds;
+  enemy.reactionTimer = reactionSeconds(context);
   enemy.pathTimer = 0;
 }
 
@@ -189,7 +208,7 @@ function updateEnemy(enemy: EnemyState, context: AiContext, others: readonly Ene
   }
 
   const perception = perceive(enemy, context);
-  updateAwareness(enemy, perception);
+  updateAwareness(enemy, perception, context);
 
   if (!enemy.alerted) {
     enemy.aiMode = 'idle';

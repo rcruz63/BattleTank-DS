@@ -2,9 +2,9 @@
 
 Documento de diseño del vertical slice **0.1.0**. Se deriva del plan aprobado
 ([`PLAN.md`](PLAN.md), fuente de verdad del alcance); si hay conflicto, manda el plan y se corrige
-este documento. Estado: fases 0–8 y los bloques 6.5 (puntería con ratón), 6.6 (colisión entre
+este documento. Estado: fases 0–9 y los bloques 6.5 (puntería con ratón), 6.6 (colisión entre
 tanques), 7.5 (blindaje direccional) y el ajuste 7.5.1 (claridad/feedback) cerrados; el siguiente
-trabajo son las misiones (fase 9). El detalle vivo está en [`STATUS.md`](STATUS.md).
+trabajo es el audio (fase 10). El detalle vivo está en [`STATUS.md`](STATUS.md).
 
 **Balance de tanques:** los números concretos (PV, velocidad, giro, recarga, daño, blindaje y
 velocidad de proyectil) viven en **`src/config/tanks.ts`**, que es la fuente de verdad. Este
@@ -44,7 +44,7 @@ línea de tiro a cañonazos y administrar la recarga son las decisiones del bucl
 
 Bucle de una partida:
 
-1. **Briefing** de misión: texto breve, objetivo y semilla del escenario; una tecla para empezar.
+1. **Briefing** de misión (DOM): nombre, texto, objetivo y semilla; `ENTER` para desplegar.
 2. El jugador **avanza** por el escenario generado sin mapa completo: periscopio, radar y barra de
    progreso (solo porcentaje, nunca número de enemigos restantes).
 3. **Combate:** los enemigos patrullan, toman línea de visión y disparan. Las coberturas bloquean
@@ -54,9 +54,9 @@ Bucle de una partida:
 4. **Gestión de recursos:** recoger botiquín, mejora y potencia; administrar la recarga y el daño
    recibido.
 5. Al destruir a todos los enemigos, **victoria de misión**: resumen de puntos, precisión, tiempo y
-   daño recibido; paso a la siguiente misión.
-6. Al morir, **derrota**: resumen y reintento desde el principio de la misión actual. Se conservan
-   récord y misión desbloqueada.
+   daño recibido; `ENTER` pasa al briefing de la siguiente misión.
+6. Al morir, **derrota**: resumen y `ENTER` reintenta desde el principio de la misión actual. Se
+   conservan récord y misión desbloqueada; la puntuación de la partida se reinicia.
 
 **Victoria:** 100 % de progreso (todos los enemigos del escenario destruidos).
 **Derrota:** vida a 0. El plan cita también «salir del área jugable», pero el escenario está cerrado
@@ -76,7 +76,8 @@ los resúmenes. No hay guardado a mitad de partida.
 | Girar | `A`/`D` o `←`/`→` | **Disponible.** Gira el casco y con él la vista; no hay torreta independiente. |
 | Apuntar | Ratón | **Disponible (bloque 6.5).** Mueve el cañón dentro de ±15° horizontal y ±4° vertical respecto al rumbo del tanque. **La cámara no gira con el ratón.** |
 | Disparar | `Espacio` o clic izquierdo | **Disponible.** Un disparo por pulsación; mantener no repite. Recarga de 2,4 s. |
-| Pausa | `Esc` | **Disponible (fase 8).** Congela la simulación y muestra la pantalla de pausa con controles y semilla. |
+| Pausa | `Esc` | **Disponible.** Congela la simulación y muestra la pantalla de pausa con controles y semilla. |
+| Confirmar pantallas | `Enter` | **Disponible.** Avanza el briefing, el resumen de misión o el reintento. |
 | Silenciar | `M` | Previsto (fase 10). |
 | Depuración | `F3` | Previsto: overlay con fps, caras, celdas visibles y entidades. |
 
@@ -105,8 +106,8 @@ replica este límite de ±15°** (bloque 7.5): si el jugador no puede disparar d
   ligado al blindaje direccional implementado.
 - **Rumbo:** marca tenue del casco en el periscopio y radar orientado con el rumbo; una brújula
   dedicada no entra en 0.1.0.
-- **Pantallas:** pausa implementada; menú/briefing, resumen de misión y derrota/final de campaña
-  se completan en la fase 9.
+- **Pantallas:** briefing, pausa, victoria, derrota y fin de campaña implementadas; no hay menú
+  inicial ni selector de misión en 0.1.0.
 
 Estado actual (fase 8): el **HUD DOM** muestra arriba a la izquierda «M4 SHERMAN», barra y valor
 de vida y recarga («LISTO» o segundos); arriba al centro, «AVANCE DE SECTOR» con porcentaje; arriba
@@ -115,7 +116,8 @@ a la derecha, puntuación; abajo a la derecha, radar circular de 45 m orientado 
 vida y los avisos de pickup usan un toast DOM. `ESC` abre la pausa (congela simulación). En el mundo
 se mantienen las **barras de vida con nombre**, el **daño flotante con zona** y el **destello** de
 impacto; el periscopio mantiene retícula móvil, rumbo, anillo de recarga y marca de impacto.
-Briefing, resumen de misión, récord y pantalla de derrota definitiva llegan con las misiones (fase 9).
+Pantallas DOM de briefing, victoria, derrota y campaña completada; `ENTER` confirma y `ESC` pausa.
+El récord se muestra en los resúmenes y la misión desbloqueada se persiste.
 
 ### Esquema ASCII (conceptual)
 
@@ -298,9 +300,10 @@ aplicación en `systems/damage.ts`, arco de fuego y pausa de recarga en `systems
 
 ## 9. Misiones y dificultad
 
-**Arranque provisional (ajuste 7.5.1):** mientras no existan misiones, el escenario por defecto usa
-3 Panzer III (sin Tiger), alineado con la misión 1 del plan. La fase 9 introducirá el reparto real
-por misión.
+**Implementado en la fase 9:** cada misión tiene su propio escenario (20×20, 22×22 y 24×24),
+reparto de enemigos (3 ligeros; 4 ligeros + 1 Tiger; 4 ligeros + 2 Tigers), densidad de coberturas y
+tuning de IA (reacción, dispersión y daño). La campaña arranca en el briefing de la misión
+desbloqueada más alta.
 
 Campaña de 3 misiones generadas con parámetros escalados, definidos como datos en
 `src/config/missions.ts`:
@@ -311,10 +314,8 @@ Campaña de 3 misiones generadas con parámetros escalados, definidos como datos
 | 2 | Cruce de caminos | 4 ligeros + 1 pesado | 16 % | 35 % | 1,1 s | ×1,0 |
 | 3 | Última línea | 4 ligeros + 2 pesados | 20 % | 45 % | 0,9 s | ×1,2 |
 
-- **Arena:** 64–96 m de lado (rejilla de 16×16 a 24×24 celdas de 4 m); la generación actual usa
-  20×20 (80 m) por defecto.
-- **Reparto provisional:** en la fase 6 `game.ts` reparte Panzer III y Tiger I de forma provisional;
-  la composición exacta por misión llega con estos datos en la fase 9.
+- **Arena:** 20×20 (80 m), 22×22 (88 m) y 24×24 (96 m) celdas de 4 m, según misión.
+- **Reparto por misión:** definido en `src/config/missions.ts`; el Tiger entra en la misión 2.
 - **Semilla:** cada misión usa una semilla visible en el briefing; la misma semilla reproduce el
   mismo escenario (útil para depurar y para repetir una partida).
 - **Progreso:** porcentaje de enemigos destruidos. No se muestra el número restante.
@@ -335,11 +336,13 @@ oclusión y pasillos) y una IA más precisa, rápida y letal.
 | Destruir un Panzer III | 100 |
 | Destruir un Tiger I | 250 |
 | Completar una misión | +500 |
-| Vida restante al terminar | Bonificación (fórmula pendiente) |
+| Vida restante al terminar | +2 por PV restante |
 
-- El récord y la misión máxima desbloqueada se guardan en `localStorage`; no hay tabla de
-  clasificación en red.
-- Al morir se pierden los puntos de la partida en curso, pero **no** el récord ya guardado.
+- El récord y la misión máxima desbloqueada se guardan en `localStorage` bajo
+  `battletank-ds.progression.v1`; no hay tabla de clasificación en red. Si el almacenamiento falla,
+  el juego continúa sin persistencia.
+- Al morir se pierden los puntos de la partida en curso (la campaña se reinicia), pero **no** el
+  récord ya guardado.
 - El resumen de misión muestra puntos, precisión (impactos/disparos), tiempo y daño recibido; el
   récord visible en pausa y resúmenes.
 - La puntuación se calcula en un sistema puro, separado del HUD y del render.

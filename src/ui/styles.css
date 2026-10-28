@@ -156,6 +156,18 @@ body {
   color: #e0b84a;
 }
 
+.hud-mission {
+  position: absolute;
+  top: 44px;
+  left: 50%;
+  transform: translateX(-50%);
+  font: 9px var(--fuente-mono);
+  letter-spacing: 0.16em;
+  color: rgba(139, 148, 128, 0.8);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 .hud-progress {
   position: absolute;
   top: 18px;
@@ -258,6 +270,49 @@ body {
   font: 600 15px var(--fuente-mono);
   text-align: center;
   white-space: nowrap;
+}
+
+.hud-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(3, 6, 4, 0.62);
+  backdrop-filter: blur(2px);
+}
+
+.hud-screen-card {
+  width: min(560px, 76%);
+  padding: 26px 32px 22px;
+  border: 1px solid rgba(200, 162, 74, 0.5);
+  background: rgba(8, 12, 10, 0.94);
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.hud-screen-card h1 {
+  margin: 6px 0 10px;
+  font: 600 32px Georgia, serif;
+  letter-spacing: 0.06em;
+  color: var(--texto);
+}
+
+.hud-screen-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 12px 0 18px;
+  color: var(--texto-tenue);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.hud-screen-action {
+  margin-top: 4px;
+  font: 11px var(--fuente-mono);
+  color: var(--acento);
+  letter-spacing: 0.08em;
 }
 
 .hud-pause {

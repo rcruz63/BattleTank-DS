@@ -122,7 +122,7 @@ implementación no van aquí, solo las decisiones.
 
 ## ADR-007 — Persistencia mínima con localStorage
 
-- **Estado:** aceptada · **Fecha:** 2026-10-26 · **Fuente:** PLAN §2, §7.6
+- **Estado:** aceptada e implementada (fase 9) · **Fecha:** 2026-10-26 · **Fuente:** PLAN §2, §7.6
 - **Contexto:** se quiere progresión simple (récord y desbloqueo de misión) sin backend, cuentas ni
   infraestructura.
 - **Decisión:** `localStorage` solo para el récord de puntos y la misión máxima desbloqueada. No hay

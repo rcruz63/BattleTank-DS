@@ -1,7 +1,7 @@
 # Estado del proyecto — BattleTank-DS
 
-> **Actualizado:** 2026-10-28 · **Fase actual:** pausa de revisión; siguiente fase 9 (misiones)
-> **Último commit:** `chore(config): mover dev a 5273 y preview a 5274`
+> **Actualizado:** 2026-10-28 · **Fase actual:** pausa de revisión; siguiente fase 10 (audio)
+> **Último commit:** `feat(mission): campaña, briefing, resultados y persistencia`
 >
 > Este fichero es el punto de entrada para retomar el proyecto, sea otra persona, otro chat u
 > otro modelo. Se actualiza en **cada commit**. La verdad sobre el alcance está en el plan.
@@ -11,13 +11,23 @@
 1. Lee [`docs/PLAN.md`](PLAN.md) (alcance y fases) y este estado.
 2. `npm install` y `npm run check` para confirmar que la base está sana.
 3. `npm run dev` y abre `http://localhost:5273`.
-4. Lee «Incidencias conocidas» antes de elegir tarea: el siguiente trabajo son las misiones (fase 9);
-   HUD/radar (8), pickups (7), blindaje direccional (7.5) y `BUG-001` (6.6) ya están cerrados.
+4. Lee «Incidencias conocidas» antes de elegir tarea: el siguiente trabajo es el audio (fase 10);
+   campaña (9), HUD/radar (8), pickups (7), blindaje direccional (7.5) y `BUG-001` (6.6) ya están
+   cerrados.
 5. Sigue el flujo de [`docs/DEVELOPMENT.md`](DEVELOPMENT.md): tests → `npm run check` → changelog
    → estado → commit.
 
 ## Hecho
 
+- [x] **Fase 9 — Campaña, briefing y resultados.** Tres misiones con dificultad creciente (3, 5 y 6
+      enemigos; el Tiger entra en la 2 y la 3), escenario propio por misión y tuning de IA por
+      misión (reacción, dispersión y daño). Flujo de fases: briefing → partida → victoria/derrota →
+      resumen. Pantallas DOM de briefing, misión cumplida, tanque destruido y campaña completada;
+      `ENTER` confirma y `ESC` pausa. Puntuación de campaña (100/250 por tipo + 500 de misión + 2 por
+      PV restante), precisión, tiempo y daño recibido. Persistencia best-effort en `localStorage`
+      (`bestScore` y `unlockedMission`); al arrancar se muestra el briefing de la misión desbloqueada
+      más alta. Tests de generación, progresión y flujo de campaña; **203 tests en 36 ficheros** y QA
+      visual headless de briefing, partida y victoria.
 - [x] **Fase 8 — HUD y radar.** HUD DOM superpuesto al canvas: vida con barra y valor que cambia
       de color, avance de sector en % (sin revelar enemigos restantes), puntuación (100 Panzer III /
       250 Tiger I), estado de recarga, efectos activos y avisos de pickup. Radar circular de 45 m
@@ -103,8 +113,8 @@
 
 ## En curso
 
-- Ninguna tarea en curso: **pausa acordada**. Próximo trabajo: **fase 9** (misiones, dificultad,
-  victoria/derrota y persistencia).
+- Ninguna tarea en curso: **pausa acordada**. Próximo trabajo: **fase 10** (audio sintetizado con
+  WebAudio).
 
 ## Incidencias conocidas
 
@@ -128,19 +138,20 @@
 | 7.5 | Blindaje direccional y flanqueo | Completada |
 | 7.5.1 | Claridad de impacto y arranque inicial (hotfix) | Completada |
 | 8 | HUD: vida, progreso, puntuación, radar, recarga y pausa | Completada |
-| 9 | Misiones: campaña de 3, escalado, victoria/derrota y persistencia | **Pendiente (siguiente)** |
-| 10 | Audio: efectos sintetizados WebAudio, volumen y mute | Pendiente |
+| 9 | Campaña: 3 misiones, briefing, resultados y persistencia | Completada |
+| 10 | Audio: efectos sintetizados WebAudio, volumen y mute | **Pendiente (siguiente)** |
 | 11 | Pulido, QA, rendimiento, documentación final y tag `v0.1.0` | Pendiente |
 
 ## Deuda técnica registrada
 
 - **Supuestos de pickups pendientes de validar:** la mejora cura también los 20 PV al subir el
   máximo, las reducciones de daño son multiplicativas y recoger una mejora con el tope ×3 la consume
-  sin efecto. Confirmar en la fase 9.
-- **HUD definitivo pendiente de misiones:** el HUD de la fase 8 ya muestra vida, avance,
-  puntuación, recarga, efectos y radar; briefing, resumen de misión y récord llegan en la fase 9.
+  sin efecto. Confirmar en la fase 11 (pulido).
+- **Pantallas de campaña mínimas:** briefing, resumen, derrota y fin de campaña están
+  implementados; no hay menú inicial ni selector de misión (se arranca en la desbloqueada más alta).
 - **Balance del blindaje pendiente de la fase 9:** multiplicadores y umbrales en `balance.ts`; hay
-  que validar 5/3/2 y 8/4/3 y si la ventana de recarga de la IA resulta demasiado generosa.
+  que validar 5/3/2 y 8/4/3 y si la ventana de recarga de la IA resulta demasiado generosa
+  (fase 11).
 - **IA sin corregir rumbo al recargar:** implementado como ventana de flanqueo; revisar en la fase 9
   si hay que acortarla o mantenerla.
 - IA sin patrulla ni coordinación de flanqueo: los enemigos permanecen al acecho hasta ver u oír al
@@ -159,7 +170,7 @@
 ## Decisiones y notas operativas
 
 - **Flujo de trabajo acordado con el usuario:** pausa al cerrar cada fase para revisión/intervención. Se retoma con «continúa la fase N» o «continúa el bloque N».
-- **Cambios aprobados 2026-10-27:** corregir `BUG-001` (6.6) y añadir blindaje direccional/flanqueo (7.5). Registrados en `PLAN.md` §2/§12 y `DECISIONS.md` ADR-009. Los bloques 6.6/7.5, la fase 7 y el HUD (fase 8) están cerrados; el siguiente trabajo son las misiones (fase 9).
+- **Cambios aprobados 2026-10-27:** corregir `BUG-001` (6.6) y añadir blindaje direccional/flanqueo (7.5). Registrados en `PLAN.md` §2/§12 y `DECISIONS.md` ADR-009. Bloques 6.6/7.5, fases 7, 8 y 9 cerrados; siguiente: audio (fase 10).
 - **QA del bloque 6.6:** además de los tests de regresión, se condujo el juego real en Chrome headless vía CDP (sin dependencias nuevas) para avanzar contra un enemigo: el jugador se detiene a 2,9 m (suma de radios 2,75 m + margen 0,15 m) y no lo cruza.
 - **QA de la fase 7:** se recogieron los tres pickups en Chrome headless vía CDP (botiquín de 40 a 70 PV, mejora de 100 a 120 de vida máxima, potencia con recarga de 1,56 s) y se verificaron con capturas el icono en el mundo, el aviso flotante y la línea de estado.
 - **QA del bloque 7.5:** en Chrome headless vía CDP, disparos al mismo Panzer III hicieron 60 de daño por la espalda y 20 de frente; la IA no disparó con el jugador a 90° del rumbo, mantuvo el heading durante 0,5 s de recarga y disparó al entrar en el arco de ±15°; se comprobaron las franjas de orientación (clara delante, roja detrás) con capturas.

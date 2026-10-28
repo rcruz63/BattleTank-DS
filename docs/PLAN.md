@@ -519,7 +519,7 @@ Cada fase termina con `npm run check`, changelog + estado actualizados y **commi
 | 7.5 | Blindaje direccional y flanqueo | Zonas frontal/lateral/trasera, arco de fuego ±15°, ventanas de flanqueo de la IA y feedback de zona | `feat(armor): blindaje direccional y flanqueo` |
 | 7.5.1 | Claridad de impacto y arranque | Panel temporal claro, 3 ligeros por defecto, barra de vida, daño flotante con zona y destello | `fix(ux): aclarar panel temporal y feedback de impacto` |
 | 8 | HUD y radar | HUD DOM (vida, avance, puntuación, recarga, efectos), radar, pausa, viñeta | `feat(hud): HUD, radar, pausa y puntuación` |
-| 9 | Misiones | Campaña de 3 misiones, escalado, victoria/derrota y persistencia | `feat(mission): misiones escaladas y progresión de campaña` |
+| 9 | Campaña | 3 misiones, briefing/resultados, escalado, victoria/derrota y persistencia | `feat(mission): campaña, briefing, resultados y persistencia` |
 | 10 | Audio | Efectos sintetizados, volumen y mute | `feat(audio): efectos sintetizados con WebAudio` |
 | 11 | Pulido y handoff | QA, rendimiento, documentación final, tag | `docs: documentación de handoff y guía de desarrollo` · `chore(release): 0.1.0` |
 

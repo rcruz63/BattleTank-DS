@@ -9,6 +9,11 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 ### Añadido
 
+- Campaña de 3 misiones con dificultad creciente y tuning de IA propio: escenarios de 20×20, 22×22 y
+  24×24, de 3 a 6 enemigos (Tiger desde la misión 2), coberturas más densas, reacción/dispersión/daño
+  escalados. Briefing, resumen de misión, derrota, campaña completada y flujo con `ENTER`; puntuación
+  de campaña (100/250 + 500 por misión + 2 por PV restante), precisión/tiempo/daño y persistencia
+  best-effort de récord y misión desbloqueada en `localStorage`.
 - HUD DOM de la fase 8: vida con barra y valor, avance de sector en %, puntuación (100 Panzer III /
   250 Tiger I), estado de recarga, efectos de mejora/potencia y avisos de pickup. Radar circular de
   45 m orientado con el rumbo (coberturas tenues, enemigos rojos, pickups verdes), pausa con `ESC`,

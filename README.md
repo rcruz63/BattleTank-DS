@@ -15,10 +15,10 @@ técnica) en [`docs/STATUS.md`](docs/STATUS.md).
 ## Estado
 
 > **Versión objetivo: `0.1.0` (vertical slice jugable) — en desarrollo**, todavía no publicado.
-> Al redactarse este README las fases 0–8 y los bloques 6.5 (puntería con ratón), 6.6 (colisión
-> entre tanques), 7.5 (blindaje direccional y flanqueo), el ajuste 7.5.1 (claridad/feedback) y la
-> fase 8 (HUD/radar, pausa y puntuación) están cerrados. El siguiente trabajo son las misiones
-> (fase 9). Ya hay un combate jugable:
+> Al redactarse este README las fases 0–9 y los bloques 6.5 (puntería con ratón), 6.6 (colisión
+> entre tanques), 7.5 (blindaje direccional y flanqueo), el ajuste 7.5.1 (claridad/feedback), la
+> fase 8 (HUD/radar, pausa y puntuación) y la fase 9 (campaña) están cerrados. El siguiente trabajo
+> es el audio (fase 10). Ya hay un combate jugable:
 > `WASD`/flechas mueven y giran el tanque, el ratón apunta el cañón dentro de un cono (la cámara y
 > el casco **no** giran con él), y `Espacio` o el clic izquierdo disparan con 2,4 s de recarga. Las
 > coberturas de madera y ladrillo se destruyen, los Panzer III y Tiger I esperan al acecho, detectan
@@ -28,9 +28,10 @@ técnica) en [`docs/STATUS.md`](docs/STATUS.md).
 > arco frontal de ±15° y no giran mientras recargan, así que el flanqueo funciona; hay overlay rojo
 > al recibir daño y una pantalla provisional de tanque destruido, y los tanques son sólidos: no se
 > atraviesan entre sí. Ya hay pickups de cura, mejora y potencia que se recogen al pasar por encima,
-> con aviso en pantalla. El arranque provisional usa **3 Panzer III** (sin Tiger) y los impactos se
+> con aviso en pantalla. La campaña empieza con **3 Panzer III** en la misión 1 y los impactos se
 > ven con barra de vida, daño flotante por zona y destello. El HUD ya muestra vida, avance,
-> puntuación, recarga y radar, y `ESC` pausa. Faltan misiones y audio. Consulta
+> puntuación, recarga y radar, y `ESC` pausa. La campaña encadena tres misiones con briefing,
+> resumen, victoria/derrota y persistencia de récord/desbloqueo. Falta audio. Consulta
 > [`docs/STATUS.md`](docs/STATUS.md) para el estado exacto del día.
 
 El título «BATTLE TANK — PERISCOPIO» es provisional y puede cambiarse en un commit de
@@ -83,6 +84,7 @@ npm run preview  # sirve dist/ para verificar el build
 | Apuntar | Ratón sobre el canvas | **Disponible.** Mueve el cañón dentro de un cono de ±15° horizontal y ±4° vertical respecto al rumbo del tanque. La cámara no gira con el ratón. |
 | Disparar | `Espacio` o clic izquierdo | **Disponible.** Un disparo por pulsación, sin fuego automático; recarga de 2,4 s. |
 | Pausa | `Esc` | **Disponible.** Congela la simulación y muestra controles y semilla. |
+| Confirmar pantallas | `Enter` | **Disponible.** Despliega, continúa tras una misión o reintenta. |
 | Silenciar | `M` | Previsto (fase 10). |
 | Depuración | `F3` | Previsto: overlay con fps, caras, celdas visibles y entidades. |
 
@@ -118,10 +120,10 @@ BattleTank-DS/
 │   ├── render/         # cámara, caras, modelos de tanques y pickups, painter, overlays y periscopio
 │   ├── entities/       # jugador, proyectil, enemigo y pickup
 │   ├── systems/        # entrada, puntería, movimiento, combate, IA, loot, daño y blindaje (misión y puntuación después)
-│   ├── ui/             # HUD DOM, modelo hudView, radar y pantallas (briefing en fase 9)
+│   ├── ui/             # HUD DOM, modelo hudView, radar y pantallas de campaña
 │   ├── audio/          # efectos sintetizados con WebAudio (fase 10)
 │   └── game/           # composición actual (createGame); máquina de estados en fases 8-9
-├── tests/              # espejo de src/ (194 tests en 33 ficheros) + integración headless
+├── tests/              # espejo de src/ (203 tests en 36 ficheros) + integración headless
 ├── docs/               # plan, estado y documentación del proyecto
 └── dist/               # build generado (no versionado)
 ```
@@ -143,8 +145,8 @@ almacenamiento, el juego debe seguir funcionando sin persistencia (degradación 
 
 ## Limitaciones conocidas y siguiente paso
 
-- **Pantallas de misión (fase 9):** el HUD y la pausa ya existen; briefing, resumen de misión,
-  récord y pantalla de derrota definitiva llegan con las misiones.
+- **Pantallas de campaña:** briefing, resumen, derrota y fin de campaña implementados; no hay menú
+  inicial ni selector de misión (se arranca en la desbloqueada más alta).
 - **Feedback de mundo:** barras de vida, daño flotante por zona y destello siguen dibujándose en el
   canvas del mundo (no son DOM).
 - **`BUG-001` corregido en el bloque 6.6:** el jugador y los enemigos ya no se atraviesan; cada

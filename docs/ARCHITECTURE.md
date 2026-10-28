@@ -4,9 +4,9 @@ Arquitectura del vertical slice **0.1.0**. Se deriva de [`PLAN.md`](PLAN.md) §5
 contratos descritos aquí son el acuerdo entre capas, no un inventario exhaustivo del código.
 
 > **Convención de estado.** **«Implementado»** = existe y está cubierto por tests; **«previsto»** =
-> diseñado y acordado, todavía sin escribir. A fecha de redacción las fases 0–8 y los bloques 6.5
+> diseñado y acordado, todavía sin escribir. A fecha de redacción las fases 0–9 y los bloques 6.5
 > (puntería con ratón), 6.6 (colisión entre tanques) y 7.5 (blindaje direccional) están cerrados; la
-> siguiente es la fase 9 (misiones). El inventario vivo está en [`STATUS.md`](STATUS.md), no aquí.
+> siguiente es la fase 10 (audio). El inventario vivo está en [`STATUS.md`](STATUS.md), no aquí.
 >
 > **Las firmas concretas no se fijan en prosa.** Cada capa cierra sus tipos en sus `types.ts` (o en
 > el propio módulo); este documento fija responsabilidades, dependencias permitidas y flujo de datos.
@@ -20,7 +20,7 @@ contratos descritos aquí son el acuerdo entre capas, no un inventario exhaustiv
 | Build y dev server | **Vite 8** (`base: './'`, `target: es2022`, `outDir: dist`, sourcemaps), puerto fijo 5273. |
 | Gráficos | **Canvas 2D** con resolución interna fija **1280×720** escalada por CSS con letterboxing (`index.html`). |
 | HUD | **DOM/CSS** sobre el canvas + un **canvas pequeño independiente** para el radar (implementado). |
-| Tests | **Vitest** en entorno **Node** (`tests/**/*.test.ts`), sin jsdom; **194 tests en 33 ficheros**. |
+| Tests | **Vitest** en entorno **Node** (`tests/**/*.test.ts`), sin jsdom; **203 tests en 36 ficheros**. |
 | Calidad | **ESLint** (tamaño/complejidad) + **Prettier**; puerta `npm run check`. |
 | Runtime | **Cero dependencias** y **cero assets externos**: geometría procedural, tipografía del sistema, iconos CSS y audio WebAudio sintetizado. |
 | Persistencia | `localStorage` solo para récord y misión desbloqueada (fase 9). |
@@ -111,6 +111,8 @@ BattleTank-DS/
 │   │   ├── loot.ts         #   recogida, efectos y temporizadores de los pickups
 │   │   ├── feedback.ts     #   visibilidad de enemigos y caducidad de daños flotantes
 │   │   ├── armor.ts        #   clasificación de zona y multiplicadores de blindaje
+│   │   ├── mission.ts      #   semillas, parámetros de arena, reparto y bonus de misión
+│   │   ├── progression.ts  #   récord/misión desbloqueada con localStorage best-effort
 │   │   └── ai.ts           #   percepción, alerta, avance, arco de fuego y ataque
 │   ├── ui/
 │   │   ├── styles.css      #   estilos base, paneles, pausa y viñeta del HUD
@@ -118,11 +120,15 @@ BattleTank-DS/
 │   │   ├── hudView.ts      #   modelo puro del HUD (vida/nivel, avance, recarga, efectos, radar)
 │   │   └── radar.ts        #   modelo puro de contactos + pintado del radar circular
 │   └── game/
-│       └── game.ts         #   composición: arena, jugadores, IA, puntería, efectos, render, HUD
+│       ├── game.ts         #   composición y API pública (getters de la sesión)
+│       ├── session.ts      #   sesión de misión: arena, entidades y estadísticas
+│       ├── simulation.ts   #   paso de simulación, impacto, fin de misión y cambio de pantalla
+│       ├── state.ts        #   estado mutable de partida y efectos transitorios
+│       ├── hudData.ts      #   adaptación del estado a los datos del HUD
+│       └── render.ts       #   render del mundo + periscopio (el HUD DOM va aparte)
 │
-│   (previstos: config/missions.ts, systems/mission.ts, systems/score.ts, systems/progression.ts,
-│    ui/screens.ts, audio/synth.ts, audio/audio.ts, game/state.ts)
-├── tests/                  # espejo de src/ (33 ficheros, 194 tests) + integración headless
+│   (previstos: systems/score.ts, ui/screens.ts, audio/synth.ts, audio/audio.ts)
+├── tests/                  # espejo de src/ (36 ficheros, 203 tests) + integración headless
 ├── docs/
 └── dist/                   # build generado (no versionado)
 ```
@@ -136,8 +142,9 @@ A fecha de redacción las fases 0–8 y los bloques 6.5, 6.6 y 7.5 están cerrad
 mueve, apunta y dispara dentro del cono, no puede atravesar tanques, recoge pickups con sus efectos
 y el combate premia el flanqueo; las coberturas se destruyen, los enemigos esperan/avanzan/atacan con
 LOS y A* y solo disparan dentro de su arco frontal. El HUD DOM muestra vida, avance, puntuación,
-recarga, efectos y radar, y `ESC` pausa. El siguiente trabajo son las **misiones (fase 9)**; después,
-audio y pulido.
+recarga, efectos y radar; `ESC` pausa y `ENTER` confirma briefing/resúmenes. La campaña tiene tres
+misiones, victoria/derrota y persistencia. El siguiente trabajo es el **audio (fase 10)**; después,
+pulido y handoff (fase 11).
 
 ### Responsabilidades por módulo
 
@@ -252,8 +259,8 @@ requestAnimationFrame
    ├─ ui.hud.update(buildHudView(game.getHudData()))
    │    ├─ barras de vida/avance, puntuación, recarga, efectos y aviso de pickup (DOM/CSS)
    │    ├─ ui.radar: contactos a 45 m orientados con el rumbo y barrido animado (canvas)
-   │    └─ pantalla de pausa con controles y semilla (ESC congela la simulación)
-   └─ (fase 10: audio consume eventos)
+   │    └─ pantallas: briefing, victoria, derrota y fin de campaña; pausa (ESC)
+   └─ (fase 10: audio consume eventos; fase 11: pulido y entrega)
 ```
 
 - **Paso fijo:** la simulación avanza en incrementos idénticos (`core/loop.ts`, 1/60 s en el
