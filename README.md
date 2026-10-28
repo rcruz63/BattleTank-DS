@@ -51,7 +51,7 @@ de fichero del código, en inglés.
 
 ```bash
 npm install      # instala dependencias de desarrollo
-npm run dev      # servidor de desarrollo en http://localhost:5173
+npm run dev      # servidor de desarrollo en http://localhost:5273
 ```
 
 Para probar el build de producción:
@@ -64,9 +64,9 @@ npm run preview  # sirve dist/ para verificar el build
 | Comando | Qué hace |
 |---|---|
 | `npm install` | Instala las dependencias de desarrollo. No hay dependencias de runtime. |
-| `npm run dev` | Servidor de desarrollo con recarga en caliente en `http://localhost:5173` (puerto fijo). |
+| `npm run dev` | Servidor de desarrollo con recarga en caliente en `http://localhost:5273` (puerto propio para no chocar con otros proyectos). |
 | `npm run build` | Compila el juego a `dist/` (con sourcemaps) para servirlo como estático. |
-| `npm run preview` | Sirve el contenido de `dist/` para verificar el build. |
+| `npm run preview` | Sirve el contenido de `dist/` para verificar el build en `http://localhost:5274`. |
 | `npm test` | Ejecuta toda la suite de Vitest una vez (entorno Node). |
 | `npm run test:watch` | Vitest en modo vigilancia durante el desarrollo. |
 | `npm run typecheck` | Comprobación de tipos con `tsc --noEmit`. |
@@ -96,7 +96,7 @@ en pantalla y `ESC` abre la pausa. Todos los detalles de diseño están en
 ## Depuración
 
 - **Escenario reproducible:** arranca con `npm run dev` y abre
-  `http://localhost:5173/?seed=123`. La misma semilla genera el mismo escenario, reparto de enemigos
+  `http://localhost:5273/?seed=123`. La misma semilla genera el mismo escenario, reparto de enemigos
   y spawns; sin el parámetro se usa la hora actual. Sirve para reproducir un bug o comparar cambios
   de balance.
 - **Inspección desde la consola:** `main.ts` expone `window.__BT__` con la instancia del juego

@@ -33,7 +33,7 @@ números y contenido; [`docs/TESTING.md`](docs/TESTING.md) para pruebas y QA;
 git status && git log --oneline -5   # ¿hay trabajo a medias? ¿cuál es el último commit?
 npm install                          # solo si falta node_modules
 npm run check                        # línea base: typecheck + lint + tests + build
-npm run dev                          # http://localhost:5173 para ver el juego
+npm run dev                          # http://localhost:5273 para ver el juego
 ```
 
 Si `npm run check` no está en verde antes de empezar, **no añadas código encima**: arregla el fallo

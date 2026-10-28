@@ -342,7 +342,7 @@ Decisiones que este documento ha tenido que asumir; conviene cerrarlas y corregi
 
 Herramientas de desarrollo y QA; no forman parte de la API del juego ni deben usarse desde la lógica:
 
-- **`?seed=<entero>`** en la URL (`http://localhost:5173/?seed=123`): `main.ts` la lee y la pasa a
+- **`?seed=<entero>`** en la URL (`http://localhost:5273/?seed=123`): `main.ts` la lee y la pasa a
   `createGame`. Reproduce escenario, spawns y reparto de enemigos; sin parámetro se usa la hora
   actual. Es la forma recomendada de adjuntar un caso reproducible a un bug o comparar balance.
 - **`window.__BT__`**: `main.ts` expone la instancia `Game` (tipada en `src/global.d.ts`) para

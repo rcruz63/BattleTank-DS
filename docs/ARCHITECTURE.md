@@ -17,7 +17,7 @@ contratos descritos aquí son el acuerdo entre capas, no un inventario exhaustiv
 | Pieza | Decisión |
 |---|---|
 | Lenguaje | **TypeScript estricto**: `strict`, `noUncheckedIndexedAccess`, `noUnusedLocals`, `noUnusedParameters`, `noFallthroughCasesInSwitch`, `verbatimModuleSyntax`, `isolatedModules`. |
-| Build y dev server | **Vite 8** (`base: './'`, `target: es2022`, `outDir: dist`, sourcemaps), puerto fijo 5173. |
+| Build y dev server | **Vite 8** (`base: './'`, `target: es2022`, `outDir: dist`, sourcemaps), puerto fijo 5273. |
 | Gráficos | **Canvas 2D** con resolución interna fija **1280×720** escalada por CSS con letterboxing (`index.html`). |
 | HUD | **DOM/CSS** sobre el canvas + un **canvas pequeño independiente** para el radar (implementado). |
 | Tests | **Vitest** en entorno **Node** (`tests/**/*.test.ts`), sin jsdom; **194 tests en 33 ficheros**. |

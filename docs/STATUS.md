@@ -1,7 +1,7 @@
 # Estado del proyecto — BattleTank-DS
 
 > **Actualizado:** 2026-10-28 · **Fase actual:** pausa de revisión; siguiente fase 9 (misiones)
-> **Último commit:** `feat(hud): HUD, radar, pausa y puntuación`
+> **Último commit:** `chore(config): mover dev a 5273 y preview a 5274`
 >
 > Este fichero es el punto de entrada para retomar el proyecto, sea otra persona, otro chat u
 > otro modelo. Se actualiza en **cada commit**. La verdad sobre el alcance está en el plan.
@@ -10,7 +10,7 @@
 
 1. Lee [`docs/PLAN.md`](PLAN.md) (alcance y fases) y este estado.
 2. `npm install` y `npm run check` para confirmar que la base está sana.
-3. `npm run dev` y abre `http://localhost:5173`.
+3. `npm run dev` y abre `http://localhost:5273`.
 4. Lee «Incidencias conocidas» antes de elegir tarea: el siguiente trabajo son las misiones (fase 9);
    HUD/radar (8), pickups (7), blindaje direccional (7.5) y `BUG-001` (6.6) ya están cerrados.
 5. Sigue el flujo de [`docs/DEVELOPMENT.md`](DEVELOPMENT.md): tests → `npm run check` → changelog
@@ -165,6 +165,8 @@
 - **QA del bloque 7.5:** en Chrome headless vía CDP, disparos al mismo Panzer III hicieron 60 de daño por la espalda y 20 de frente; la IA no disparó con el jugador a 90° del rumbo, mantuvo el heading durante 0,5 s de recarga y disparó al entrar en el arco de ±15°; se comprobaron las franjas de orientación (clara delante, roja detrás) con capturas.
 - **QA del ajuste de periscopio:** playtest en Chrome headless con capturas antes y después; la vista central queda despejada, la retícula sigue siendo legible y no hay errores de consola.
 - No hay `pnpm` instalado en la máquina; se usa **npm** (Node 24 / npm 11).
+- Puertos propios para evitar conflictos con otros desarrollos en paralelo: **dev 5273** y
+  **preview 5274** (antes 5173). Se pueden sobreescribir con `npm run dev -- --port 5280`.
 - El audio se sintetiza con WebAudio: no habrá ficheros de audio ni assets externos.
 - La interfaz y la documentación van en español; los identificadores del código, en inglés.
 - `main.ts` arranca el juego real (`createGame`): WASD/flechas para moverse, ratón para apuntar,
@@ -178,7 +180,7 @@
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173
+npm run dev        # http://localhost:5273
 npm run check      # typecheck + lint + test + build (obligatorio antes de commit)
 npm run build      # build de producción en dist/
 ```

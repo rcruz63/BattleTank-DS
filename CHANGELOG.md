@@ -63,6 +63,8 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 ### Cambiado
 
+- Puertos del servidor de desarrollo y de preview: **5273** y **5274** respectivamente
+  (antes 5173/4173) para poder convivir con otro desarrollo en paralelo.
 - El panel temporal de canvas se elimina al entrar el HUD DOM; `render/statusOverlay.ts` queda solo
   como pantalla provisional de tanque destruido. El aviso de pickup pasa de canvas al HUD y la
   visibilidad/caducidad de feedback se agrupa en `systems/feedback.ts`.
