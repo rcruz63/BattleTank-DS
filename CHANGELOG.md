@@ -73,6 +73,9 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 ### Cambiado
 
+- Comentarios de `config/balance.ts` y `game.ts` actualizados tras cerrar la fase 9: el reparto de
+  enemigos por misión y el arranque en el briefing de la misión desbloqueada más alta (sin cambios de
+  comportamiento).
 - Documentación sincronizada con el código real tras cerrar las fases 8–10: STATUS, README,
   ARCHITECTURE, GAME_DESIGN, TESTING y DECISIONS; `PLAN.md` se sincroniza aparte con autorización
   explícita del usuario (fila 7.5.1, retirada del cañón 2D y fases cerradas).

@@ -26,7 +26,7 @@ export interface GameOptions {
   readonly seed?: number;
   /** Entrada inyectada para tests/mandos. */
   readonly input?: InputState;
-  /** true: empieza a jugar la misión 1 directamente (tests). false: briefing del HUD. */
+  /** true: empieza a jugar la misión 1 directamente (tests). false: briefing de la misión desbloqueada. */
   readonly autoStart?: boolean;
   /** Bus de audio inyectable; por defecto, uno silencioso (tests). */
   readonly audio?: AudioBus;

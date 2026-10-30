@@ -16,7 +16,7 @@ export const ARENA_DEFAULTS = {
   cellSize: 4,
   obstacleDensity: 0.14,
   destructibleRatio: 0.72,
-  // Provisional: arranque tipo misión 1 (3 Panzer III); la fase 9 dará el reparto por misión.
+  // Reserva sin misión; el reparto real viene de config/missions.ts (la misión 1 usa 3 enemigos).
   enemyCount: 3,
   pickupCount: 4,
   minEnemyDistance: 20,
@@ -44,7 +44,7 @@ export const COMBAT = {
   recoilKickRadians: 0.055,
 } as const;
 
-/** Puntuación por destruir cada tipo de enemigo (bonus de misión llegará en la fase 9). */
+/** Puntuación por destruir cada tipo de enemigo (el bonus de misión se suma en systems/mission.ts). */
 export const SCORE_REWARDS = {
   light: 100,
   heavy: 250,
@@ -56,7 +56,7 @@ export const ENEMY_RADIUS = 1.4;
 /** Margen de seguridad al colisionar dos tanques (m): se suma a la suma de sus radios. */
 export const ENTITY_SEPARATION = 0.15;
 
-/** Ajustes base de la IA; las misiones los escalan en la fase 9. */
+/** Ajustes base de la IA; cada misión los escala desde config/missions.ts. */
 export const AI_TUNING = {
   detectionRange: 70,
   attackRange: 34,

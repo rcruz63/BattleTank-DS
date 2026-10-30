@@ -1,7 +1,7 @@
 # Estado del proyecto — BattleTank-DS
 
 > **Actualizado:** 2026-10-30 · **Fase actual:** 11 (pulido, QA y entrega) — en curso
-> **Último commit:** `docs(plan): sincronizar plan tras fases 8-10`
+> **Último commit:** `docs(config): actualizar comentarios tras fase 9`
 >
 > Este fichero es el punto de entrada para retomar el proyecto, sea otra persona, otro chat u
 > otro modelo. Se actualiza en **cada commit**. La verdad sobre el alcance está en el plan.
