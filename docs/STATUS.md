@@ -1,7 +1,7 @@
 # Estado del proyecto — BattleTank-DS
 
-> **Actualizado:** 2026-10-28 · **Fase actual:** pausa de revisión; siguiente fase 11 (pulido y entrega)
-> **Último commit:** `feat(audio): audio sintetizado, mute y volumen`
+> **Actualizado:** 2026-10-30 · **Fase actual:** 11 (pulido, QA y entrega) — en curso
+> **Último commit:** `docs(status): sincronizar estado tras fases 8-10`
 >
 > Este fichero es el punto de entrada para retomar el proyecto, sea otra persona, otro chat u
 > otro modelo. Se actualiza en **cada commit**. La verdad sobre el alcance está en el plan.
@@ -11,9 +11,9 @@
 1. Lee [`docs/PLAN.md`](PLAN.md) (alcance y fases) y este estado.
 2. `npm install` y `npm run check` para confirmar que la base está sana.
 3. `npm run dev` y abre `http://localhost:5273`.
-4. Lee «Incidencias conocidas» antes de elegir tarea: el siguiente trabajo es el pulido/entrega
-   (fase 11); audio (10), campaña (9), HUD/radar (8), pickups (7), blindaje direccional (7.5) y
-   `BUG-001` (6.6) ya están cerrados.
+4. Lee «Incidencias conocidas» antes de elegir tarea: el trabajo actual es el pulido/entrega
+   (fase 11: QA, rendimiento, mejoras UX aprobadas y cierre de release); audio (10), campaña (9),
+   HUD/radar (8), pickups (7), blindaje direccional (7.5) y `BUG-001` (6.6) ya están cerrados.
 5. Sigue el flujo de [`docs/DEVELOPMENT.md`](DEVELOPMENT.md): tests → `npm run check` → changelog
    → estado → commit.
 
@@ -43,11 +43,12 @@
       periscopio. 194 tests en 33 ficheros y QA visual headless (HUD y pausa).
 - [x] **Ajuste de claridad y arranque (2026-10-28).** Panel temporal reetiquetado («Escenario
       #semilla · enemigos vivos X/Y», sin números internos de fase ni proyectiles) con leyenda de
-      blindaje (frente ×0,5 / lateral ×1 / espalda ×1,5). Arranque provisional alineado con la
-      misión 1: **3 Panzer III, sin Tiger**, hasta que la fase 9 defina el reparto por misión.
-      Feedback de combate: nombre y barra de vida sobre enemigos visibles (LOS, sin atravesar
-      coberturas), números flotantes de daño con zona («−20 FRONTAL») y destello del tanque al
-      recibir impacto; `systems/damage.ts` devuelve un `DamageResult` para desacoplar el feedback.
+      blindaje (frente ×0,5 / lateral ×1 / espalda ×1,5). Arranque alineado con la misión 1:
+      **3 Panzer III, sin Tiger**; la fase 9 fijó después el reparto por misión en
+      `config/missions.ts` (3/5/6 enemigos, Tiger desde la 2). Feedback de combate: nombre y barra de
+      vida sobre enemigos visibles (LOS, sin atravesar coberturas), números flotantes de daño con
+      zona («−20 FRONTAL») y destello del tanque al recibir impacto; `systems/damage.ts` devuelve un
+      `DamageResult` para desacoplar el feedback.
       184 tests en 31 ficheros y QA visual headless.
 - [x] **Ajuste de periscopio (2026-10-27).** Se retira el cañón 2D del overlay y su fogonazo (a
       petición del usuario): la puntería se lee solo con la retícula. Se mantienen máscara, marcas de
@@ -67,8 +68,9 @@
       cura de +30 PV con tope, +20 de vida máxima con −10 % de daño recibido acumulable ×3, o daño
       ×1,75 y recarga −35 % durante 20 s (renovable). Efectos en `systems/loot.ts`, aplicación de
       daño en `systems/damage.ts`, modelo procedural con icono flotante en `render/pickupFaces.ts`
-      y aviso/línea de estado en `render/statusOverlay.ts`. 168 tests en 30 ficheros (26 nuevos) y
-      QA en Chrome headless vía CDP: los tres pickups se recogen con su efecto y el aviso visible.
+      y aviso/línea de estado en `render/statusOverlay.ts` (el aviso pasó al toast del HUD en la
+      fase 8 y `render/statusOverlay.ts` se retiró). 168 tests en 30 ficheros (26 nuevos) y QA en
+      Chrome headless vía CDP: los tres pickups se recogen con su efecto y el aviso visible.
 - [x] **Bloque 6.6 — Colisión entre tanques (`BUG-001`).** `world/entityCollision.ts` trata cada
       tanque vivo como bloqueador circular con separación de seguridad de 0,15 m sobre la suma de
       radios; el movimiento del jugador y el avance de la IA usan `moveCircleAroundEntities`
@@ -90,8 +92,8 @@
       de 1 m (las coberturas intactas bloquean), alerta visual y por estampido a 60 m, avance con A*
       rodeando muros, apuntado con giro limitado, disparo con dispersión y recarga, daño cruzado
       con blindaje, modelo de tanque por cajas (casco/cadenas/torreta/cañón) con oclusión por el
-      painter, overlay de daño y pantalla provisional de destrucción. Ganchos `?seed=` y
-      `window.__BT__` para QA. Verificado con captura headless. 121 tests en verde.
+      painter, overlay de daño y pantalla de destrucción (hoy pantalla real de derrota, fase 9).
+      Ganchos `?seed=` y `window.__BT__` para QA. Verificado con captura headless. 121 tests en verde.
 - [x] **Fase 5 — Combate.** Disparo con recarga de 2,4 s y flanco, proyectiles en subpasos con
       colisión contra coberturas y blancos, daño por material (madera 1 impacto, ladrillo 3,
       hormigón/acero inmunes), escombros que dejan pasar los proyectiles, retroceso de cámara,
@@ -119,8 +121,10 @@
 
 ## En curso
 
-- Ninguna tarea en curso: **pausa acordada**. Próximo trabajo: **fase 11** (QA final, rendimiento,
-  documentación de entrega y tag `v0.1.0`).
+- **Fase 11 — pulido, QA y entrega.** Documentación sincronizada con el código real (2026-10-30) y
+  `PLAN.md` autorizado a sincronizar; quedan la QA manual (incluido el audio de oído), la medición de
+  rendimiento, las mejoras UX aprobadas (viñeta de vida baja, fogonazo enemigo y máscara inferior del
+  periscopio) y el cierre de release (`CHANGELOG` a `0.1.0`, versión y tag `v0.1.0`).
 
 ## Incidencias conocidas
 
@@ -130,23 +134,23 @@
 
 ## Pendiente (por fases)
 
-| Fase | Contenido | Estado |
-|---|---|---|
-| 1 | Núcleo: matemáticas, RNG, bucle de paso fijo y bus de eventos | Completada |
-| 2 | Render: canvas, cámara, proyección, recorte, painter y niebla | Completada |
-| 3 | Mundo: rejilla, generación procedural validada, escena de prismas | Completada |
-| 4 | Jugador: movimiento solidario, colisión, cámara de periscopio | Completada |
-| 5 | Combate: disparo, recarga, proyectiles, impactos y escombros | Completada |
-| 6 | Enemigos: modelos, IA con LOS/A*, dificultad por parámetros | Completada |
-| 6.5 | Puntería con ratón (cañón cónico, balística 3D) | Completada |
-| 6.6 | Colisión entre tanques (`BUG-001`) | Completada |
-| 7 | Pickups: cura, mejora y potencia | Completada |
-| 7.5 | Blindaje direccional y flanqueo | Completada |
-| 7.5.1 | Claridad de impacto y arranque inicial (hotfix) | Completada |
-| 8 | HUD: vida, progreso, puntuación, radar, recarga y pausa | Completada |
-| 9 | Campaña: 3 misiones, briefing, resultados y persistencia | Completada |
-| 10 | Audio: efectos sintetizados WebAudio, volumen y mute | Completada |
-| 11 | Pulido, QA, rendimiento, documentación final y tag `v0.1.0` | **Pendiente (siguiente)** |
+| Fase  | Contenido                                                         | Estado       |
+| ----- | ----------------------------------------------------------------- | ------------ |
+| 1     | Núcleo: matemáticas, RNG, bucle de paso fijo y bus de eventos     | Completada   |
+| 2     | Render: canvas, cámara, proyección, recorte, painter y niebla     | Completada   |
+| 3     | Mundo: rejilla, generación procedural validada, escena de prismas | Completada   |
+| 4     | Jugador: movimiento solidario, colisión, cámara de periscopio     | Completada   |
+| 5     | Combate: disparo, recarga, proyectiles, impactos y escombros      | Completada   |
+| 6     | Enemigos: modelos, IA con LOS/A*, dificultad por parámetros       | Completada   |
+| 6.5   | Puntería con ratón (cañón cónico, balística 3D)                   | Completada   |
+| 6.6   | Colisión entre tanques (`BUG-001`)                                | Completada   |
+| 7     | Pickups: cura, mejora y potencia                                  | Completada   |
+| 7.5   | Blindaje direccional y flanqueo                                   | Completada   |
+| 7.5.1 | Claridad de impacto y arranque inicial (hotfix)                   | Completada   |
+| 8     | HUD: vida, progreso, puntuación, radar, recarga y pausa           | Completada   |
+| 9     | Campaña: 3 misiones, briefing, resultados y persistencia          | Completada   |
+| 10    | Audio: efectos sintetizados WebAudio, volumen y mute              | Completada   |
+| 11    | Pulido, QA, rendimiento, documentación final y tag `v0.1.0`       | **En curso** |
 
 ## Deuda técnica registrada
 
@@ -155,23 +159,24 @@
   sin efecto. Confirmar en la fase 11 (pulido).
 - **Pantallas de campaña mínimas:** briefing, resumen, derrota y fin de campaña están
   implementados; no hay menú inicial ni selector de misión (se arranca en la desbloqueada más alta).
-- **Balance del blindaje pendiente de la fase 9:** multiplicadores y umbrales en `balance.ts`; hay
-  que validar 5/3/2 y 8/4/3 y si la ventana de recarga de la IA resulta demasiado generosa
-  (fase 11).
-- **IA sin corregir rumbo al recargar:** implementado como ventana de flanqueo; revisar en la fase 9
+- **Balance del blindaje pendiente de la fase 11:** multiplicadores y umbrales ya están en
+  `balance.ts`; hay que validar 5/3/2 y 8/4/3 y si la ventana de recarga de la IA resulta demasiado
+  generosa (fase 11).
+- **IA sin corregir rumbo al recargar:** implementado como ventana de flanqueo; revisar en la fase 11
   si hay que acortarla o mantenerla.
 - IA sin patrulla ni coordinación de flanqueo: los enemigos permanecen al acecho hasta ver u oír al
   jugador. Suficiente para 0.1.0; ampliable tras la entrega.
-- Reparto provisional de tipos de enemigo (**3 Panzer III, sin pesado** desde el ajuste del
-  2026-10-28); la fase 9 lo sustituirá por el reparto de cada misión (el Tiger entrará en misiones
-  posteriores).
-- Pantalla de destrucción y texto de estado son provisionales (fases 8-9).
+- **Reparto por misión fijado en `config/missions.ts`** (fase 9): 3/5/6 enemigos y Tiger desde la
+  misión 2; ya no hay reparto provisional.
+- **Feedback aprobado el 2026-10-30 para la fase 11:** viñeta roja sutil con vida baja (hoy solo
+  cambia el color de la barra), fogonazo del enemigo al disparar (`enemy.muzzleFlash` se calcula pero
+  no se dibuja) y reducción de la máscara inferior del periscopio (118 px).
 - **Sin cañón visible:** la puntería se lee solo con la retícula y no hay fogonazo en el cañón
   (decisión del usuario, 2026-10-27); no hay modelo 3D del arma en primera persona. El retroceso de
   cámara, la marca de impacto y el tracer mantienen el feedback del disparo.
-- **PLAN §7.7 sigue describiendo el cañón dibujado:** el cambio se ha registrado aquí, en
-  `CHANGELOG` y en `GAME_DESIGN`, pero `PLAN.md` no se toca sin autorización explícita; queda pendiente
-  sincronizarlo cuando el usuario lo apruebe.
+- **PLAN §7.7 describía el cañón dibujado:** el cambio está registrado aquí y en `CHANGELOG` y
+  `GAME_DESIGN`; el usuario autorizó el 2026-10-30 sincronizar `PLAN.md` (retirada del cañón, fila
+  7.5.1 y cierre de las fases 8–10) en el commit `docs(plan)`.
 
 ## Decisiones y notas operativas
 
@@ -189,8 +194,15 @@
   queda como QA manual de la fase 11 (el QA headless solo comprueba HUD/eventos).
 - La interfaz y la documentación van en español; los identificadores del código, en inglés.
 - `main.ts` arranca el juego real (`createGame`): WASD/flechas para moverse, ratón para apuntar,
-  clic o Espacio para disparar. El HUD funcional y la pantalla de resultados llegan en las fases
-  8-9; el texto de estado actual es temporal.
+  clic o Espacio para disparar. El HUD DOM, las pantallas de campaña (briefing, victoria, derrota y
+  campaña completada) y la persistencia están implementados; el overlay `F3` sigue pendiente.
+- **Sincronización documental 2026-10-30:** se contrastó toda la documentación con el código real
+  (`config/missions.ts`, `balance.ts`, `systems/progression.ts`, `ui/hudView.ts`, `render/periscope.ts`
+  y `game/simulation.ts`) y se corrigieron las referencias obsoletas de STATUS, README, CHANGELOG,
+  ARCHITECTURE, GAME_DESIGN, TESTING y DECISIONS; `PLAN.md` se sincronizó con autorización explícita
+  del usuario.
+- **QA de fase 11:** verificación headless de las 3 misiones, rendimiento y operaciones de dibujo;
+  el audio queda como QA manual de oído en un navegador real (el headless solo comprueba HUD/eventos).
 - Depuración: `?seed=42` reproduce un escenario; `window.__BT__` expone el estado del juego en consola.
 - Controles: W/S avanzar/retroceder, A/D girar tanque y vista, ratón para apuntar en el cono,
   clic izquierdo o Espacio disparar.

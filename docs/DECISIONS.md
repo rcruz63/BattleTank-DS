@@ -37,7 +37,7 @@ implementación no van aquí, solo las decisiones.
 ## ADR-002 — Pseudo-3D con painter's algorithm y sus límites
 
 - **Estado:** aceptada · **Fecha:** 2026-10-26 · **Fuente:** PLAN §6.2, §6.3, §14
-- **Contexto:** la referencia es el arcade *Battle Tank/Battlezone*: geometría plana, cámara de
+- **Contexto:** la referencia es el arcade _Battle Tank/Battlezone_: geometría plana, cámara de
   periscopio, sin texturas ni modelos. Se busca la solución más simple y testeable que dé profundidad
   convincente.
 - **Decisión:** proyección perspectiva con cámara a 1,7 m, FOV ≈ 72°, recorte de plano cercano
@@ -53,7 +53,7 @@ implementación no van aquí, solo las decisiones.
 
 ## ADR-003 — HUD en DOM/CSS y radar en un canvas independiente
 
-- **Estado:** aceptada · **Fecha:** 2026-10-26 · **Fuente:** PLAN §5.1, §7.7
+- **Estado:** aceptada e implementada en la fase 8 · **Fecha:** 2026-10-26 · **Fuente:** PLAN §5.1, §7.7
 - **Contexto:** el HUD es texto, barras, iconos y avisos; el radar exige dibujo circular, giro y
   barrido animado. El canvas principal está ocupado por la vista 3D.
 - **Decisión:** HUD y pantallas en DOM/CSS sobre el canvas 3D; radar en un canvas pequeño propio; los
@@ -80,7 +80,7 @@ implementación no van aquí, solo las decisiones.
   intacta.
 - **Consecuencias:**
   - (+) Oclusión garantizada por geometría + orden de pintado, no por trucos; DDA de LOS y A* de
-    rejilla simples; generación validable por *flood fill*; reglas simétricas para el jugador y la IA.
+    rejilla simples; generación validable por _flood fill_; reglas simétricas para el jugador y la IA.
   - (−) Movimiento en rejilla de 4 m puede sentirse grueso; sin alturas, rampas ni voladizos; las
     coberturas ocupan celdas completas; destruir una cobertura abre un hueco de celda entera.
   - Revisar si el diseño necesita verticalidad o coberturas de tamaño libre: exigiría cambiar el
@@ -94,7 +94,7 @@ implementación no van aquí, solo las decisiones.
   injustos.
 - **Decisión:** RNG determinista `mulberry32` sembrado con `Date.now()` y semilla visible en el
   briefing; generación por pasos (borde → grupos de coberturas → validación de conectividad con
-  *flood fill* → colocación de jugador/enemigos/pickups con distancias mínimas) y reintentos
+  _flood fill_ → colocación de jugador/enemigos/pickups con distancias mínimas) y reintentos
   acotados (máx. 30). Los tests usan semillas fijas.
 - **Consecuencias:**
   - (+) Escenarios reproducibles y testables, sin mapas hechos a mano; validación automática de
@@ -105,7 +105,7 @@ implementación no van aquí, solo las decisiones.
 
 ## ADR-006 — Cero assets externos y audio sintetizado con WebAudio
 
-- **Estado:** aceptada · **Fecha:** 2026-10-26 · **Fuente:** PLAN §2, §7.8, §9.1
+- **Estado:** aceptada e implementada en la fase 10 · **Fecha:** 2026-10-26 · **Fuente:** PLAN §2, §7.8, §9.1
 - **Contexto:** el proyecto no tiene pipeline de arte ni de audio; se quiere un build pequeño, sin
   licencias de terceros y coherente con la estética de polígonos planos.
 - **Decisión:** toda la geometría se construye por código; tipografía del sistema e iconos CSS;
@@ -132,8 +132,8 @@ implementación no van aquí, solo las decisiones.
   - (+) Cero infraestructura y cero latencia; implementación pequeña y aislada en
     `systems/progression`; fácil de sustituir por un doble en tests.
   - (−) Los datos no viajan entre dispositivos; se pierden al limpiar el navegador o en modo privado;
-    solo hay dos claves (pendientes de fijar en la fase 9); un guardado a mitad de partida no está
-    soportado y no debe simularse.
+    clave única `battletank-ds.progression.v1` con `{bestScore, unlockedMission}`; un guardado a mitad
+    de partida no está soportado y no debe simularse.
   - Revisar solo si se añaden cuentas, clasificación en red o guardado de partida (fuera de 0.1.0).
 
 ## ADR-008 — Sin móvil ni gamepad en 0.1.0
@@ -150,7 +150,6 @@ implementación no van aquí, solo las decisiones.
   - (−) Sin público móvil ni mandos; una futura adaptación requerirá abstracción de entrada, UI
     táctil y un ADR propio.
   - Revisar después de 0.1.0 si se decide ampliar plataformas.
-
 
 ## ADR-009 — Blindaje direccional y arco de fuego simétrico (implementada en el bloque 7.5)
 
@@ -176,4 +175,5 @@ implementación no van aquí, solo las decisiones.
   - (−) La IA expuesta mientras recarga puede resultar demasiado fácil; se valida con simulación y se
     ajusta la ventana si hace falta.
 - **Valores abiertos:** multiplicadores, umbrales y duración de la pausa de seguimiento son
-  configurables; el balance definitivo es de la fase 9.
+  configurables; el balance definitivo es de la fase 11 (nota 2026-10-30: la fase 9 cerró la campaña
+  y no recalibró el blindaje, así que la revisión sigue pendiente en el pulido final).

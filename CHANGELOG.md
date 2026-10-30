@@ -43,9 +43,9 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
   modelo procedural en `render/pickupFaces.ts` y recogida cableada en `game.ts`; 168 tests.
 - Puntería con ratón: el cañón pivota sobre la mazorca en un cono de ±15° horizontal y ±4°
   vertical, la retícula sigue al puntero y el disparo sale en esa dirección; clic izquierdo o
-  Espacio disparan. Balística 3D con altura de blancos e impacto en suelo, cañón dibujado
-  orientado, recarga y marca de impacto en la retícula, y marca tenue del rumbo del casco.
-  La cámara pasa a pitch 0° para que la retícula centrada coincida con el tiro horizontal.
+  Espacio disparan. Balística 3D con altura de blancos e impacto en suelo, recarga y marca de impacto
+  en la retícula, y marca tenue del rumbo del casco. La cámara pasa a pitch 0° para que la retícula
+  centrada coincida con el tiro horizontal. (El cañón 2D dibujado se retiró después; ver «Cambiado».)
 - Enemigos Panzer III y Tiger I con IA (percepción, alerta por visión o estampido, avance con A*,
   apuntado, disparo y recarga), línea de visión, daño cruzado con blindaje, modelos de tanque en
   polígonos con oclusión y ganchos de depuración `?seed=` y `window.__BT__`.
@@ -73,21 +73,25 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 ### Cambiado
 
+- Documentación sincronizada con el código real tras cerrar las fases 8–10: STATUS, README,
+  ARCHITECTURE, GAME_DESIGN, TESTING y DECISIONS; `PLAN.md` se sincroniza aparte con autorización
+  explícita del usuario (fila 7.5.1, retirada del cañón 2D y fases cerradas).
 - Puertos del servidor de desarrollo y de preview: **5273** y **5274** respectivamente
   (antes 5173/4173) para poder convivir con otro desarrollo en paralelo.
-- El panel temporal de canvas se elimina al entrar el HUD DOM; `render/statusOverlay.ts` queda solo
-  como pantalla provisional de tanque destruido. El aviso de pickup pasa de canvas al HUD y la
-  visibilidad/caducidad de feedback se agrupa en `systems/feedback.ts`.
+- El panel temporal de canvas se elimina al entrar el HUD DOM; la pantalla de destrucción y los
+  avisos pasan al HUD DOM y `render/statusOverlay.ts` desaparece. El aviso de pickup pasa de canvas
+  al HUD y la visibilidad/caducidad de feedback se agrupa en `systems/feedback.ts`.
 - El panel temporal de QA se reetiqueta: «Escenario #semilla · enemigos vivos X/Y», sin fase ni
-  proyectiles internos, con leyenda de blindaje y efectos activos; el HUD definitivo llega en la
+  proyectiles internos, con leyenda de blindaje y efectos activos; el HUD definitivo llegó en la
   fase 8.
-- El escenario por defecto pasa a **3 Panzer III** (sin Tiger) como arranque provisional alineado
-  con la misión 1; la fase 9 definirá el reparto por misión.
+- El escenario por defecto pasa a **3 Panzer III** (sin Tiger) como arranque alineado con la misión
+  1; la fase 9 fijó después el reparto por misión (3/5/6 enemigos, Tiger desde la 2).
 - El cableado de entrada (teclado y ratón) se mueve de `game.ts` a `main.ts`; `createGame` acepta
   el estado de entrada inyectado y ya no enlaza eventos del DOM.
 - La aplicación de daño sale de `game.ts` a `systems/damage.ts` y los overlays temporales de canvas
-  (panel de estado, aviso de pickup y pantalla de destrucción) a `render/statusOverlay.ts`; la
-  geometría de cajas compartida se extrae a `render/boxes.ts`.
+  (panel de estado, aviso de pickup y pantalla de destrucción) pasan a `render/statusOverlay.ts`
+  (retirado después al llegar el HUD DOM); la geometría de cajas compartida se extrae a
+  `render/boxes.ts`.
 - La IA enemiga limita su fuego a un arco frontal de ±15° y deja de corregir el rumbo mientras
   recarga; `aimToleranceRadians` se sustituye por `fireArcDegrees`.
 - El periscopio deja de dibujar el cañón 2D y su fogonazo: la puntería se lee solo con la retícula
