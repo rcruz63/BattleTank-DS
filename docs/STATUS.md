@@ -1,7 +1,7 @@
 # Estado del proyecto — BattleTank-DS
 
 > **Actualizado:** 2026-10-30 · **Fase actual:** 11 (pulido, QA y entrega) — en curso
-> **Último commit:** `docs(status): sincronizar estado tras fases 8-10`
+> **Último commit:** `docs(plan): sincronizar plan tras fases 8-10`
 >
 > Este fichero es el punto de entrada para retomar el proyecto, sea otra persona, otro chat u
 > otro modelo. Se actualiza en **cada commit**. La verdad sobre el alcance está en el plan.
@@ -121,10 +121,12 @@
 
 ## En curso
 
-- **Fase 11 — pulido, QA y entrega.** Documentación sincronizada con el código real (2026-10-30) y
-  `PLAN.md` autorizado a sincronizar; quedan la QA manual (incluido el audio de oído), la medición de
-  rendimiento, las mejoras UX aprobadas (viñeta de vida baja, fogonazo enemigo y máscara inferior del
-  periscopio) y el cierre de release (`CHANGELOG` a `0.1.0`, versión y tag `v0.1.0`).
+- **Fase 11 — pulido, QA y entrega.** Documentación sincronizada con el código real y `PLAN.md`
+  sincronizado con autorización explícita (2026-10-30). La QA headless inicial es **APTO**: 85/85
+  comprobaciones, 0 errores de consola, 60 fps estables y 193/343 caras p50 (457 máx). Quedan las
+  mejoras UX aprobadas (viñeta de vida baja, fogonazo enemigo y máscara inferior del periscopio),
+  corregir el aviso de pickup durante la pausa (INC-02), precisar el presupuesto de operaciones
+  (INC-01), la QA de oído y el cierre de release (`CHANGELOG` a `0.1.0`, versión y tag `v0.1.0`).
 
 ## Incidencias conocidas
 
@@ -174,9 +176,8 @@
 - **Sin cañón visible:** la puntería se lee solo con la retícula y no hay fogonazo en el cañón
   (decisión del usuario, 2026-10-27); no hay modelo 3D del arma en primera persona. El retroceso de
   cámara, la marca de impacto y el tracer mantienen el feedback del disparo.
-- **PLAN §7.7 describía el cañón dibujado:** el cambio está registrado aquí y en `CHANGELOG` y
-  `GAME_DESIGN`; el usuario autorizó el 2026-10-30 sincronizar `PLAN.md` (retirada del cañón, fila
-  7.5.1 y cierre de las fases 8–10) en el commit `docs(plan)`.
+- **PLAN §7.7 describía el cañón dibujado:** sincronizado el 2026-10-30 con autorización del usuario
+  en el commit `docs(plan)` (fila 7.5.1 aprobada, cañón 2D retirado y fases 8–10 cerradas).
 
 ## Decisiones y notas operativas
 
@@ -201,8 +202,13 @@
   y `game/simulation.ts`) y se corrigieron las referencias obsoletas de STATUS, README, CHANGELOG,
   ARCHITECTURE, GAME_DESIGN, TESTING y DECISIONS; `PLAN.md` se sincronizó con autorización explícita
   del usuario.
-- **QA de fase 11:** verificación headless de las 3 misiones, rendimiento y operaciones de dibujo;
-  el audio queda como QA manual de oído en un navegador real (el headless solo comprueba HUD/eventos).
+- **QA de fase 11 (2026-10-30):** sesión headless por CDP sobre las 3 misiones: 85/85 comprobaciones
+  OK, 0 errores de consola, pausa que congela la simulación, campaña 3/5/6, derrota/reintento y
+  persistencia (`{"bestScore":2140,"unlockedMission":2}`). Rendimiento: 60 fps estables (p50 16,7 ms;
+  0 frames >33 ms en 2888), caras visibles p50 193/343 y máx 457 (≤1500). **INC-01:** el presupuesto
+  de «operaciones de dibujo» era ambiguo (llamadas de path frente a primitivas de dibujo); se
+  documenta la métrica. **INC-02:** el toast de pickup se queda visible si se pausa antes de ~1,25 s.
+  El audio queda como QA manual de oído en un navegador real (el headless solo comprueba HUD/eventos).
 - Depuración: `?seed=42` reproduce un escenario; `window.__BT__` expone el estado del juego en consola.
 - Controles: W/S avanzar/retroceder, A/D girar tanque y vista, ratón para apuntar en el cono,
   clic izquierdo o Espacio disparar.

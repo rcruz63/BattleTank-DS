@@ -58,7 +58,8 @@ resto del alcance; se insertan en el orden de fases de §12.
    a todos los enemigos.
 5. Al completar la misión: resumen de puntuación y paso a la siguiente, con más enemigos
    y mayor agresividad. Al morir: derrota, resumen y reintento.
-6. Se guardan récord y misión desbloqueada; la partida se puede reanudar desde el menú.
+6. Se guardan récord y misión desbloqueada; la partida se reanuda desde el briefing de la misión
+   desbloqueada más alta (no hay menú inicial).
 
 **Victoria:** 100 % de progreso (todos los enemigos del escenario destruidos).
 **Derrota:** vida a 0 o salir del área jugable (el escenario está cerrado por coberturas).
@@ -122,8 +123,8 @@ npm run check      # typecheck + lint + test + build (puerta de calidad)
 
 ### 5.2 Estructura de carpetas
 
-> Estructura objetivo inicial; el mapa real y actualizado de módulos está en
-> [`ARCHITECTURE.md`](ARCHITECTURE.md) §3. Los módulos marcados «previsto» se añaden en su bloque.
+> Estructura real a fecha de 2026-10-30; el detalle de módulos y contratos está en
+> [`ARCHITECTURE.md`](ARCHITECTURE.md) §3.
 
 ```
 BattleTank-DS/
@@ -162,17 +163,21 @@ BattleTank-DS/
 │   │   ├── generate.ts
 │   │   ├── grid.ts
 │   │   ├── collision.ts
-│   │   ├── entityCollision.ts # (previsto 6.6) bloqueadores dinámicos entre tanques
+│   │   ├── entityCollision.ts # bloqueadores dinámicos entre tanques (6.6)
 │   │   ├── los.ts
 │   │   └── pathfind.ts
 │   ├── render/                # pipeline gráfico
 │   │   ├── types.ts
 │   │   ├── canvas.ts
 │   │   ├── camera.ts
+│   │   ├── playerCamera.ts    # cámara de periscopio del jugador
 │   │   ├── clip.ts
+│   │   ├── faces.ts           # proyección, culling, recorte y niebla
+│   │   ├── worldFaces.ts      # caras de coberturas y escombros
 │   │   ├── painter.ts
 │   │   ├── models.ts          # construcción de tanques/objetos con polígonos
-│   │   └── scene.ts           # estado del juego -> lista de caras a pintar
+│   │   ├── renderer.ts        # composición del frame -> lista de caras pintadas
+│   │   └── periscope.ts       # overlay de periscopio (sin cañón dibujado)
 │   ├── entities/
 │   │   ├── player.ts
 │   │   ├── enemy.ts
@@ -180,24 +185,31 @@ BattleTank-DS/
 │   │   └── pickup.ts
 │   ├── systems/
 │   │   ├── input.ts
+│   │   ├── aim.ts             # puntería con ratón dentro del cono (6.5)
+│   │   ├── movement.ts        # movimiento solidario y colisión
 │   │   ├── combat.ts
 │   │   ├── ai.ts
-│   │   ├── armor.ts          # (previsto 7.5) zonas de blindaje y multiplicadores
+│   │   ├── armor.ts           # zonas de blindaje y multiplicadores (7.5)
+│   │   ├── damage.ts          # impacto, blindaje y muerte
+│   │   ├── feedback.ts        # visibilidad y caducidad del feedback
 │   │   ├── loot.ts
 │   │   ├── mission.ts
-│   │   ├── score.ts
-│   │   └── progression.ts
+│   │   └── progression.ts     # récord y misión desbloqueada
 │   ├── ui/
-│   │   ├── hud.ts
-│   │   ├── radar.ts
-│   │   ├── screens.ts
-│   │   └── periscope.ts
+│   │   ├── hud.ts             # adaptador DOM del HUD y las pantallas
+│   │   ├── hudView.ts         # modelo puro del HUD
+│   │   ├── radar.ts           # contactos y pintado del radar
+│   │   └── styles.css         # estilos, paneles, pausa y viñeta
 │   ├── audio/
 │   │   ├── synth.ts
 │   │   └── audio.ts
 │   └── game/
-│       ├── game.ts            # composición y máquina de estados
-│       └── state.ts           # estado serializable de una partida
+│       ├── game.ts            # composición y máquina de estados de campaña
+│       ├── session.ts         # arena, entidades y estadísticas de la misión
+│       ├── simulation.ts      # paso, puntuación, fin de misión y pantallas
+│       ├── state.ts           # estado mutable de la partida
+│       ├── hudData.ts         # adaptación del estado al HUD
+│       └── render.ts          # render del mundo + periscopio
 └── tests/                     # espejo de src/ + escenarios de integración
 ```
 
@@ -261,8 +273,9 @@ registran en `docs/STATUS.md` como deuda técnica.
    profundidad y oculta el borde del mundo.
 4. Ordenación **painter's algorithm** por profundidad media y pintado con Canvas 2D.
    Las coberturas intactas tapan lo que hay detrás; al destruirse, dejan de aportar caras.
-5. Overlay de periscopio: viñeta, mira con marcas de distancia, silueta del cañón y del casco
-   (polígonos en primer plano), destello de impacto y feedback de recarga.
+5. Overlay de periscopio: viñeta CSS, mira con marcas de distancia, marca del rumbo del casco,
+   anillo de recarga, marca de impacto y feedback de recarga. **Sin cañón dibujado**: se retiró el
+   2026-10-27 y la retícula es la única referencia de puntería.
 
 Limitación conocida: el painter's algorithm puede producir artefactos en cruces exactos de
 geometría; el diseño evita intersecciones (celdas disjuntas) y lo asume como deuda cosmética.
@@ -296,7 +309,7 @@ geometría; el diseño evita intersecciones (celdas disjuntas) y lo asume como d
 - Física 2D en el plano: el tanque avanza/retrocede a lo largo de su rumbo; `A/D` giran casco
   y mira a la vez (sin torreta independiente, fiel a «solidario con la mira»).
 - Colisión círculo vs. celdas con **deslizamiento** por ejes; sin atravesar coberturas.
-- **Colisión entre tanques (prevista, bloque 6.6):** los círculos del jugador y de los enemigos se
+- **Colisión entre tanques (implementada, bloque 6.6):** los círculos del jugador y de los enemigos se
   tratan como bloqueadores dinámicos; el movimiento no puede atravesarlos y se aplica separación de
   seguridad al aparecer. Corrige la incidencia `BUG-001` registrada en `STATUS.md`.
 - Límites del escenario cerrados. Inercia ligera y aceleración corta para dar peso.
@@ -315,7 +328,8 @@ geometría; el diseño evita intersecciones (celdas disjuntas) y lo asume como d
   pesado; con blindaje direccional los frontales y traseros cambian, ver bloque 7.5).
 - **Blindaje direccional (aprobado, bloque 7.5):** el daño depende del ángulo de impacto respecto al
   rumbo del blanco: frontal ×0,5, lateral ×1,0 y trasero ×1,5 (configurable), aplicado después de
-  `armor`. Es simétrico para jugador y enemigos. El HUD mostrará la zona del impacto (fase 8).
+  `armor`. Es simétrico para jugador y enemigos. El feedback de combate muestra la zona del impacto
+  (daño flotante «FRONTAL/LATERAL/TRASERA», fase 7.5.1; el HUD DOM llegó en la fase 8).
 - **Arco de fuego simétrico:** el jugador ya está limitado por el cono de ±15°; los enemigos solo
   podrán disparar si el jugador está dentro de ±15° de su rumbo, nunca por los lados ni por detrás.
 - Feedback: fogonazo, retroceso de cámara, sacudida, marca de impacto, números flotantes de
@@ -363,7 +377,8 @@ Campaña de 3 misiones generadas con parámetros escalados (en `src/config/missi
 
 - Victoria: todos los enemigos destruidos. Derrota: vida 0.
 - Resumen de misión: puntos, precisión, tiempo, daño recibido; récord persistente.
-- Progresión: desbloqueo de misión y récord en `localStorage`; reintento desde el menú.
+- Progresión: desbloqueo de misión y récord en `localStorage` (clave
+  `battletank-ds.progression.v1`); reintento desde el briefing de la misma misión, sin menú inicial.
 - Ampliar misiones = añadir una entrada de datos, sin tocar sistemas (test de contrato).
 
 ### 7.7 HUD, radar y periscopio
@@ -375,9 +390,9 @@ Campaña de 3 misiones generadas con parámetros escalados (en `src/config/missi
   enemigos como triángulos rojos, pickups como rombos verdes, coberturas como trazos tenues.
   Alcance 45 m con barrido animado.
 - **Recarga**: anillo de progreso alrededor de la retícula móvil + segundos si está recargando;
-  el arma lista se marca con un destello. La retícula sigue al ratón dentro del cono y el cañón
-  dibujado pivota desde la torreta hacia ella; una marca tenue en el centro indica el rumbo del casco.
-- Capas: canvas 3D → viñeta de periscopio (CSS) → HUD DOM → overlays de menú/briefing/resultados.
+  el arma lista se marca con un destello. La retícula sigue al ratón dentro del cono y una marca
+  tenue en el centro indica el rumbo del casco. **Sin cañón dibujado** (retirado el 2026-10-27).
+- Capas: canvas 3D → viñeta de periscopio (CSS) → HUD DOM → overlays de briefing, pausa y resultados.
 - Accesibilidad mínima: textos legibles, contraste alto, sin depender solo del color (iconos).
 
 ### 7.8 Audio
@@ -407,9 +422,9 @@ respecto al rumbo del blanco, después de aplicar el blindaje del tanque:
 | Lateral | 60°–120° | ×1,0 |
 | Trasera | >120° | ×1,5 |
 
-Impactos previstos con el cañón del Sherman (a validar en la fase 9): Panzer III **5 / 3 / 2**
-(frontal/lateral/trasero) y Tiger I **8 / 4 / 3**. Los multiplicadores y umbrales vivirán en
-`src/config/balance.ts` y serán ajustables.
+Impactos con el cañón del Sherman: Panzer III **5 / 3 / 2** (frontal/lateral/trasero) y Tiger I
+**8 / 4 / 3**; están cubiertos por tests y el balance fino se revisa en la fase 11. Los
+multiplicadores y umbrales viven en `src/config/balance.ts` y son ajustables.
 
 - Puntuación: 100 por ligero, 250 por pesado, +500 por misión, bonificación por vida restante.
 - Valores centralizados en `src/config/tanks.ts` y `src/config/balance.ts` para ajuste rápido.
@@ -513,7 +528,7 @@ Cada fase termina con `npm run check`, changelog + estado actualizados y **commi
 | 4 | Jugador | Movimiento solidario, colisión con deslizamiento, cámara de periscopio | `feat(player): movimiento solidario, colisión y cámara de periscopio` |
 | 5 | Combate | Disparo, recarga, proyectiles, impactos, daño y escombros | `feat(combat): disparo, recarga, proyectiles e impactos` |
 | 6 | Enemigos | Modelos, IA con LOS y A*, dificultad por parámetros | `feat(ai): enemigos con línea de visión y máquina de estados` |
-| 6.5 | Puntería con ratón | Cono de cañón, balística 3D, retícula y cañón orientables | `feat(aim): puntería con ratón y cañón cónico` |
+| 6.5 | Puntería con ratón | Cono de cañón, balística 3D y retícula orientable (sin cañón dibujado) | `feat(aim): puntería con ratón y cañón cónico` |
 | 6.6 | Colisión entre tanques | Bloqueadores dinámicos jugador↔enemigo y enemigo↔enemigo; tests de regresión (`BUG-001`) | `fix(collision): bloquear el paso entre tanques` |
 | 7 | Pickups | Cura, mejora y potencia con efectos y feedback | `feat(loot): pickups de cura, mejora y potencia` |
 | 7.5 | Blindaje direccional y flanqueo | Zonas frontal/lateral/trasera, arco de fuego ±15°, ventanas de flanqueo de la IA y feedback de zona | `feat(armor): blindaje direccional y flanqueo` |
@@ -526,6 +541,10 @@ Cada fase termina con `npm run check`, changelog + estado actualizados y **commi
 Dependencias: 0→1→2→3→4→5→6→6.5→6.6→7→7.5→7.5.1→8→9→10→11. La documentación (GAME_DESIGN,
 ARCHITECTURE, STATUS, CHANGELOG) se redacta en paralelo desde la fase 1; las pruebas
 independientes de QA se incorporan desde la fase 4.
+
+A fecha 2026-10-30 las fases 0–10 y los bloques 6.5, 6.6, 7.5 y 7.5.1 están cerrados con los commits
+de la tabla; la fila 7.5.1 se da por aprobada en esta sincronización y la fase 11 (pulido y entrega)
+está en curso.
 
 El bloque 6.6 va antes de pickups porque el fallo rompe el combate; el bloque 7.5 va después de
 pickups y antes de HUD (para poder mostrar la zona de impacto) y de misiones (para calibrar la
@@ -570,7 +589,7 @@ blindaje direccional), fin de fase 9 (campaña completa), fin de fase 11 (entreg
 | Scope creep | Alcance cerrado de 0.1.0 y lista explícita de lo que queda fuera |
 | «No ver a través» percibido como injusto | Enemigos también respetan LOS; coberturas destructibles y radar compensan |
 | **Bug:** el jugador atraviesa tanques (`BUG-001`) | Bloque 6.6: colisión entre entidades, separación y tests de regresión; se prioriza antes de pickups |
-| Blindaje direccional desequilibra la dificultad | Multiplicadores/umbrales en `balance.ts`, simulación headless y ajuste en fase 9 |
+| Blindaje direccional desequilibra la dificultad | Multiplicadores/umbrales en `balance.ts`, simulación headless y ajuste en fase 11 |
 | IA demasiado precisa encarando al jugador | Arco de fuego ±15°, giro limitado y pausa de seguimiento durante la recarga (bloque 7.5) |
 | Audio bloqueado por el navegador | Desbloqueo en el primer input; degradación silenciosa si no hay WebAudio |
 
@@ -608,11 +627,14 @@ planificado como bloque 6.6 y no se considera deuda aceptada.
 | ¿Récord y desbloqueo persistente? | Sí, en `localStorage`, sin guardado a mitad de partida |
 | ¿Soporte móvil/gamepad? | Fuera de 0.1.0 |
 | ¿Idioma del código? | Identificadores en inglés; comentarios, UI y docs en español |
-| ¿Multiplicadores de blindaje direccional? | Frontal ×0,5, lateral ×1,0, trasero ×1,5; umbrales ±60°/120°; configurables y revisables en la fase 9 |
-| ¿Ventana de flanqueo de la IA? | Mientras recarga no corrige el rumbo; giro limitado; se valida con simulación en el bloque 7.5 |
+| ¿Multiplicadores de blindaje direccional? | Frontal ×0,5, lateral ×1,0, trasero ×1,5; umbrales ±60°/120°; configurables y revisables en la fase 11 |
+| ¿Ventana de flanqueo de la IA? | Mientras recarga no corrige el rumbo; giro limitado; implementada en el bloque 7.5 y revisable en la fase 11 |
 | ¿Colisión entre tanques? | Bloqueo por círculos sólidos + separación de seguridad; sin empuje físico ni física de masas |
 
 ---
 
 *Plan aprobado el: ________ · Aprobado por: ________*
 *Actualizado el 2026-10-27 con `BUG-001` (bloque 6.6) y blindaje direccional/arco de fuego (bloque 7.5).*
+*Sincronizado el 2026-10-30 con autorización del usuario tras cerrar las fases 8–10: se aprueba la
+fila 7.5.1, se retira la silueta del cañón 2D del alcance y las referencias de balance pasan a la
+fase 11.*
