@@ -11,6 +11,7 @@ interface VitalsElements {
   readonly healthFill: HTMLDivElement;
   readonly healthText: HTMLSpanElement;
   readonly reloadText: HTMLSpanElement;
+  readonly damageVignette: HTMLDivElement;
 }
 
 interface ProgressElements {
@@ -38,11 +39,7 @@ interface ScreenElements {
 }
 
 interface HudElements
-  extends VitalsElements,
-    ProgressElements,
-    EffectsElements,
-    PauseElements,
-    ScreenElements {
+  extends VitalsElements, ProgressElements, EffectsElements, PauseElements, ScreenElements {
   readonly scoreText: HTMLDivElement;
   readonly toast: HTMLDivElement;
   readonly missionLabel: HTMLDivElement;
@@ -62,6 +59,7 @@ function queryVitals(root: ParentNode): VitalsElements {
     healthFill: mustFind<HTMLDivElement>(root, '#hud-health-fill'),
     healthText: mustFind<HTMLSpanElement>(root, '#hud-health-text'),
     reloadText: mustFind<HTMLSpanElement>(root, '#hud-reload-text'),
+    damageVignette: mustFind<HTMLDivElement>(root, '#hud-damage-vignette'),
   };
 }
 
@@ -81,9 +79,7 @@ function queryEffects(root: ParentNode): EffectsElements {
   };
 }
 
-function queryPause(
-  root: ParentNode,
-): PauseElements & {
+function queryPause(root: ParentNode): PauseElements & {
   toast: HTMLDivElement;
   missionLabel: HTMLDivElement;
   audioText: HTMLDivElement;
@@ -135,9 +131,13 @@ function updateVitals(view: HudView, elements: VitalsElements): void {
   elements.healthText.textContent = view.health.text;
   elements.reloadText.textContent = view.reload.text;
   elements.reloadText.classList.toggle('ready', view.reload.ready);
+  elements.damageVignette.style.opacity = view.health.vignette.toFixed(3);
 }
 
-function updateProgress(view: HudView, elements: ProgressElements & { scoreText: HTMLDivElement }): void {
+function updateProgress(
+  view: HudView,
+  elements: ProgressElements & { scoreText: HTMLDivElement },
+): void {
   elements.progressFill.style.width = `${view.progress.fraction * 100}%`;
   elements.progressText.textContent = view.progress.text;
   elements.scoreText.textContent = view.score.toString();

@@ -21,7 +21,7 @@ contratos descritos aquí son el acuerdo entre capas, no un inventario exhaustiv
 | Build y dev server | **Vite 8** (`base: './'`, `target: es2022`, `outDir: dist`, sourcemaps), puerto fijo 5273.                                                                                      |
 | Gráficos           | **Canvas 2D** con resolución interna fija **1280×720** escalada por CSS con letterboxing (`index.html`).                                                                        |
 | HUD                | **DOM/CSS** sobre el canvas + un **canvas pequeño independiente** para el radar (implementado).                                                                                 |
-| Tests              | **Vitest** en entorno **Node** (`tests/**/*.test.ts`), sin jsdom; **211 tests en 38 ficheros**.                                                                                 |
+| Tests              | **Vitest** en entorno **Node** (`tests/**/*.test.ts`), sin jsdom; **214 tests en 38 ficheros**.                                                                                 |
 | Calidad            | **ESLint** (tamaño/complejidad) + **Prettier**; puerta `npm run check`.                                                                                                         |
 | Runtime            | **Cero dependencias** y **cero assets externos**: geometría procedural, tipografía del sistema, iconos CSS y audio WebAudio sintetizado.                                        |
 | Persistencia       | `localStorage` solo para récord y misión desbloqueada, clave `battletank-ds.progression.v1` (fase 9).                                                                           |
@@ -48,7 +48,7 @@ entities, core, config}`. Sin ciclos de importación.
 
 ## 3. Estructura real de carpetas
 
-Estructura a fecha de la fase 10 (los módulos previstos se añaden en su fase; el inventario vivo
+Estructura a fecha de la fase 11 (los módulos previstos se añaden en su fase; el inventario vivo
 está en [`STATUS.md`](STATUS.md)):
 
 ```text
@@ -90,7 +90,7 @@ BattleTank-DS/
 │   │   ├── faces.ts        #   WorldFace + projectWorldFaces (culling, recorte, sombreado, niebla)
 │   │   ├── worldFaces.ts   #   caras de coberturas y escombros (buildWallWorldFaces)
 │   │   ├── boxes.ts        #   cajas opacas reutilizables (tanques y pickups)
-│   │   ├── models.ts       #   cajas rotadas del tanque enemigo: casco, cadenas, torreta, cañón
+│   │   ├── models.ts       #   cajas rotadas del tanque enemigo y fogonazo del cañón
 │   │   ├── pickupFaces.ts  #   caja, marca de suelo e icono flotante de los pickups
 │   │   ├── bulletFaces.ts  #   tracers de proyectiles (rombos billboard)
 │   │   ├── background.ts   #   cielo, horizonte y rejilla del suelo
@@ -120,7 +120,7 @@ BattleTank-DS/
 │   │   └── synth.ts        #   síntesis procedural de efectos y motor
 │   ├── ui/
 │   │   ├── styles.css      #   base, viñeta de periscopio, paneles, pausa y pantallas
-│   │   ├── hud.ts          #   adaptador DOM: barras, misión, recarga, efectos, avisos, pantallas y radar
+│   │   ├── hud.ts          #   adaptador DOM: barras, viñeta de daño, efectos, avisos, pantallas y radar
 │   │   ├── hudView.ts      #   modelo puro del HUD (vida/nivel, avance, recarga, efectos, audio, radar)
 │   │   └── radar.ts        #   modelo puro de contactos + pintado del radar circular
 │   └── game/
@@ -131,7 +131,7 @@ BattleTank-DS/
 │       ├── hudData.ts      #   adaptación del estado a los datos del HUD
 │       └── render.ts       #   render del mundo + periscopio (el HUD DOM va aparte)
 │
-├── tests/                  # espejo de src/ (38 ficheros, 211 tests) + integración headless
+├── tests/                  # espejo de src/ (38 ficheros, 214 tests) + integración headless
 ├── docs/
 └── dist/                   # build generado (no versionado)
 ```
@@ -298,7 +298,7 @@ requestAnimationFrame
 - **Retroceso:** `game` aplica un retroceso **temporal y visual** de la cámara al disparar
   (`COMBAT.recoilKickRadians` de pitch y 0,1 m hacia atrás, con desvanecimiento); nunca altera el
   rumbo lógico ni la simulación ni la dirección del disparo. La sacudida por daño se sustituye de
-  momento por el overlay rojo.
+  momento por el overlay rojo (tinte al recibir impacto y viñeta de vida baja).
 - **Puntería:** el cañón vive en un cono de ±15° de giro y ±4° de cabeceo respecto al casco
   (`AIM_LIMITS`). El puntero se normaliza a [-1, 1] con el rectángulo del canvas (que puede estar
   escalado por CSS); la retícula se dibuja en la proyección del ángulo y no en la posición del ratón.
@@ -314,7 +314,8 @@ El plan describe 5 macro-pasos (§6.3); este es el desglose real de la composici
    telón de fondo (`render/background.ts`); al ser lo más lejano, quedan detrás de todo.
 2. **Generación de caras de mundo.** `buildWallWorldFaces` produce coberturas intactas (omitiendo
    caras que tocan otra cobertura) y escombros; `tankWorldFaces` produce el tanque enemigo como siete
-   cajas rotadas (casco, 2 cadenas, torreta, cañón y franjas de orientación) sin cara inferior;
+   cajas rotadas (casco, 2 cadenas, torreta, cañón y franjas de orientación) sin cara inferior y
+   añade cinco caras de fogonazo en la boca del cañón mientras `enemy.muzzleFlash` está activo;
    `pickupWorldFaces` produce la caja, la marca de suelo y el icono flotante de cada pickup no
    recogido.
 3. **Proyección en una sola pasada** (`projectWorldFaces`): mundo→cámara, descarte de caras traseras,
@@ -330,15 +331,17 @@ El plan describe 5 macro-pasos (§6.3); este es el desglose real de la composici
    **anillo de recarga** con segundos y la marca de impacto. **Sin cañón dibujado** (decisión del
    usuario, 2026-10-27): la retícula es la única referencia de puntería y se elimina el fogonazo del
    arma; el retroceso de cámara y el tracer conservan el feedback. El overlay va en canvas; la
-   **viñeta de periscopio es CSS** (`#game-frame::after` con `radial-gradient` en `ui/styles.css`),
-   encima del canvas y por debajo del HUD (`z-index` 1 frente a 2 de `#hud-root`).
+   **viñeta de periscopio** (`#game-frame::after`) y la **viñeta roja de vida baja**
+   (`#hud-damage-vignette`) son capas CSS con `radial-gradient` en `ui/styles.css`. La máscara
+   inferior del canvas se redujo a 96 px en la fase 11 (antes 118) al no dibujarse el cañón; el HUD
+   queda por encima (`z-index` 2 de `#hud-root`).
 7. **Feedback de pantalla.** `render/combatFeedback.ts` dibuja la barra de vida con nombre sobre
    enemigos visibles y los números de daño con la zona del impacto; `overlayTint` tiñe de rojo al
    recibir daño; el HUD DOM muestra el aviso de pickup y las pantallas de campaña cubren el
    resultado (victoria/derrota/campaña completada).
-8. **HUD DOM.** `ui.hud` actualiza vida, avance, puntuación, recarga, efectos, avisos, audio, pausa
-   y pantallas de campaña; el radar se pinta en su canvas y el mundo (barras/daño flotante) sigue en
-   canvas.
+8. **HUD DOM.** `ui.hud` actualiza vida, avance, puntuación, recarga, efectos, avisos, audio, pausa,
+   pantallas de campaña y la opacidad de la viñeta de daño (0 a 0,5 según la vida, siempre por debajo
+   del 40 %); el radar se pinta en su canvas y el mundo (barras/daño flotante) sigue en canvas.
 
 **Oclusión:** el test de `tests/render/occlusion.test.ts` comprueba que una cobertura intacta tapa al
 enemigo en el centro de la mira y que, al destruirla, la línea queda despejada.
@@ -430,6 +433,8 @@ No hay escena unificada: construir caras es una función pura, proyectarlas es o
   (`projectWorldFaces`) aplica culling, recorte, sombreado y niebla y devuelve `RenderFace[]`;
   `bulletFaces` proyecta los tracers. Todo se ejecuta en Node con fixtures fijos (cámara, rejilla,
   enemigo de prueba).
+- **Modelo enemigo y fogonazo:** `tests/render/models.test.ts` valida las 35 caras base (7 cajas), las
+  franjas de orientación y las 5 caras extra de fogonazo mientras `muzzleFlash` está activo.
 - **Pintor:** `painter.ts` pinta `RenderFace[]` sobre el contrato mínimo `FaceCanvas` (`fillStyle`,
   `beginPath`, `moveTo`, `lineTo`, `closePath`, `fill`). Un contexto simulado registra las
   operaciones y permite afirmar orden y contenido.
@@ -450,12 +455,18 @@ No hay escena unificada: construir caras es una función pura, proyectarlas es o
 ## 11. Presupuesto de rendimiento
 
 - **Objetivo:** 60 fps a 1280×720 en un portátil moderno.
-- **Presupuesto:** ≤ **1 500 caras visibles** y ≤ **500 operaciones de dibujo por frame**.
+- **Presupuesto:** ≤ **1 500 caras visibles** y ≤ **500 operaciones de dibujo por frame**. Una
+  «operación de dibujo» es una primitiva (`fill`, `stroke`, `fillRect`, `strokeRect`, `arc`,
+  `drawImage`); la construcción del path (`beginPath`/`moveTo`/`lineTo`/`closePath`) no cuenta.
 - **Coste de los enemigos:** cada tanque son 7 cajas × 5 caras = 35 caras nominales; con la
   formación actual (3–6 enemigos según la misión, `config/missions.ts`) son ~105–210 caras, dentro
   del presupuesto.
 - **Coste de los pickups:** ~30 caras por pickup (marca, caja e icono) y 4–5 unidades ⇒ ~120–150
   caras, también dentro del presupuesto.
+- **Medición fase 11 (Chrome headless, 1280×720, semilla 42):** 60 fps estables (p50 16,7 ms; 0
+  frames >33 ms en 2890); caras visibles p50 193 (misión 1) / 343 (misión 3) y máx 457; primitivas
+  p50 255 / 407 y pico 536 en la ventana extrema de la misión 3 (~6 % sobre el objetivo, sin caída
+  de FPS). Se mantiene el objetivo; si el pico crece, la palanca es culling/distancia de dibujado.
 - **Depuración:** `F3` con fps, caras, celdas visibles y entidades sigue **previsto** (fase 11); hoy
   el HUD DOM muestra vida, avance, misión, puntos, recarga, efectos, audio y radar, sin fps ni
   contador de caras.
@@ -546,7 +557,10 @@ colisión se dividen en funciones pequeñas; si una regla no cabe sin anidar, se
   victoria/derrota, puntuación de campaña y persistencia (`battletank-ds.progression.v1`).
 - **Fase 10:** audio cerrado — bus WebAudio inyectable con motor, cañón, impactos, recarga, pickups,
   UI y viento; mute/volumen y HUD. **211 tests en 38 ficheros.**
-- **Siguiente trabajo (fase 11):** QA final, rendimiento, documentación de entrega y tag `v0.1.0`.
+- **Fase 11:** pulido en curso — documentación y `PLAN.md` sincronizados con autorización del usuario,
+  mejoras UX (viñeta de vida baja, fogonazo del enemigo, máscara inferior de 96 px, aviso de pickup
+  oculto en pausa) y QA headless APTO; quedan la QA de audio de oído, la decisión de release y el tag
+  `v0.1.0`. **214 tests en 38 ficheros.**
 
 El inventario real, commit a commit, está en [`STATUS.md`](STATUS.md); el orden y entregables de
 cada fase, en [`PLAN.md`](PLAN.md) §12.

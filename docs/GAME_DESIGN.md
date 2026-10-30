@@ -93,6 +93,9 @@ jugador no puede disparar de lado, ellos tampoco.
 ### Elementos
 
 - **Vida:** barra + valor numérico, arriba a la izquierda. Cambia de color según el porcentaje.
+- **Viñeta de daño:** con la vida por debajo del 40 % aparece un tinte rojo sutil en los bordes
+  (`#hud-damage-vignette`) que se intensifica al bajar la vida y desaparece al curarse; refuerza la
+  lectura sin depender solo del color de la barra.
 - **Avance del escenario:** barra superior centrada, solo porcentaje; sube al destruir enemigos y
   nunca muestra cuántos quedan.
 - **Puntuación:** marcador arriba a la derecha; en pausa se muestra la semilla y los controles. El
@@ -112,16 +115,17 @@ jugador no puede disparar de lado, ellos tampoco.
 - **Pantallas:** briefing, pausa, victoria, derrota y fin de campaña implementadas; no hay menú
   inicial ni selector de misión en 0.1.0.
 
-Estado actual (fases 8–10): el **HUD DOM** muestra arriba a la izquierda «M4 SHERMAN», barra y valor
+Estado actual (fases 8–11): el **HUD DOM** muestra arriba a la izquierda «M4 SHERMAN», barra y valor
 de vida y recarga («LISTO» o segundos); arriba al centro, la misión y «AVANCE DE SECTOR» con
 porcentaje; arriba a la derecha, puntuación y estado de audio; abajo a la derecha, radar circular de
-45 m orientado con el rumbo (coberturas tenues, enemigos rojos y pickups verdes). Los efectos de
-mejora/potencia aparecen bajo la vida y los avisos de pickup usan un toast DOM. `ESC` abre la pausa
-(congela simulación). En el mundo se mantienen las **barras de vida con nombre**, el **daño flotante
-con zona** y el **destello** de impacto; el periscopio mantiene retícula móvil, rumbo, anillo de
-recarga y marca de impacto. Pantallas DOM de briefing, victoria, derrota y campaña completada;
-`ENTER` confirma y `ESC` pausa. El récord se muestra en los resúmenes y la misión desbloqueada se
-persiste.
+45 m orientado con el rumbo (coberturas tenues, enemigos rojos y pickups verdes). Con vida baja se
+activa la **viñeta roja de daño**. Los efectos de mejora/potencia aparecen bajo la vida y los avisos
+de pickup usan un toast DOM (oculto mientras la partida está en pausa). `ESC` abre la pausa (congela
+simulación). En el mundo se mantienen las **barras de vida con nombre**, el **daño flotante con
+zona**, el **destello** de impacto y el **fogonazo del cañón enemigo**; el periscopio mantiene
+retícula móvil, rumbo, anillo de recarga y marca de impacto. Pantallas DOM de briefing, victoria,
+derrota y campaña completada; `ENTER` confirma y `ESC` pausa. El récord se muestra en los resúmenes y
+la misión desbloqueada se persiste.
 
 ### Esquema ASCII (conceptual)
 
@@ -151,8 +155,8 @@ decimal (español) y **no deben depender solo del color**: los estados llevan ic
 
 1. Canvas 3D (1280×720 interno, escalado con letterboxing).
 2. Overlay de periscopio (máscara, retícula móvil, casco y marcas; sin cañón dibujado). Se pinta en
-   el canvas (`render/periscope.ts`) y encima va la **viñeta de periscopio en CSS**
-   (`#game-frame::after` en `ui/styles.css`, `z-index` 1).
+   el canvas (`render/periscope.ts`) y encima van la **viñeta de periscopio** y la **viñeta de daño**
+   en CSS (`#game-frame::after` y `#hud-damage-vignette` en `ui/styles.css`), bajo el HUD.
 3. HUD en DOM/CSS (vida, progreso, puntuación, recarga, avisos, iconos) — implementado (fase 8).
 4. Radar en un canvas pequeño independiente — implementado (fase 8).
 5. Overlays de briefing/pausa/resumen/fin de campaña encima de todo — implementados (fases 8–9).
@@ -162,10 +166,10 @@ decimal (español) y **no deben depender solo del color**: los estados llevan ic
 - Cámara a **1,7 m** de altura sobre el tanque, **yaw = rumbo del tanque** (sin retardo lógico),
   **pitch base 0°** (el plan hablaba de ligeramente hacia abajo; se subió a 0 para que la retícula
   centrada sea un tiro horizontal) y FOV horizontal ≈ **72°**.
-- La imagen se enmarca con una máscara oscura pintada en el canvas y una **viñeta CSS**
-  (`#game-frame::after`); el overlay de periscopio (`render/periscope.ts`) va en canvas y la viñeta
-  en CSS (fase 8). En el primer plano se dibuja el borde del casco (sin cañón, decisión del usuario
-  del 2026-10-27).
+- La imagen se enmarca con una máscara oscura pintada en el canvas (máscara inferior de **96 px**
+  desde la fase 11, antes 118) y una **viñeta CSS** (`#game-frame::after`); el overlay de periscopio
+  (`render/periscope.ts`) va en canvas y la viñeta en CSS (fase 8). En el primer plano se dibuja el
+  borde del casco (sin cañón, decisión del usuario del 2026-10-27).
 - Retroceso de cámara al disparar (implementado): sube el pitch y la cámara retrocede unos
   centímetros durante un instante. Al recibir daño se tiñe la pantalla de rojo; la sacudida de cámara
   por impacto queda como deuda. Todos son efectos **visuales**: nunca cambian el rumbo lógico ni la
@@ -271,6 +275,8 @@ Reglas de justicia y comportamiento:
   escombros no bloquean.
 - **Sin _aimbot_:** el cañón gira con velocidad limitada, hay tiempo de reacción y el disparo lleva
   dispersión; acertar no está garantizado.
+- **Fogonazo:** al disparar, el cañón enemigo muestra un destello breve (5 caras en `render/models.ts`
+  mientras `enemy.muzzleFlash` está activo) que ayuda a leer el disparo sin alterar la simulación.
 - **Escalado por misión:** reacción, dispersión y daño enemigo definidos en `config/missions.ts`
   sobre los valores base de `AI_TUNING` (`src/config/balance.ts`); implementado en la fase 9.
 - **Sin coordinación avanzada:** no hay flanqueo coordinado, reposición táctica ni uso inteligente de
@@ -428,8 +434,11 @@ de audio ni música en 0.1.0.
 - **Reposición y coordinación de la IA:** la máquina actual es `idle/advance/attack`; el estado de
   reposición y la coordinación de flanqueo de la IA quedan como deuda posterior. El flanqueo **del
   jugador** sí entra en 0.1.0 con el bloque 7.5.
-- **Sacudida de cámara al recibir daño:** hoy se usa tinte rojo; la sacudida queda como deuda de
-  feedback.
+- **Sacudida de cámara al recibir daño:** hoy se usan el tinte rojo y la viñeta de vida baja; la
+  sacudida de cámara queda como deuda de feedback.
+- **Viñeta de vida baja (implementada, fase 11):** tinte rojo en los bordes con opacidad progresiva
+  (0 al 40 % de vida, hasta 0,5 al 0 %); se calcula en `ui/hudView.ts` y se pinta en la capa CSS
+  `#hud-damage-vignette`. No sustituye a la sacudida de cámara.
 - **Balance definitivo:** ajuste de dificultad previsto para la fase 11 sobre los valores de
   `tanks.ts` y `AI_TUNING`.
 - **Sensibilidad del ratón:** el mapeo actual es lineal contra todo el canvas; no hay curvas,
@@ -440,8 +449,8 @@ de audio ni música en 0.1.0.
 - **Alineación fina retícula-disparo:** comprobada con QA visual headless; si aparecen desajustes en
   resoluciones escaladas, revisar el mapeo canvas→píxeles en `bindMouseInput`.
 - **PLAN §7.7 describía el cañón dibujado:** el periscopio ya no lo pinta (decisión del usuario,
-  2026-10-27); el usuario autorizó el 2026-10-30 sincronizar `PLAN.md` (retirada del cañón, fila
-  7.5.1 y cierre de las fases 8–10).
+  2026-10-27); `PLAN.md` se sincronizó el 2026-10-30 con autorización del usuario (retirada del
+  cañón, fila 7.5.1 y cierre de las fases 8–10).
 
 ## 13. Balance de tanques (Segunda Guerra Mundial)
 

@@ -65,6 +65,22 @@ body {
     rgba(0, 0, 0, 0.18) 75%,
     rgba(0, 0, 0, 0.55) 100%
   );
+  z-index: 0;
+}
+
+/* Viñeta de daño: refuerza la lectura de vida baja por encima del periscopio. */
+.hud-damage-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 48%,
+    rgba(196, 69, 47, 0.35) 78%,
+    rgba(196, 69, 47, 0.6) 100%
+  );
+  opacity: 0;
+  transition: opacity 140ms linear;
   z-index: 1;
 }
 
@@ -113,7 +129,9 @@ body {
 .hud-health-fill {
   height: 100%;
   width: 100%;
-  transition: width 120ms linear, background 180ms linear;
+  transition:
+    width 120ms linear,
+    background 180ms linear;
   background: var(--vida);
 }
 
@@ -309,7 +327,9 @@ body {
 
 .hud-screen-card h1 {
   margin: 6px 0 10px;
-  font: 600 32px Georgia, serif;
+  font:
+    600 32px Georgia,
+    serif;
   letter-spacing: 0.06em;
   color: var(--texto);
 }
@@ -352,7 +372,9 @@ body {
 
 .hud-pause-card h1 {
   margin: 8px 0 6px;
-  font: 600 38px Georgia, serif;
+  font:
+    600 38px Georgia,
+    serif;
   letter-spacing: 0.08em;
   color: var(--texto);
 }

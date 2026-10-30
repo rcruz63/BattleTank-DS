@@ -12,7 +12,8 @@ import { withAlpha } from './color';
 import type { ScreenPoint, Viewport } from './types';
 
 const TOP_MASK = 58;
-const BOTTOM_MASK = 118;
+/** Máscara inferior reducida en la fase 11 (118 → 96 px): ya no hay cañón dibujado que enmarcar. */
+const BOTTOM_MASK = 96;
 const SIDE_MASK = 64;
 
 export interface PeriscopeState {
@@ -42,12 +43,7 @@ function drawMask(context: CanvasRenderingContext2D, viewport: Viewport): void {
   context.fillRect(0, 0, width, TOP_MASK);
   context.fillRect(0, height - BOTTOM_MASK, width, BOTTOM_MASK);
   context.fillRect(0, TOP_MASK, SIDE_MASK, height - TOP_MASK - BOTTOM_MASK);
-  context.fillRect(
-    width - SIDE_MASK,
-    TOP_MASK,
-    SIDE_MASK,
-    height - TOP_MASK - BOTTOM_MASK,
-  );
+  context.fillRect(width - SIDE_MASK, TOP_MASK, SIDE_MASK, height - TOP_MASK - BOTTOM_MASK);
 
   context.strokeStyle = withAlpha(PALETTE.mira, 0.12);
   context.lineWidth = 2;
@@ -99,11 +95,7 @@ function drawHullMarker(context: CanvasRenderingContext2D, viewport: Viewport): 
   context.stroke();
 }
 
-function drawCrossLines(
-  context: CanvasRenderingContext2D,
-  centerX: number,
-  centerY: number,
-): void {
+function drawCrossLines(context: CanvasRenderingContext2D, centerX: number, centerY: number): void {
   const gap = 16;
   const arm = 54;
 
@@ -121,11 +113,7 @@ function drawCrossLines(
   context.stroke();
 }
 
-function drawCenterMark(
-  context: CanvasRenderingContext2D,
-  centerX: number,
-  centerY: number,
-): void {
+function drawCenterMark(context: CanvasRenderingContext2D, centerX: number, centerY: number): void {
   context.beginPath();
   context.arc(centerX, centerY, 21, 0, Math.PI * 2);
   context.stroke();
@@ -136,11 +124,7 @@ function drawCenterMark(
   context.fill();
 }
 
-function drawRangeTicks(
-  context: CanvasRenderingContext2D,
-  centerX: number,
-  centerY: number,
-): void {
+function drawRangeTicks(context: CanvasRenderingContext2D, centerX: number, centerY: number): void {
   context.strokeStyle = withAlpha(PALETTE.mira, 0.45);
   context.lineWidth = 1;
   context.beginPath();
@@ -154,10 +138,7 @@ function drawRangeTicks(
   context.stroke();
 }
 
-function drawReloadRing(
-  context: CanvasRenderingContext2D,
-  state: PeriscopeState,
-): void {
+function drawReloadRing(context: CanvasRenderingContext2D, state: PeriscopeState): void {
   const centerX = state.aimScreenX;
   const centerY = state.aimScreenY;
   const radius = 31;
@@ -174,13 +155,7 @@ function drawReloadRing(
   context.strokeStyle = withAlpha(PALETTE.progreso, 0.9);
   context.lineWidth = 3;
   context.beginPath();
-  context.arc(
-    centerX,
-    centerY,
-    radius,
-    -Math.PI / 2,
-    -Math.PI / 2 + Math.PI * 2 * progress,
-  );
+  context.arc(centerX, centerY, radius, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * progress);
   context.stroke();
 
   context.fillStyle = withAlpha(PALETTE.texto, 0.85);
@@ -189,10 +164,7 @@ function drawReloadRing(
   context.fillText(`${state.reloadRemaining.toFixed(1)} s`, centerX, centerY + 88);
 }
 
-function drawHitMarker(
-  context: CanvasRenderingContext2D,
-  state: PeriscopeState,
-): void {
+function drawHitMarker(context: CanvasRenderingContext2D, state: PeriscopeState): void {
   if (state.hitMarker <= 0.01) return;
   const centerX = state.aimScreenX;
   const centerY = state.aimScreenY;

@@ -9,6 +9,10 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 ### Añadido
 
+- Feedback de vida baja y disparo enemigo: viñeta roja sutil en los bordes cuando la vida baja del
+  40 % (opacidad progresiva hasta 0,5, calculada en `ui/hudView.ts` y aplicada al DOM) y fogonazo
+  del cañón del enemigo al disparar, usando `enemy.muzzleFlash`, que hasta ahora se calculaba sin
+  dibujarse. Tests nuevos de la vista del HUD y del modelo enemigo.
 - Audio sintetizado con WebAudio y sin assets: motor con pitch/volumen según velocidad, cañonazo,
   impactos/explosiones, daño, recarga lista, pickups, UI y viento de fondo. Bus inyectable con
   degradación silenciosa, desbloqueo en el primer gesto y fallback si WebAudio no existe. `M`
@@ -73,6 +77,12 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 ### Cambiado
 
+- Máscara inferior del periscopio reducida de 118 a 96 px (ya no hay cañón 2D que enmarcar) y el
+  aviso de pickup se oculta mientras la partida está en pausa (`INC-02`).
+- Presupuesto de rendimiento precisado: «operación de dibujo» cuenta primitivas (`fill`, `stroke`,
+  `fillRect`, `strokeRect`, `arc`, `drawImage`) y no la construcción de path; la medición de fase 11
+  da 60 fps estables, 193/343 caras p50 (457 máx) y 255/407 operaciones p50 (pico 536 en la ventana
+  extrema de la misión 3, sin caída de FPS).
 - Comentarios de `config/balance.ts` y `game.ts` actualizados tras cerrar la fase 9: el reparto de
   enemigos por misión y el arranque en el briefing de la misión desbloqueada más alta (sin cambios de
   comportamiento).

@@ -26,15 +26,15 @@ técnica) en [`docs/STATUS.md`](docs/STATUS.md).
 > y disparan (el estampido de tu cañón alerta a los cercanos); el daño respeta el blindaje y la
 > zona de impacto (frontal ×0,5, lateral ×1, trasera ×1,5), los enemigos solo disparan dentro de su
 > arco frontal de ±15° y no giran mientras recargan, así que el flanqueo funciona; hay overlay rojo
-> al recibir daño y una pantalla real de derrota («TANQUE DESTRUIDO»), y los tanques son sólidos: no
-> se atraviesan entre sí. Ya hay pickups de cura, mejora y potencia que se recogen al pasar por
-> encima, con aviso en pantalla. La campaña empieza con **3 Panzer III** en la misión 1 (el Tiger
-> entra en la 2) y los impactos se ven con barra de vida, daño flotante por zona y destello. El HUD
-> ya muestra vida, avance, puntuación, recarga y radar, y `ESC` pausa. La campaña encadena tres
-> misiones con briefing, resumen, victoria/derrota y persistencia de récord/desbloqueo. El audio está
-> sintetizado con WebAudio (motor, cañón, impactos, recarga, pickups y UI), con `M` para silenciar y
-> `−`/`+` para el volumen. Falta el pulido/entrega (fase 11). Consulta
-> [`docs/STATUS.md`](docs/STATUS.md) para el estado exacto.
+> y viñeta de daño con vida baja, una pantalla real de derrota («TANQUE DESTRUIDO») y los tanques son
+> sólidos: no se atraviesan entre sí. Ya hay pickups de cura, mejora y potencia que se recogen al
+> pasar por encima, con aviso en pantalla. La campaña empieza con **3 Panzer III** en la misión 1 (el
+> Tiger entra en la 2) y los impactos se ven con barra de vida, daño flotante por zona, destello y
+> fogonazo del cañón enemigo. El HUD ya muestra vida, avance, puntuación, recarga y radar, y `ESC`
+> pausa. La campaña encadena tres misiones con briefing, resumen, victoria/derrota y persistencia de
+> récord/desbloqueo. El audio está sintetizado con WebAudio (motor, cañón, impactos, recarga, pickups
+> y UI), con `M` para silenciar y `−`/`+` para el volumen. Queda cerrar el pulido/entrega (fase 11).
+> Consulta [`docs/STATUS.md`](docs/STATUS.md) para el estado exacto.
 
 El título «BATTLE TANK — PERISCOPIO» es provisional y puede cambiarse en un commit de
 documentación. La interfaz y la documentación van en español; los identificadores, tipos y nombres
@@ -126,7 +126,7 @@ BattleTank-DS/
 │   ├── ui/             # HUD DOM, modelo hudView, radar y pantallas de campaña
 │   ├── audio/          # bus WebAudio y síntesis procedural de efectos
 │   └── game/           # composición, máquina de estados de campaña, simulación y render
-├── tests/              # espejo de src/ (211 tests en 38 ficheros) + integración headless
+├── tests/              # espejo de src/ (214 tests en 38 ficheros) + integración headless
 ├── docs/               # plan, estado y documentación del proyecto
 └── dist/               # build generado (no versionado)
 ```

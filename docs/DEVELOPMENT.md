@@ -51,17 +51,17 @@ Configuración actual en `eslint.config.js` (base `@eslint/js` + `typescript-esl
 
 ### `src/**/*.ts` (reglas de tamaño y complejidad)
 
-| Regla | Configuración exacta | Objetivo de diseño |
-|---|---|---|
-| `max-lines` | `['error', { max: 300, skipBlankLines: true, skipComments: true }]` | 200 líneas por fichero |
-| `max-lines-per-function` | `['error', { max: 60, skipBlankLines: true, skipComments: true }]` | 40 líneas por función |
-| `complexity` | `['error', 10]` | complejidad ciclomática ≤ 10 |
-| `max-depth` | `['error', 3]` | ≤ 3 bloques anidados |
-| `max-params` | `['error', 4]` | ≤ 4 parámetros; si no, objeto de opciones |
-| `max-statements` | `['error', 20]` | ≤ 20 sentencias por función |
-| `no-restricted-syntax` | error: **bucles anidados prohibidos** (cualquier combinación de `for`, `for…of`, `for…in`, `while`, `do…while` dentro de otro bucle) | extraer función/utilidad |
-| `@typescript-eslint/no-explicit-any` | error | usar `unknown` + validación |
-| `@typescript-eslint/consistent-type-imports` | error | `import type` |
+| Regla                                        | Configuración exacta                                                                                                                 | Objetivo de diseño                        |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------- |
+| `max-lines`                                  | `['error', { max: 300, skipBlankLines: true, skipComments: true }]`                                                                  | 200 líneas por fichero                    |
+| `max-lines-per-function`                     | `['error', { max: 60, skipBlankLines: true, skipComments: true }]`                                                                   | 40 líneas por función                     |
+| `complexity`                                 | `['error', 10]`                                                                                                                      | complejidad ciclomática ≤ 10              |
+| `max-depth`                                  | `['error', 3]`                                                                                                                       | ≤ 3 bloques anidados                      |
+| `max-params`                                 | `['error', 4]`                                                                                                                       | ≤ 4 parámetros; si no, objeto de opciones |
+| `max-statements`                             | `['error', 20]`                                                                                                                      | ≤ 20 sentencias por función               |
+| `no-restricted-syntax`                       | error: **bucles anidados prohibidos** (cualquier combinación de `for`, `for…of`, `for…in`, `while`, `do…while` dentro de otro bucle) | extraer función/utilidad                  |
+| `@typescript-eslint/no-explicit-any`         | error                                                                                                                                | usar `unknown` + validación               |
+| `@typescript-eslint/consistent-type-imports` | error                                                                                                                                | `import type`                             |
 
 Además, `typescript-eslint` recommended mantiene `@typescript-eslint/ban-ts-comment` en error:
 `@ts-ignore` está prohibido; `@ts-expect-error` exige una descripción (mínimo 3 caracteres) y solo se
@@ -113,16 +113,16 @@ conviene ejecutar antes del commit.
 
 ### Tipos permitidos
 
-| Tipo | Uso |
-|---|---|
-| `feat` | Nueva funcionalidad visible o de motor. |
-| `fix` | Corrección de un defecto de comportamiento. |
-| `docs` | Documentación, README, comentarios de diseño, changelog. |
-| `chore` | Andamiaje, configuración, dependencias de desarrollo, release. |
-| `test` | Solo pruebas (nuevas o corregidas), sin cambio de comportamiento. |
-| `refactor` | Reestructuración sin cambio de comportamiento. |
-| `perf` | Mejora de rendimiento medible. |
-| `style` | Formato/estilo sin cambio funcional (usar poco; Prettier lo hace). |
+| Tipo       | Uso                                                                |
+| ---------- | ------------------------------------------------------------------ |
+| `feat`     | Nueva funcionalidad visible o de motor.                            |
+| `fix`      | Corrección de un defecto de comportamiento.                        |
+| `docs`     | Documentación, README, comentarios de diseño, changelog.           |
+| `chore`    | Andamiaje, configuración, dependencias de desarrollo, release.     |
+| `test`     | Solo pruebas (nuevas o corregidas), sin cambio de comportamiento.  |
+| `refactor` | Reestructuración sin cambio de comportamiento.                     |
+| `perf`     | Mejora de rendimiento medible.                                     |
+| `style`    | Formato/estilo sin cambio funcional (usar poco; Prettier lo hace). |
 
 ### Scopes preferidos
 
@@ -198,11 +198,13 @@ Sin los siete no está terminado; «funciona en local» no es la definición de 
 **Objetivo:** qué comportamiento/entrega se consigue.
 **Contexto:** fase del PLAN y sección de referencia; enlace a la deuda o incidencia si la hay.
 **Alcance:**
+
 - [ ] ...
 - [ ] ...
 
 **Fuera de alcance:** lo que NO entra (para evitar scope creep).
 **Criterios de aceptación:**
+
 - [ ] Comportamiento observable y comprobable.
 - [ ] Tests que lo demuestran (rutas de test).
 - [ ] `npm run check` verde.
@@ -291,21 +293,22 @@ Detalle completo en [`TESTING.md`](TESTING.md); resumen de convenciones:
   2D simulado y fixtures de rejilla/cámara/caras; la IA, con rejilla, jugador y RNG inyectados.
 - Helpers compartidos en `tests/helpers/` (previsto) para no duplicar fixtures.
 - Los tests son código: también se leen, se refactorizan y no se dejan comentados.
-- Estado actual: **211 tests en 38 ficheros** (`tests/core`, `tests/world`, `tests/render`,
+- Estado actual: **214 tests en 38 ficheros** (`tests/core`, `tests/world`, `tests/render`,
   `tests/systems`, `tests/game`, `tests/config` y `tests/entities`), incluidas las pruebas de
-  puntería, LOS, A*, IA, modelos, oclusión, colisión entre tanques, pickups y blindaje direccional.
+  puntería, LOS, A*, IA, modelos, oclusión, colisión entre tanques, pickups, blindaje direccional y el
+  pulido UX de la fase 11 (viñeta de vida baja, aviso en pausa y fogonazo enemigo).
 
 ## 12. Si falla `npm run check`
 
 El orden de la puerta es: `typecheck → lint → test → build`. Ataca el primer fallo; los siguientes
 pueden ser consecuencia.
 
-| Paso | Qué hacer | Causas típicas |
-|---|---|---|
-| `typecheck` (`tsc --noEmit`) | Lee `fichero:línea` y corrige el tipo. | Índices posiblemente `undefined` (`noUncheckedIndexedAccess`), imports de tipo sin `import type`, variables/parámetros sin usar, uniones no exhaustivas. |
-| `lint` (ESLint) | Corrige la causa. | Fichero > 300 o función > 60 líneas, > 20 sentencias, complejidad > 10, anidamiento > 3, bucle anidado, > 4 parámetros, `any`, imports de tipo. |
-| `test` (Vitest) | Ejecuta el fichero suelto: `npx vitest run tests/world/generate.test.ts` (o `npm test -- tests/world/generate.test.ts`). | Supuesto del test desactualizado, RNG/estado compartido entre tests, tiempo real. |
-| `build` (Vite) | Revisa el error de resolución/HTML. | Import a fichero inexistente, ruta mal escrita, dependencia no instalada, error en `index.html`. |
+| Paso                         | Qué hacer                                                                                                                | Causas típicas                                                                                                                                           |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `typecheck` (`tsc --noEmit`) | Lee `fichero:línea` y corrige el tipo.                                                                                   | Índices posiblemente `undefined` (`noUncheckedIndexedAccess`), imports de tipo sin `import type`, variables/parámetros sin usar, uniones no exhaustivas. |
+| `lint` (ESLint)              | Corrige la causa.                                                                                                        | Fichero > 300 o función > 60 líneas, > 20 sentencias, complejidad > 10, anidamiento > 3, bucle anidado, > 4 parámetros, `any`, imports de tipo.          |
+| `test` (Vitest)              | Ejecuta el fichero suelto: `npx vitest run tests/world/generate.test.ts` (o `npm test -- tests/world/generate.test.ts`). | Supuesto del test desactualizado, RNG/estado compartido entre tests, tiempo real.                                                                        |
+| `build` (Vite)               | Revisa el error de resolución/HTML.                                                                                      | Import a fichero inexistente, ruta mal escrita, dependencia no instalada, error en `index.html`.                                                         |
 
 Después de corregir, vuelve a ejecutar `npm run check` completo. Si un fallo no se puede resolver en
 un tiempo razonable: no commitees en rojo, anota el problema en `STATUS.md` (deuda/pendiente) y
@@ -353,7 +356,6 @@ Herramientas de desarrollo y QA; no forman parte de la API del juego ni deben us
 - Para tests automáticos, usa las APIs inyectables: semilla en `createGame({ seed })` e `InputState`
   propio; no dependas de la URL ni de `window`.
 - Sigue prohibido el `console.log` de depuración permanente: estos dos ganchos son la vía sancionada.
-
 
 ## 15. Registro de incidencias (bugs)
 

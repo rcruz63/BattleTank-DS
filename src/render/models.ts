@@ -29,6 +29,25 @@ function hitTinted(color: string, hitFlash: number): string {
   return hitFlash > 0.01 ? mixHexColors(color, '#ffffff', Math.min(0.55, hitFlash * 0.55)) : color;
 }
 
+/** Fogonazo breve en la boca del cañón mientras `muzzleFlash` está activo (0..1). */
+function muzzleFlashFaces(enemy: EnemyState): WorldFace[] {
+  const intensity = Math.min(1, enemy.muzzleFlash);
+  if (intensity <= 0.01) return [];
+  const size = 0.4 + intensity * 0.4;
+  return boxFaces({
+    center: offsetPoint({
+      position: enemy.position,
+      yaw: enemy.yaw,
+      right: 0,
+      forward: 3.2,
+      y: 1.7,
+    }),
+    size: { x: size, y: size, z: 0.35 },
+    yaw: enemy.yaw,
+    color: mixHexColors(PALETTE.destelloDisparo, '#ffffff', intensity * 0.35),
+  });
+}
+
 /** Silueta del enemigo: casco, cadenas, torreta, cañón y marcas de orientación. */
 export function tankWorldFaces(enemy: EnemyState): WorldFace[] {
   const yaw = enemy.yaw;
@@ -81,5 +100,13 @@ export function tankWorldFaces(enemy: EnemyState): WorldFace[] {
     color: PALETTE.miraAviso,
   });
 
-  return [...hull, ...tracks, ...turret, ...barrel, ...frontMarker, ...rearMarker];
+  return [
+    ...hull,
+    ...tracks,
+    ...turret,
+    ...barrel,
+    ...frontMarker,
+    ...rearMarker,
+    ...muzzleFlashFaces(enemy),
+  ];
 }

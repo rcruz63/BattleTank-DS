@@ -11,9 +11,9 @@ son reglas deterministas sobre estado, los constructores de caras (`worldFaces`,
 `bulletFaces`) producen datos, `faces` los proyecta y solo el pintor toca el contrato gráfico
 (`FaceCanvas`). La composición del frame vive en `render/renderer.ts`; **no hay una escena unificada
 (`render/scene.ts`)**. La UI y el audio son adaptadores finos que se sustituyen por dobles. Estado:
-**211 tests en 38 ficheros** con las fases 0–10 y los bloques 6.5 (puntería con ratón), 6.6
-(colisión entre tanques), 7.5 (blindaje direccional), 7.5.1 (claridad/feedback), la fase 9
-(campaña) y la fase 10 (audio) cerrados.
+**214 tests en 38 ficheros** con las fases 0–10, los bloques 6.5 (puntería con ratón), 6.6 (colisión
+entre tanques), 7.5 (blindaje direccional), 7.5.1 (claridad/feedback) y el pulido de la fase 11
+cerrados.
 
 | Nivel                          | Qué cubre                                                                                 | Herramienta                         | Cuándo                                        |
 | ------------------------------ | ----------------------------------------------------------------------------------------- | ----------------------------------- | --------------------------------------------- |
@@ -70,7 +70,7 @@ DOM o WebAudio, el diseño que se está probando no está separado: extrae la l�
 | `render/clip`                             | Polígono delante sin cambios; parcialmente detrás recortado a `z ≥ 0,3`; totalmente detrás descartado; polígonos con varios vértices.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `render/color`                            | Sombreado plano por normal, mezcla de colores y niebla; extremos de la mezcla.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `render/worldFaces`                       | `buildWallWorldFaces`: caras de coberturas desde una rejilla fija, omisión de caras que tocan otra cobertura intacta, culling por distancia; cobertura destruida sin caras altas (solo escombros); `buildWorldFaces` como atajo de test.                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| `render/models`                           | Caras de casco, cadenas, torreta, cañón y franjas de orientación del enemigo (7 cajas, 35 caras); todas las caras entre el suelo y la altura del tanque; orientación según el rumbo; franja clara delante y roja detrás; colores de `tanks.ts`. La geometría de cajas compartida vive en `render/boxes`.                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `render/models`                           | Caras de casco, cadenas, torreta, cañón y franjas de orientación del enemigo (7 cajas, 35 caras); todas las caras entre el suelo y la altura del tanque; orientación según el rumbo; franja clara delante y roja detrás; colores de `tanks.ts`; 5 caras extra de fogonazo mientras `enemy.muzzleFlash` está activo. La geometría de cajas compartida vive en `render/boxes`.                                                                                                                                                                                                                                                                                                                                    |
 | `render/pickupFaces`                      | Caja, marca de suelo e icono flotante para los tres tipos; caras de cuatro puntos con coordenadas finitas y por encima del suelo; centrado sobre la posición y flotación; un pickup recogido no genera caras.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `render/bulletFaces`                      | Tracers de proyectiles: descarte detrás del plano cercano, dos caras por proyectil (halo y núcleo), profundidad para el painter y radio visual mínimo.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `render/background`                       | Fondo, horizonte y rejilla de suelo proyectada con una cámara fija.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
@@ -81,7 +81,7 @@ DOM o WebAudio, el diseño que se está probando no está separado: extrae la l�
 | `systems/damage`                          | Impacto al jugador con blindaje base, mejoras acumuladas y zona direccional; impacto a enemigos con su blindaje y zona; balance 5/3/2 (Panzer III) y 8/4/3 (Tiger I) por frontal/lateral/trasero; muerte al llegar a 0; objetivos desconocidos o ya destruidos se ignoran.                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `systems/armor`                           | Clasificación frontal/lateral/trasera con umbrales inclusivos ±60°/120°, giro con el rumbo del blanco y multiplicadores ×0,5/×1,0/×1,5; el arco de fuego enemigo coincide con el cono del jugador (`AIM_LIMITS`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `systems/mission` / `systems/progression` | Parámetros de arena, reparto de enemigos, semillas y bonus; récord/desbloqueo con almacenamiento falso.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| `ui` (parte pura)                         | `hudView` (vida/nivel, avance, misión, puntuación, recarga, efectos, audio, pantallas) y `radar` (contactos girados con el rumbo, alcance, paredes). El DOM real no se prueba en unitarias; se valida con QA visual.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `ui` (parte pura)                         | `hudView` (vida/nivel y viñeta de daño, avance, misión, puntuación, recarga, efectos, audio, pantallas, aviso oculto en pausa) y `radar` (contactos girados con el rumbo, alcance, paredes). El DOM real no se prueba en unitarias; se valida con QA visual.                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `audio` (fase 10)                         | Con un doble de `AudioBus`: mapeo de eventos a efectos, mute/volumen, no lanzar si no hay WebAudio.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `game`                                    | `createGame` con semilla e `InputState` inyectado: expone arena, jugador, enemigos, pickups, loot y proyectiles; `update` responde a avance/giro y resuelve la puntería con el puntero; el disparo sale con la dirección 3D del cañón (el ratón orienta el tiro); mueve la IA; el jugador no atraviesa a un enemigo colocado delante (`BUG-001`); recoge pickups con su efecto (cura, vida máxima/reducción y potencia con recarga acortada), que no reaparecen; el mismo disparo hace 60 por la espalda y 20 de frente a un Panzer III (zona + blindaje); `dispose` limpia la entrada. Campaña: briefing/confirmación, victoria y siguiente misión, derrota y reintento, campaña completada; pausa y reinicio. |
 
@@ -206,6 +206,9 @@ Quedan pendientes el overlay `F3` (previsto) y la QA manual de oído y rendimien
       (`BUG-001`, bloque 6.6).
 - [ ] Al disparar, la cámara retrocede un instante y vuelve; el rumbo lógico no cambia.
 - [ ] Al recibir daño se ve el tinte rojo; al morir aparece la pantalla de derrota «TANQUE DESTRUIDO».
+- [ ] Con vida por debajo del 40 % aparece la viñeta roja de daño en los bordes y se intensifica al
+      bajar la vida; al curarse por encima del umbral desaparece.
+- [ ] Con vida baja, la viñeta no tapa la retícula ni el centro de la mira.
 - [ ] `Esc` pausa y reanuda; `M` silencia **(fase 10)**.
 
 ### Combate (fase 5)
@@ -223,8 +226,8 @@ Quedan pendientes el overlay `F3` (previsto) y la QA manual de oído y rendimien
 - [ ] El daño depende de la zona: mismo cañón, más daño por la espalda que de frente (×0,5 frontal,
       ×1 lateral, ×1,5 trasera); el enemigo muestra la orientación con franja clara delante y roja
       detrás.
-- [ ] El anillo de recarga, los segundos, el fogonazo y la marca de impacto se ven y no tapan la
-      mira.
+- [ ] El anillo de recarga, los segundos y la marca de impacto se ven y no tapan la mira.
+- [ ] Al disparar un enemigo se ve el fogonazo de su cañón durante un instante y desaparece.
 - [ ] No se experimentan tirones ni errores al disparar o destruir varias coberturas seguidas.
 
 ### Oclusión
@@ -252,6 +255,7 @@ Quedan pendientes el overlay `F3` (previsto) y la QA manual de oído y rendimien
       resúmenes de victoria y fin de campaña.
 - [ ] Recarga: «LISTO» o segundos en el HUD, además del anillo del periscopio.
 - [ ] Efectos de mejora/potencia con texto y cuenta atrás; avisos de pickup legibles.
+- [ ] El aviso de pickup se oculta al pausar y vuelve a mostrarse o decae al reanudar.
 - [ ] `ESC` congela la simulación, abre la pausa con controles/semilla y reanuda con `ESC`.
 - [ ] Viñeta y paneles no tapan la retícula ni el centro de la mira.
 - [ ] Contraste alto y estados distinguibles sin depender solo del color.
@@ -311,9 +315,16 @@ Quedan pendientes el overlay `F3` (previsto) y la QA manual de oído y rendimien
 
 ### Rendimiento
 
-- [ ] 60 fps estables a 1280×720 en la misión más densa (misión 3).
-- [ ] Presupuesto de render respetado (≤ 1 500 caras, ≤ 500 operaciones por frame); el contador de
-      `F3` queda pendiente (previsto).
+Medido en la fase 11 con Chrome headless (1280×720, semilla 42), en ventanas de 10 s en reposo, giro
+rápido con disparo y tras destruir coberturas:
+
+- [ ] 60 fps estables a 1280×720 en la misión más densa (misión 3): p50 16,7 ms y **0 frames >33 ms
+      en 2890**.
+- [ ] Presupuesto de caras (≤ 1 500): p50 **193** (misión 1) / **343** (misión 3), máximo **457**.
+- [ ] Presupuesto de operaciones (≤ 500 primitivas de dibujo por frame; `fill`, `stroke`, `fillRect`,
+      `strokeRect`, `arc`, `drawImage`, sin contar la construcción de path): p50 **255 / 407** y pico
+      **536** en la ventana extrema de la misión 3 (~6 % sobre el objetivo, sin caída de FPS).
+- [ ] Contador `F3` sigue pendiente (previsto); la medición se hace por instrumentación CDP.
 - [ ] Sin tirones al girar rápido, disparar, destruir coberturas ni entrar en combate.
 - [ ] Volver de una pestaña en segundo plano no produce saltos ni avalancha de simulación.
 
@@ -411,5 +422,9 @@ anotan en [`DEVELOPMENT.md`](DEVELOPMENT.md#13-pendientes-y-supuestos-detectados
   congelado 0,5 s y disparo al entrar en el arco.
 - **Marcas de orientación (7.5, implementado):** `tests/render/models.test.ts` comprueba las 35 caras
   (7 cajas), que las franjas clara y roja giran con el rumbo y quedan en el frente y la espalda.
+- **Pulido UX (fase 11, implementado):** viñeta de vida baja (empieza al 40 % y llega a 0,5 de
+  opacidad), aviso de pickup oculto en pausa y fogonazo enemigo (35 → 40 caras mientras `muzzleFlash`
+  está activo); `tests/ui/hudView.test.ts` y `tests/render/models.test.ts` lo cubren y hay QA visual
+  headless de los tres cambios.
 - **HUD y campaña:** vida, avance, puntuación, recarga, efectos, radar y pausa implementados. La
   zona de impacto sigue en el canvas del mundo; la campaña y los resúmenes ya están implementados.

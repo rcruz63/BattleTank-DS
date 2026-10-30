@@ -38,6 +38,24 @@ describe('modelos de tanques', () => {
     expect(turned).toBe(true);
   });
 
+  it('dibuja el fogonazo del cañón mientras dura el disparo enemigo', () => {
+    const enemy = makeEnemy();
+    expect(tankWorldFaces(enemy)).toHaveLength(35);
+
+    enemy.muzzleFlash = 1;
+    const firing = tankWorldFaces(enemy);
+    expect(firing).toHaveLength(40);
+    for (const face of firing.slice(35)) {
+      for (const point of face.points) {
+        expect(point.y).toBeGreaterThan(1.2);
+        expect(point.y).toBeLessThan(2.2);
+      }
+    }
+
+    enemy.muzzleFlash = 0;
+    expect(tankWorldFaces(enemy)).toHaveLength(35);
+  });
+
   it('marca el frente y la espalda con colores distintos', () => {
     const faces = tankWorldFaces(makeEnemy());
     expect(faces.some((face) => face.color === PALETTE.texto)).toBe(true);

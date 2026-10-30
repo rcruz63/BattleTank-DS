@@ -1,7 +1,7 @@
 # Estado del proyecto — BattleTank-DS
 
 > **Actualizado:** 2026-10-30 · **Fase actual:** 11 (pulido, QA y entrega) — en curso
-> **Último commit:** `docs(config): actualizar comentarios tras fase 9`
+> **Último commit:** `feat(ux): viñeta de vida baja y fogonazo enemigo`
 >
 > Este fichero es el punto de entrada para retomar el proyecto, sea otra persona, otro chat u
 > otro modelo. Se actualiza en **cada commit**. La verdad sobre el alcance está en el plan.
@@ -19,6 +19,12 @@
 
 ## Hecho
 
+- [x] **Fase 11 — pulido UX (2026-10-30).** Viñeta roja sutil con vida baja (empieza al 40 % y llega
+      a 0,5 de opacidad al 0 %; lógica pura en `ui/hudView.ts` y capa `#hud-damage-vignette`),
+      fogonazo del cañón enemigo (5 caras en `render/models.ts` mientras `enemy.muzzleFlash` está
+      activo), aviso de pickup oculto durante la pausa (`INC-02`) y máscara inferior del periscopio
+      reducida de 118 a 96 px. Tests nuevos de la vista del HUD y del modelo enemigo; **214 tests en
+      38 ficheros** y QA headless de los cambios visuales.
 - [x] **Fase 10 — Audio sintetizado.** Bus WebAudio sin assets: motor con pitch/volumen ligados a la
       velocidad, cañonazo, impactos/explosiones, daño recibido, recarga lista, pickups, UI y viento
       de fondo. El `AudioContext` se desbloquea con el primer gesto; si WebAudio no existe se usa un
@@ -121,12 +127,11 @@
 
 ## En curso
 
-- **Fase 11 — pulido, QA y entrega.** Documentación sincronizada con el código real y `PLAN.md`
-  sincronizado con autorización explícita (2026-10-30). La QA headless inicial es **APTO**: 85/85
-  comprobaciones, 0 errores de consola, 60 fps estables y 193/343 caras p50 (457 máx). Quedan las
-  mejoras UX aprobadas (viñeta de vida baja, fogonazo enemigo y máscara inferior del periscopio),
-  corregir el aviso de pickup durante la pausa (INC-02), precisar el presupuesto de operaciones
-  (INC-01), la QA de oído y el cierre de release (`CHANGELOG` a `0.1.0`, versión y tag `v0.1.0`).
+- **Fase 11 — pulido, QA y entrega.** Documentación y `PLAN.md` sincronizados con autorización
+  explícita (2026-10-30) y mejoras UX implementadas y revalidadas (viñeta de vida baja, fogonazo
+  enemigo, máscara inferior de 96 px y aviso de pickup oculto en pausa). La QA headless es **APTO**
+  (85/85 + 41/41, 0 errores de consola, 60 fps estables, 457 caras máx). Quedan la QA de oído y el
+  cierre de release (`CHANGELOG` a `0.1.0`, versión y tag `v0.1.0`).
 
 ## Incidencias conocidas
 
@@ -170,12 +175,11 @@
   jugador. Suficiente para 0.1.0; ampliable tras la entrega.
 - **Reparto por misión fijado en `config/missions.ts`** (fase 9): 3/5/6 enemigos y Tiger desde la
   misión 2; ya no hay reparto provisional.
-- **Feedback aprobado el 2026-10-30 para la fase 11:** viñeta roja sutil con vida baja (hoy solo
-  cambia el color de la barra), fogonazo del enemigo al disparar (`enemy.muzzleFlash` se calcula pero
-  no se dibuja) y reducción de la máscara inferior del periscopio (118 px).
-- **Sin cañón visible:** la puntería se lee solo con la retícula y no hay fogonazo en el cañón
-  (decisión del usuario, 2026-10-27); no hay modelo 3D del arma en primera persona. El retroceso de
-  cámara, la marca de impacto y el tracer mantienen el feedback del disparo.
+- **Feedback de fase 11 implementado:** viñeta roja con vida baja, fogonazo del enemigo al disparar
+  y máscara inferior del periscopio de 96 px; `INC-02` (aviso de pickup en pausa) corregido.
+- **Sin cañón propio visible:** la puntería se lee solo con la retícula y el jugador no ve un cañón
+  en primera persona (decisión del usuario, 2026-10-27). El fogonazo del enemigo sí se dibuja desde
+  la fase 11; el retroceso de cámara, la marca de impacto y el tracer mantienen el feedback propio.
 - **PLAN §7.7 describía el cañón dibujado:** sincronizado el 2026-10-30 con autorización del usuario
   en el commit `docs(plan)` (fila 7.5.1 aprobada, cañón 2D retirado y fases 8–10 cerradas).
 
@@ -205,10 +209,15 @@
 - **QA de fase 11 (2026-10-30):** sesión headless por CDP sobre las 3 misiones: 85/85 comprobaciones
   OK, 0 errores de consola, pausa que congela la simulación, campaña 3/5/6, derrota/reintento y
   persistencia (`{"bestScore":2140,"unlockedMission":2}`). Rendimiento: 60 fps estables (p50 16,7 ms;
-  0 frames >33 ms en 2888), caras visibles p50 193/343 y máx 457 (≤1500). **INC-01:** el presupuesto
-  de «operaciones de dibujo» era ambiguo (llamadas de path frente a primitivas de dibujo); se
-  documenta la métrica. **INC-02:** el toast de pickup se queda visible si se pausa antes de ~1,25 s.
-  El audio queda como QA manual de oído en un navegador real (el headless solo comprueba HUD/eventos).
+  0 frames >33 ms en 2890), caras visibles p50 193/343 y máx 457 (≤1500). **INC-01:** el presupuesto
+  de «operaciones de dibujo» era ambiguo; se documenta como primitivas (`fill`, `stroke`, `fillRect`,
+  `strokeRect`, `arc`, `drawImage`): p50 255/407 y pico 536 en la ventana extrema de la misión 3, sin
+  caída de FPS. **INC-02:** el toast de pickup se quedaba visible en pausa; corregido. La
+  revalidación de las mejoras UX (41/41 comprobaciones) confirma la viñeta (opacidad 0→0,438 a 5 PV),
+  el fogonazo enemigo (2 de las 5 caras visibles por culling, +2 caras pintadas por tanque), la
+  máscara de 96 px y el aviso oculto en pausa, sin regresión de rendimiento (457 caras máx, 0 frames
+  > 33 ms). El audio queda como QA manual de oído en un navegador real (el headless solo comprueba
+  > HUD/eventos).
 - Depuración: `?seed=42` reproduce un escenario; `window.__BT__` expone el estado del juego en consola.
 - Controles: W/S avanzar/retroceder, A/D girar tanque y vista, ratón para apuntar en el cono,
   clic izquierdo o Espacio disparar.

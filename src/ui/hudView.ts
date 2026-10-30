@@ -57,6 +57,8 @@ export interface HudView {
     readonly fraction: number;
     readonly level: HealthLevel;
     readonly text: string;
+    /** 0..0,5 de opacidad de la viñeta roja cuando la vida está baja. */
+    readonly vignette: number;
   };
   readonly progress: {
     readonly fraction: number;
@@ -90,6 +92,15 @@ function healthLevel(fraction: number): HealthLevel {
   if (fraction > 0.6) return 'alta';
   if (fraction > 0.3) return 'media';
   return 'baja';
+}
+
+/** La viñeta de daño empieza al 40 % de vida y sube hasta 0,5 de opacidad al 0 %. */
+const HEALTH_VIGNETTE_START = 0.4;
+const HEALTH_VIGNETTE_MAX = 0.5;
+
+function healthVignette(fraction: number): number {
+  const intensity = clamp((HEALTH_VIGNETTE_START - fraction) / HEALTH_VIGNETTE_START, 0, 1);
+  return intensity * HEALTH_VIGNETTE_MAX;
 }
 
 function pad(value: number): string {
@@ -174,13 +185,14 @@ export function buildHudView(data: HudData): HudView {
   const progressFraction = total > 0 ? clamp(destroyed / total, 0, 1) : 0;
   const percent = Math.round(progressFraction * 100);
   const reloadReady = player.reloadRemaining <= 0;
-  const noticeVisible = notice.alpha > 0.01;
+  const noticeVisible = notice.alpha > 0.01 && !paused;
 
   return {
     health: {
       fraction: healthFraction,
       level: healthLevel(healthFraction),
       text: `${Math.round(player.health)} / ${Math.round(player.maxHealth)}`,
+      vignette: healthVignette(healthFraction),
     },
     progress: {
       fraction: progressFraction,
@@ -195,8 +207,7 @@ export function buildHudView(data: HudData): HudView {
     },
     effects: {
       upgrade: loot.upgradeStacks > 0 ? `Mejora ×${loot.upgradeStacks}` : null,
-      power:
-        loot.powerRemaining > 0 ? `Potencia ${Math.ceil(loot.powerRemaining)} s` : null,
+      power: loot.powerRemaining > 0 ? `Potencia ${Math.ceil(loot.powerRemaining)} s` : null,
     },
     paused,
     drive: 'M4 SHERMAN',

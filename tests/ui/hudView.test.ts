@@ -14,6 +14,7 @@ describe('vista del HUD', () => {
     expect(view.health.fraction).toBeCloseTo(1, 9);
     expect(view.health.level).toBe('alta');
     expect(view.health.text).toBe('100 / 100');
+    expect(view.health.vignette).toBe(0);
     expect(view.progress.fraction).toBe(0);
     expect(view.progress.text).toBe('0 %');
     expect(view.score).toBe(0);
@@ -32,8 +33,19 @@ describe('vista del HUD', () => {
 
     const view = buildHudView({ ...data, score: 100 });
     expect(view.health.level).toBe('baja');
+    expect(view.health.vignette).toBeCloseTo(0.25, 9);
     expect(view.progress.percent).toBeGreaterThan(0);
     expect(view.score).toBe(100);
+  });
+
+  it('intensifica la viñeta de daño al bajar la vida y la anula por encima del umbral', () => {
+    const data = dataFor();
+    data.player.health = 40;
+    expect(buildHudView(data).health.vignette).toBe(0);
+    data.player.health = 0;
+    expect(buildHudView(data).health.vignette).toBeCloseTo(0.5, 9);
+    data.player.health = 100;
+    expect(buildHudView(data).health.vignette).toBe(0);
   });
 
   it('formatea recarga y efectos temporales', () => {
@@ -44,15 +56,25 @@ describe('vista del HUD', () => {
 
     const view = buildHudView({
       ...data,
-      paused: true,
       notice: { text: 'Potencia 20 s', color: '#e0b84a', alpha: 0.8 },
     });
     expect(view.reload.ready).toBe(false);
     expect(view.reload.text).toBe('1.4 s');
     expect(view.effects).toEqual({ upgrade: 'Mejora ×2', power: 'Potencia 13 s' });
-    expect(view.paused).toBe(true);
+    expect(view.paused).toBe(false);
     expect(view.notice?.text).toBe('Potencia 20 s');
     expect(view.notice?.alpha).toBeCloseTo(0.8, 9);
+  });
+
+  it('oculta el aviso de pickup mientras la partida está en pausa', () => {
+    const data = dataFor();
+    const view = buildHudView({
+      ...data,
+      paused: true,
+      notice: { text: 'Potencia 20 s', color: '#e0b84a', alpha: 0.8 },
+    });
+    expect(view.paused).toBe(true);
+    expect(view.notice).toBeNull();
   });
 
   it('limita la vida al rango 0..max y oculta avisos caducados', () => {
