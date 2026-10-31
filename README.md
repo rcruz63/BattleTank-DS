@@ -14,11 +14,11 @@ técnica) en [`docs/STATUS.md`](docs/STATUS.md).
 
 ## Estado
 
-> **Versión objetivo: `0.1.0` (vertical slice jugable) — en desarrollo**, todavía no publicado.
-> Al redactarse este README las fases 0–10 y los bloques 6.5 (puntería con ratón), 6.6 (colisión
-> entre tanques), 7.5 (blindaje direccional y flanqueo), el ajuste 7.5.1 (claridad/feedback), las
-> fases 8 (HUD/radar, pausa y puntuación), 9 (campaña) y 10 (audio) están cerradas. El siguiente
-> trabajo es el pulido y la entrega (fase 11). Ya hay un combate jugable:
+> **Versión `0.1.0` (vertical slice jugable) — release preparado**, tag pendiente de la QA manual de
+> audio. Fases 0–10 y bloques 6.5 (puntería con ratón), 6.6 (colisión entre tanques), 7.5 (blindaje
+> direccional y flanqueo) y 7.5.1 (claridad/feedback) cerrados; la fase 11 (pulido, QA y entrega)
+> está ejecutada con documentación sincronizada, mejoras UX y QA headless APTO. Ya hay un combate
+> jugable:
 > `WASD`/flechas mueven y giran el tanque, el ratón apunta el cañón dentro de un cono (la cámara y
 > el casco **no** giran con él), y `Espacio` o el clic izquierdo disparan con 2,4 s de recarga. Las
 > coberturas de madera y ladrillo se destruyen, los Panzer III y Tiger I esperan al acecho, detectan
@@ -33,8 +33,8 @@ técnica) en [`docs/STATUS.md`](docs/STATUS.md).
 > fogonazo del cañón enemigo. El HUD ya muestra vida, avance, puntuación, recarga y radar, y `ESC`
 > pausa. La campaña encadena tres misiones con briefing, resumen, victoria/derrota y persistencia de
 > récord/desbloqueo. El audio está sintetizado con WebAudio (motor, cañón, impactos, recarga, pickups
-> y UI), con `M` para silenciar y `−`/`+` para el volumen. Queda cerrar el pulido/entrega (fase 11).
-> Consulta [`docs/STATUS.md`](docs/STATUS.md) para el estado exacto.
+> y UI), con `M` para silenciar y `−`/`+` para el volumen. Queda la QA manual de oído y crear el tag
+> `v0.1.0`. Consulta [`docs/STATUS.md`](docs/STATUS.md) para el estado exacto.
 
 El título «BATTLE TANK — PERISCOPIO» es provisional y puede cambiarse en un commit de
 documentación. La interfaz y la documentación van en español; los identificadores, tipos y nombres
@@ -183,7 +183,7 @@ el navegador bloquea el almacenamiento, el juego debe seguir funcionando sin per
   hace el Lead para mantener la historia limpia.
 - [`CHANGELOG.md`](CHANGELOG.md) y [`docs/STATUS.md`](docs/STATUS.md) se actualizan **en el mismo
   commit** que la feature; no se aplazan al final de la fase.
-- Al cerrar la fase 11 se etiqueta `v0.1.0`.
+- El tag `v0.1.0` se crea al cerrar la fase 11, después de la QA manual de audio.
 - Las normas completas (límites de código, plantillas de tarea, flujo de trabajo) están en
   [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md). Para agentes de IA, el punto de entrada es
   [`AGENTS.md`](AGENTS.md).

@@ -7,6 +7,11 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 ## [No publicado]
 
+## [0.1.0] — 2026-10-31
+
+Primera entrega del vertical slice jugable: campaña de 3 misiones, HUD/radar, audio sintetizado y
+pulido de la fase 11. El tag `v0.1.0` se crea tras la QA manual de audio de oído.
+
 ### Añadido
 
 - Feedback de vida baja y disparo enemigo: viñeta roja sutil en los bordes cuando la vida baja del

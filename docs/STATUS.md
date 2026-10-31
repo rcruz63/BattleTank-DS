@@ -1,7 +1,7 @@
 # Estado del proyecto — BattleTank-DS
 
-> **Actualizado:** 2026-10-30 · **Fase actual:** 11 (pulido, QA y entrega) — en curso
-> **Último commit:** `feat(ux): viñeta de vida baja y fogonazo enemigo`
+> **Actualizado:** 2026-10-31 · **Fase actual:** 11 cerrada salvo QA de oído y tag (`0.1.0` preparado)
+> **Último commit:** `chore(release): 0.1.0`
 >
 > Este fichero es el punto de entrada para retomar el proyecto, sea otra persona, otro chat u
 > otro modelo. Se actualiza en **cada commit**. La verdad sobre el alcance está en el plan.
@@ -11,14 +11,18 @@
 1. Lee [`docs/PLAN.md`](PLAN.md) (alcance y fases) y este estado.
 2. `npm install` y `npm run check` para confirmar que la base está sana.
 3. `npm run dev` y abre `http://localhost:5273`.
-4. Lee «Incidencias conocidas» antes de elegir tarea: el trabajo actual es el pulido/entrega
-   (fase 11: QA, rendimiento, mejoras UX aprobadas y cierre de release); audio (10), campaña (9),
-   HUD/radar (8), pickups (7), blindaje direccional (7.5) y `BUG-001` (6.6) ya están cerrados.
+4. Lee «Incidencias conocidas» antes de elegir tarea: el release `0.1.0` está preparado; quedan la
+   QA manual de oído y crear el tag `v0.1.0`. Audio (10), campaña (9), HUD/radar (8), pickups (7),
+   blindaje direccional (7.5) y `BUG-001` (6.6) ya están cerrados.
 5. Sigue el flujo de [`docs/DEVELOPMENT.md`](DEVELOPMENT.md): tests → `npm run check` → changelog
    → estado → commit.
 
 ## Hecho
 
+- [x] **Release `0.1.0` preparado (2026-10-31).** `package.json`/`package-lock.json` a `0.1.0`,
+      `CHANGELOG` con `[0.1.0] — 2026-10-31`, README y STATUS finales y build de producción verificado.
+      **No se ha creado el tag:** queda pendiente de la QA manual de audio de oído, y no se ha hecho
+      push.
 - [x] **Fase 11 — pulido UX (2026-10-30).** Viñeta roja sutil con vida baja (empieza al 40 % y llega
       a 0,5 de opacidad al 0 %; lógica pura en `ui/hudView.ts` y capa `#hud-damage-vignette`),
       fogonazo del cañón enemigo (5 caras en `render/models.ts` mientras `enemy.muzzleFlash` está
@@ -127,11 +131,11 @@
 
 ## En curso
 
-- **Fase 11 — pulido, QA y entrega.** Documentación y `PLAN.md` sincronizados con autorización
-  explícita (2026-10-30) y mejoras UX implementadas y revalidadas (viñeta de vida baja, fogonazo
-  enemigo, máscara inferior de 96 px y aviso de pickup oculto en pausa). La QA headless es **APTO**
-  (85/85 + 41/41, 0 errores de consola, 60 fps estables, 457 caras máx). Quedan la QA de oído y el
-  cierre de release (`CHANGELOG` a `0.1.0`, versión y tag `v0.1.0`).
+- **Fase 11 — release preparado (2026-10-31).** Documentación y `PLAN.md` sincronizados con
+  autorización explícita, mejoras UX implementadas y revalidadas (viñeta de vida baja, fogonazo
+  enemigo, máscara inferior de 96 px y aviso de pickup oculto en pausa), QA headless **APTO**
+  (85/85 + 41/41, 0 errores de consola, 60 fps estables, 457 caras máx) y release `0.1.0` preparado
+  sin tag. Quedan la QA manual de oído y, después, el tag anotado `v0.1.0` (sin push).
 
 ## Incidencias conocidas
 
@@ -141,23 +145,23 @@
 
 ## Pendiente (por fases)
 
-| Fase  | Contenido                                                         | Estado       |
-| ----- | ----------------------------------------------------------------- | ------------ |
-| 1     | Núcleo: matemáticas, RNG, bucle de paso fijo y bus de eventos     | Completada   |
-| 2     | Render: canvas, cámara, proyección, recorte, painter y niebla     | Completada   |
-| 3     | Mundo: rejilla, generación procedural validada, escena de prismas | Completada   |
-| 4     | Jugador: movimiento solidario, colisión, cámara de periscopio     | Completada   |
-| 5     | Combate: disparo, recarga, proyectiles, impactos y escombros      | Completada   |
-| 6     | Enemigos: modelos, IA con LOS/A*, dificultad por parámetros       | Completada   |
-| 6.5   | Puntería con ratón (cañón cónico, balística 3D)                   | Completada   |
-| 6.6   | Colisión entre tanques (`BUG-001`)                                | Completada   |
-| 7     | Pickups: cura, mejora y potencia                                  | Completada   |
-| 7.5   | Blindaje direccional y flanqueo                                   | Completada   |
-| 7.5.1 | Claridad de impacto y arranque inicial (hotfix)                   | Completada   |
-| 8     | HUD: vida, progreso, puntuación, radar, recarga y pausa           | Completada   |
-| 9     | Campaña: 3 misiones, briefing, resultados y persistencia          | Completada   |
-| 10    | Audio: efectos sintetizados WebAudio, volumen y mute              | Completada   |
-| 11    | Pulido, QA, rendimiento, documentación final y tag `v0.1.0`       | **En curso** |
+| Fase  | Contenido                                                         | Estado                                          |
+| ----- | ----------------------------------------------------------------- | ----------------------------------------------- |
+| 1     | Núcleo: matemáticas, RNG, bucle de paso fijo y bus de eventos     | Completada                                      |
+| 2     | Render: canvas, cámara, proyección, recorte, painter y niebla     | Completada                                      |
+| 3     | Mundo: rejilla, generación procedural validada, escena de prismas | Completada                                      |
+| 4     | Jugador: movimiento solidario, colisión, cámara de periscopio     | Completada                                      |
+| 5     | Combate: disparo, recarga, proyectiles, impactos y escombros      | Completada                                      |
+| 6     | Enemigos: modelos, IA con LOS/A*, dificultad por parámetros       | Completada                                      |
+| 6.5   | Puntería con ratón (cañón cónico, balística 3D)                   | Completada                                      |
+| 6.6   | Colisión entre tanques (`BUG-001`)                                | Completada                                      |
+| 7     | Pickups: cura, mejora y potencia                                  | Completada                                      |
+| 7.5   | Blindaje direccional y flanqueo                                   | Completada                                      |
+| 7.5.1 | Claridad de impacto y arranque inicial (hotfix)                   | Completada                                      |
+| 8     | HUD: vida, progreso, puntuación, radar, recarga y pausa           | Completada                                      |
+| 9     | Campaña: 3 misiones, briefing, resultados y persistencia          | Completada                                      |
+| 10    | Audio: efectos sintetizados WebAudio, volumen y mute              | Completada                                      |
+| 11    | Pulido, QA, rendimiento, documentación final y tag `v0.1.0`       | **Casi completa** (tag pendiente de QA de oído) |
 
 ## Deuda técnica registrada
 
@@ -215,9 +219,12 @@
   caída de FPS. **INC-02:** el toast de pickup se quedaba visible en pausa; corregido. La
   revalidación de las mejoras UX (41/41 comprobaciones) confirma la viñeta (opacidad 0→0,438 a 5 PV),
   el fogonazo enemigo (2 de las 5 caras visibles por culling, +2 caras pintadas por tanque), la
-  máscara de 96 px y el aviso oculto en pausa, sin regresión de rendimiento (457 caras máx, 0 frames
-  > 33 ms). El audio queda como QA manual de oído en un navegador real (el headless solo comprueba
-  > HUD/eventos).
+  máscara de 96 px y el aviso oculto en pausa, sin regresión de rendimiento (457 caras máx y cero
+  frames por encima de 33 ms). El audio queda como QA manual de oído en un navegador real (el
+  headless solo comprueba HUD y eventos).
+- **Release 0.1.0 preparado (2026-10-31):** versión `0.1.0` en `package.json`/lockfile, `CHANGELOG`
+  con `[0.1.0] — 2026-10-31`, README/STATUS finales y build de producción verificado. Pendiente la
+  QA manual de oído y, después, el tag anotado `v0.1.0`; no se ha hecho push.
 - Depuración: `?seed=42` reproduce un escenario; `window.__BT__` expone el estado del juego en consola.
 - Controles: W/S avanzar/retroceder, A/D girar tanque y vista, ratón para apuntar en el cono,
   clic izquierdo o Espacio disparar.

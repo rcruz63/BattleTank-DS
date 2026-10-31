@@ -1,6 +1,6 @@
 {
   "name": "battletank-ds",
-  "version": "0.1.0-dev",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "description": "Shooter de tanques en primera persona con polígonos procedurales, inspirado en Battle Tank y en carros de la Segunda Guerra Mundial.",
