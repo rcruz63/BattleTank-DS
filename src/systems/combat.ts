@@ -141,11 +141,18 @@ export interface PlayerWeaponStep {
 export function updatePlayerWeapon(step: PlayerWeaponStep): boolean {
   const { player, fireRequested, stepSeconds, bullets, direction } = step;
   player.reloadRemaining = Math.max(0, player.reloadRemaining - stepSeconds);
-  if (!fireRequested || player.reloadRemaining > 0) return false;
+  player.fireBufferRemaining = Math.max(0, player.fireBufferRemaining - stepSeconds);
+  // Un clic durante la recarga se guarda un instante: si el arma se libera dentro del margen, dispara.
+  if (fireRequested && player.reloadRemaining > 0) {
+    player.fireBufferRemaining = COMBAT.fireBufferSeconds;
+  }
+  const wantsFire = fireRequested || player.fireBufferRemaining > 0;
+  if (!wantsFire || player.reloadRemaining > 0) return false;
 
   bullets.push(createPlayerBullet(player, direction, step.damageMultiplier ?? 1));
   player.reloadDuration = player.reloadSeconds * (step.reloadMultiplier ?? 1);
   player.reloadRemaining = player.reloadDuration;
+  player.fireBufferRemaining = 0;
   return true;
 }
 
@@ -195,7 +202,8 @@ function hitCover(
   const inside = isInside(grid, cell.x, cell.z);
   const obstacle = inside ? getObstacle(grid, cell.x, cell.z) : null;
   const material = obstacle?.material ?? null;
-  const destroyed = obstacle && inside ? damageObstacle(grid, cell.x, cell.z, bullet.damage) : false;
+  const destroyed =
+    obstacle && inside ? damageObstacle(grid, cell.x, cell.z, bullet.damage) : false;
   bullet.alive = false;
   return {
     kind: 'cover',

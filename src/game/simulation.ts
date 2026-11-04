@@ -5,14 +5,15 @@ import { clampVolume } from '../audio/audio';
 import { MISSIONS } from '../config/missions';
 import { PALETTE } from '../config/palette';
 import { alertEnemiesNear, updateEnemies } from '../systems/ai';
-import {
-  buildProjectileTargets,
-  updatePlayerWeapon,
-  updateProjectiles,
-} from '../systems/combat';
+import { buildProjectileTargets, updatePlayerWeapon, updateProjectiles } from '../systems/combat';
 import type { ProjectileEvent } from '../systems/combat';
 import { resolveProjectileHit } from '../systems/damage';
-import { refreshEnemyVisibility, updateDamagePopups } from '../systems/feedback';
+import {
+  refreshEnemyVisibility,
+  impactBearing,
+  isHitMarker,
+  updateDamagePopups,
+} from '../systems/feedback';
 import type { InputSnapshot } from '../systems/input';
 import {
   collectPickups,
@@ -62,7 +63,10 @@ function applyImpact(state: GameState, impact: ProjectileEvent): boolean {
   if (result.playerHit) {
     session.damageTaken += result.damage;
     state.audio.play('damage');
+    state.effects.damageBearing = impactBearing(session.player, impact.position);
+    state.effects.damageIndicator = 1;
   }
+  if (isHitMarker(impact, result)) state.effects.hitMarker = 1;
   if (result.target === 'enemy' && result.damage > 0) {
     session.shotsHit += 1;
     state.audio.play(result.killed ? 'explosion' : 'impact');
@@ -92,7 +96,6 @@ function resolveImpacts(state: GameState, impacts: ProjectileEvent[]): boolean {
     if (applyImpact(state, impact)) playerHit = true;
   }
   playCoverAudio(state, impacts);
-  if (impacts.some((impact) => impact.kind !== 'ground')) state.effects.hitMarker = 1;
   return playerHit;
 }
 
@@ -133,7 +136,7 @@ function updatePlayerStep(state: GameState, snapshot: InputSnapshot, stepSeconds
 
 function updateEnemyStep(state: GameState, stepSeconds: number): void {
   const session = state.session;
-  updateEnemies(session.enemies, {
+  const shots = updateEnemies(session.enemies, {
     grid: session.arena.grid,
     player: session.player,
     stepSeconds,
@@ -145,13 +148,10 @@ function updateEnemyStep(state: GameState, stepSeconds: number): void {
       damageMultiplier: session.mission.ai.damageMultiplier,
     },
   });
+  if (shots > 0) state.audio.play('enemy-fire');
 }
 
-function advanceSimulation(
-  state: GameState,
-  snapshot: InputSnapshot,
-  stepSeconds: number,
-): void {
+function advanceSimulation(state: GameState, snapshot: InputSnapshot, stepSeconds: number): void {
   const session = state.session;
   updatePlayerStep(state, snapshot, stepSeconds);
   updateLoot(session.loot, stepSeconds);
@@ -267,5 +267,7 @@ export function stepCombat(state: GameState, stepSeconds: number): void {
   session.elapsedSeconds += stepSeconds;
   advanceSimulation(state, snapshot, stepSeconds);
   evaluateMission(state);
-  state.audio.setEngine(session.player.alive && session.phase === 'playing' ? Math.abs(snapshot.forward) : 0);
+  state.audio.setEngine(
+    session.player.alive && session.phase === 'playing' ? Math.abs(snapshot.forward) : 0,
+  );
 }

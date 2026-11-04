@@ -33,21 +33,39 @@ interface ProjectedPoint {
 function projectPoint(point: Vec3, frame: CameraFrame): ProjectedPoint | null {
   const cameraPoint = worldToCamera(point, frame.camera, frame.basis);
   if (cameraPoint.z < frame.camera.near) return null;
-  const projected = projectCameraPoint(
-    cameraPoint,
-    frame.camera,
-    frame.viewport,
-    frame.focal,
-  );
+  const projected = projectCameraPoint(cameraPoint, frame.camera, frame.viewport, frame.focal);
   if (!projected) return null;
   return { point: projected, depth: cameraPoint.z };
 }
 
-function projectEnemy(enemy: EnemyState, frame: CameraFrame, height: number): ProjectedPoint | null {
-  return projectPoint(
-    { x: enemy.position.x, y: height, z: enemy.position.z },
-    frame,
-  );
+function projectEnemy(
+  enemy: EnemyState,
+  frame: CameraFrame,
+  height: number,
+): ProjectedPoint | null {
+  return projectPoint({ x: enemy.position.x, y: height, z: enemy.position.z }, frame);
+}
+
+/** 0..1 del avance de la recarga enemiga; 1 significa arma lista. */
+export function enemyReloadFraction(enemy: EnemyState): number {
+  if (enemy.reloadRemaining <= 0 || enemy.reloadSeconds <= 0) return 1;
+  return clamp(1 - enemy.reloadRemaining / enemy.reloadSeconds, 0, 1);
+}
+
+/** Barra fina bajo la vida que muestra la ventana de recarga del enemigo (flanqueo legible). */
+interface EnemyReloadBar {
+  readonly enemy: EnemyState;
+  readonly x: number;
+  readonly top: number;
+  readonly width: number;
+}
+
+function drawEnemyReloadBar(context: CanvasRenderingContext2D, bar: EnemyReloadBar): void {
+  if (bar.enemy.reloadRemaining <= 0) return;
+  context.fillStyle = 'rgba(4, 7, 5, 0.8)';
+  context.fillRect(bar.x - 1, bar.top, bar.width + 2, 5);
+  context.fillStyle = PALETTE.progreso;
+  context.fillRect(bar.x, bar.top + 1, bar.width * enemyReloadFraction(bar.enemy), 3);
 }
 
 function drawEnemyHealthBars(
@@ -68,11 +86,7 @@ function drawEnemyHealthBars(
     const y = projected.point.y;
     const fraction = clamp(enemy.health / enemy.tank.maxHealth, 0, 1);
     const color =
-      fraction > 0.55
-        ? PALETTE.vidaAlta
-        : fraction > 0.25
-          ? PALETTE.vidaMedia
-          : PALETTE.vidaBaja;
+      fraction > 0.55 ? PALETTE.vidaAlta : fraction > 0.25 ? PALETTE.vidaMedia : PALETTE.vidaBaja;
 
     context.fillStyle = 'rgba(4, 7, 5, 0.8)';
     context.fillRect(x - 1, y - 1, width + 2, height + 2);
@@ -83,6 +97,7 @@ function drawEnemyHealthBars(
     context.font = '10px monospace';
     context.textAlign = 'center';
     context.fillText(enemy.tank.label, projected.point.x, y - 4);
+    drawEnemyReloadBar(context, { enemy, x, top: y + height + 3, width });
   }
 }
 

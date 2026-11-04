@@ -34,7 +34,10 @@ técnica) en [`docs/STATUS.md`](docs/STATUS.md).
 > pausa. La campaña encadena tres misiones con briefing, resumen, victoria/derrota y persistencia de
 > récord/desbloqueo. El audio está sintetizado con WebAudio (motor, cañón, impactos, recarga, pickups
 > y UI), con `M` para silenciar y `−`/`+` para el volumen. Queda la QA manual de oído y crear el tag
-> `v0.1.0`. Consulta [`docs/STATUS.md`](docs/STATUS.md) para el estado exacto.
+> `v0.1.0`. Sobre la entrega se ha cerrado el **bloque A de pulido post-0.1.0** (marca de impacto
+> fiable, arco direccional de daño, cañonazo enemigo audible, recarga enemiga visible, buffer de
+> disparo, briefing con controles/blindaje y puntería 1:1 con el cursor). Consulta
+> [`docs/STATUS.md`](docs/STATUS.md) para el estado exacto.
 
 El título «BATTLE TANK — PERISCOPIO» es provisional y puede cambiarse en un commit de
 documentación. La interfaz y la documentación van en español; los identificadores, tipos y nombres
@@ -155,7 +158,7 @@ BattleTank-DS/
 │   ├── ui/             # HUD DOM, modelo hudView, radar y pantallas de campaña
 │   ├── audio/          # bus WebAudio y síntesis procedural de efectos
 │   └── game/           # composición, máquina de estados de campaña, simulación y render
-├── tests/              # espejo de src/ (214 tests en 38 ficheros) + integración headless
+├── tests/              # espejo de src/ (233 tests en 40 ficheros) + integración headless
 ├── docs/               # plan, estado y documentación del proyecto
 └── dist/               # build generado (no versionado)
 ```

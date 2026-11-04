@@ -3,8 +3,10 @@
 Documento de diseño del vertical slice **0.1.0**. Se deriva del plan aprobado
 ([`PLAN.md`](PLAN.md), fuente de verdad del alcance); si hay conflicto, manda el plan y se corrige
 este documento. Estado: fases 0–10 y los bloques 6.5 (puntería con ratón), 6.6 (colisión entre
-tanques), 7.5 (blindaje direccional) y el ajuste 7.5.1 (claridad/feedback) cerrados; el siguiente
-trabajo es el pulido y la entrega (fase 11). El detalle vivo está en [`STATUS.md`](STATUS.md).
+tanques), 7.5 (blindaje direccional) y el ajuste 7.5.1 (claridad/feedback) cerrados y la entrega
+`0.1.0` preparada. El bloque A de pulido post-entrega (claridad de combate y onboarding) está
+cerrado el 2026-11-04; el siguiente trabajo es el bloque B (sensación y legibilidad). El detalle
+vivo está en [`STATUS.md`](STATUS.md).
 
 **Balance de tanques:** los números concretos (PV, velocidad, giro, recarga, daño, blindaje y
 velocidad de proyectil) viven en **`src/config/tanks.ts`**, que es la fuente de verdad. Este
@@ -44,7 +46,7 @@ línea de tiro a cañonazos y administrar la recarga son las decisiones del bucl
 
 Bucle de una partida:
 
-1. **Briefing** de misión (DOM): nombre, texto, objetivo y semilla; `ENTER` para desplegar.
+1. **Briefing** de misión (DOM): nombre, texto, objetivo, controles, pista de blindaje y semilla; `ENTER` para desplegar.
 2. El jugador **avanza** por el escenario generado sin mapa completo: periscopio, radar y barra de
    progreso (solo porcentaje, nunca número de enemigos restantes).
 3. **Combate:** los enemigos acechan hasta detectar al jugador, toman línea de visión y disparan. Las
@@ -110,6 +112,10 @@ jugador no puede disparar de lado, ellos tampoco.
   «Potencia 20 s»); los resultados de misión usan pantallas completas.
 - **Zona de impacto:** aviso de daño flotante «FRONTAL / LATERAL / TRASERA» sobre el enemigo,
   ligado al blindaje direccional implementado.
+- **Recarga enemiga:** barra fina bajo la barra de vida del enemigo visible mientras recarga; hace
+  legible la ventana de flanqueo (bloque A post-0.1.0).
+- **Daño recibido:** arco rojo direccional en el borde de la pantalla hacia el origen del impacto,
+  junto al tinte y la viñeta; el cañonazo enemigo se oye con un timbre propio (bloque A).
 - **Rumbo:** marca tenue del casco en el periscopio y radar orientado con el rumbo; una brújula
   dedicada no entra en 0.1.0.
 - **Pantallas:** briefing, pausa, victoria, derrota y fin de campaña implementadas; no hay menú
@@ -184,9 +190,9 @@ decimal (español) y **no deben depender solo del color**: los estados llevan ic
 
 ### Puntería del cañón (bloque 6.5)
 
-- El puntero del ratón se normaliza con el rectángulo del canvas y se mapea linealmente a un cono de
-  **±15° horizontal y ±4° vertical** respecto al rumbo del tanque (`AIM_LIMITS`). La cámara y el
-  casco no giran: solo apunta el cañón.
+- El puntero se mapea por ángulo con la focal de la cámara: la retícula sigue al cursor 1:1 hasta
+  el límite de un cono de **±15° horizontal y ±4° vertical** respecto al rumbo del tanque
+  (`AIM_LIMITS`) y se recorta después. La cámara y el casco no giran: solo apunta el cañón.
 - La retícula y las marcas de distancia se dibujan en la proyección del ángulo de puntería, no en la
   posición bruta del cursor; el cursor del sistema se oculta sobre el canvas.
 - **No se dibuja el cañón:** la retícula y sus marcas son la referencia de puntería (decisión del
@@ -379,6 +385,7 @@ de audio ni música en 0.1.0.
 | Recarga           | Sonido de arma lista al completar la recarga.                                  |
 | Pickup            | Confirmación al recoger cura, mejora o potencia.                               |
 | UI                | Cambios de pantalla, pausa, mute/volumen y avisos.                             |
+| Cañón enemigo     | Disparo más apagado y distante que el del jugador, para localizar el fuego.    |
 | Ambiente          | Viento filtrado de fondo.                                                      |
 
 - El `AudioContext` se desbloquea con el primer gesto del usuario (política de los navegadores).
@@ -441,8 +448,11 @@ de audio ni música en 0.1.0.
   `#hud-damage-vignette`. No sustituye a la sacudida de cámara.
 - **Balance definitivo:** ajuste de dificultad previsto para la fase 11 sobre los valores de
   `tanks.ts` y `AI_TUNING`.
-- **Sensibilidad del ratón:** el mapeo actual es lineal contra todo el canvas; no hay curvas,
-  aceleración ni ajuste de sensibilidad. Si el QA lo pide, se convierte en opción de datos.
+- **Sensibilidad del ratón:** el mapeo es angular con la focal (la retícula sigue al cursor 1:1
+  hasta el límite del cono); no hay curvas ni ajuste de sensibilidad. Si el QA lo pide, se convierte
+  en opción de datos.
+- **Feedback direccional de daño (implementado, bloque A post-0.1.0):** arco en el borde y cañonazo
+  enemigo audible; la marca de impacto solo se muestra al acertar a un enemigo (`BUG-002`).
 - **Zonas de blindaje (implementadas, bloque 7.5):** el cilindro de impacto de 2,2 m se mantiene; las
   zonas frontal/lateral/trasera aplican ×0,5/×1,0/×1,5. No hay zonas por oruga ni torreta, ni daño
   direccional dentro de una misma cara.

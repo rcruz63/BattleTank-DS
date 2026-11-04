@@ -5,7 +5,9 @@ import type { PlayerState } from '../entities/player';
 import type { DamagePopup } from '../render/combatFeedback';
 import { planarDistance } from '../world/geometry';
 import { hasLineOfSight } from '../world/los';
-import type { WorldGrid } from '../world/types';
+import type { WorldGrid, WorldPoint } from '../world/types';
+import type { ProjectileEvent } from './combat';
+import type { DamageResult } from './damage';
 
 const ENEMY_VISIBILITY_RANGE = 65;
 
@@ -24,8 +26,7 @@ export function refreshEnemyVisibility(
     }
     const distance = planarDistance(player.position, enemy.position);
     enemy.visibleToPlayer =
-      distance <= ENEMY_VISIBILITY_RANGE &&
-      hasLineOfSight(grid, player.position, enemy.position);
+      distance <= ENEMY_VISIBILITY_RANGE && hasLineOfSight(grid, player.position, enemy.position);
   }
 }
 
@@ -37,4 +38,17 @@ export function updateDamagePopups(popups: DamagePopup[], stepSeconds: number): 
     popup.age += stepSeconds;
     if (popup.age > DAMAGE_POPUP_LIFETIME) popups.splice(index, 1);
   }
+}
+
+/**
+ * Marca de acierto de la retícula: solo cuando el disparo del jugador daña de verdad a un enemigo.
+ * Antes se activaba con cualquier impacto (recibir daño o golpear una cobertura), lo que confundía.
+ */
+export function isHitMarker(impact: ProjectileEvent, result: DamageResult): boolean {
+  return impact.owner === 'player' && result.target === 'enemy' && result.damage > 0;
+}
+
+/** Rumbo absoluto desde el que llega un impacto; el render lo gira con el rumbo actual del tanque. */
+export function impactBearing(player: PlayerState, impact: WorldPoint): number {
+  return Math.atan2(impact.x - player.position.x, impact.z - player.position.z);
 }

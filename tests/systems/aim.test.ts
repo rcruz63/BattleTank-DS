@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { AIM_LIMITS, CAMERA_DEFAULTS } from '../../src/config/balance';
-import { resolveAim } from '../../src/systems/aim';
+import { aimPointerFromCanvas, resolveAim } from '../../src/systems/aim';
 import type { Viewport } from '../../src/render/types';
 
 const viewport: Viewport = { width: 1280, height: 720 };
@@ -58,5 +58,48 @@ describe('puntería del cañón', () => {
       const length = Math.hypot(aim.direction.x, aim.direction.y, aim.direction.z);
       expect(length).toBeCloseTo(1, 9);
     }
+  });
+});
+
+describe('mapeo del cursor al cono', () => {
+  const maxYaw = (AIM_LIMITS.maxYawDegrees * Math.PI) / 180;
+  const maxPitch = (AIM_LIMITS.maxPitchDegrees * Math.PI) / 180;
+
+  it('con el cursor en el centro apunta al frente', () => {
+    const pointer = aimPointerFromCanvas(0, 0, viewport.width);
+    expect(pointer.x).toBeCloseTo(0, 9);
+    expect(pointer.y).toBeCloseTo(0, 9);
+  });
+
+  it('la retícula sigue al cursor 1:1 hasta el límite del cono', () => {
+    const offset = 120;
+    const pointer = aimPointerFromCanvas(offset, 0, viewport.width);
+    const aim = resolveAim(0, viewport, pointer);
+    expect(aim.screenX).toBeCloseTo(viewport.width / 2 + offset, 6);
+    expect(aim.screenY).toBeCloseTo(viewport.height / 2, 9);
+  });
+
+  it('alcanza el máximo del cono con el desplazamiento focal', () => {
+    const atEdge = aimPointerFromCanvas(focal * Math.tan(maxYaw), 0, viewport.width);
+    expect(atEdge.x).toBeCloseTo(1, 9);
+    expect(aimPointerFromCanvas(-focal * Math.tan(maxYaw), 0, viewport.width).x).toBeCloseTo(-1, 9);
+  });
+
+  it('recorta el cursor fuera del cono', () => {
+    const pointer = aimPointerFromCanvas(viewport.width, 0, viewport.width);
+    expect(pointer.x).toBe(1);
+    const aim = resolveAim(0, viewport, pointer);
+    expect(aim.screenX).toBeCloseTo(viewport.width / 2 + focal * Math.tan(maxYaw), 6);
+  });
+
+  it('mapea la vertical con la misma focal y respeta el límite de cabeceo', () => {
+    const pointer = aimPointerFromCanvas(0, -focal * Math.tan(maxPitch / 2), viewport.width);
+    expect(pointer.y).toBeCloseTo(0.5, 9);
+    expect(aimPointerFromCanvas(0, -viewport.height, viewport.width).y).toBe(1);
+    expect(aimPointerFromCanvas(0, viewport.height, viewport.width).y).toBe(-1);
+  });
+
+  it('con un canvas sin ancho devuelve el centro', () => {
+    expect(aimPointerFromCanvas(120, 40, 0)).toEqual({ x: 0, y: 0 });
   });
 });

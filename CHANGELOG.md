@@ -15,6 +15,27 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
   el 2026-11-04 en <https://battletank-ds.rpublico.workers.dev>; `workers_dev` y `preview_urls`
   quedan explícitos para que el deploy no emita avisos.
 
+- Feedback de combate del bloque A post-0.1.0: la marca de impacto solo aparece cuando el disparo
+  del jugador daña de verdad a un enemigo, el daño recibido se indica con un arco rojo direccional
+  en el borde de la pantalla y el cañonazo enemigo suena (más apagado y distante que el del jugador).
+- Recarga enemiga visible: barra fina bajo la barra de vida mientras el enemigo recarga, para que la
+  ventana de flanqueo se pueda leer.
+- El briefing de misión muestra los controles y una pista de blindaje (frontal ×0,5, lateral ×1,
+  trasero ×1,5) antes de desplegar.
+- Buffer de disparo de 0,25 s: un clic hecho justo antes de terminar la recarga dispara al quedar el
+  arma lista, sin perder la pulsación.
+
+### Cambiado
+
+- La puntería con ratón se mapea por ángulo con la focal de la cámara: la retícula sigue al cursor
+  1:1 hasta el límite del cono (±15° / ±4°) y se recorta después, en lugar de repartir el cono por
+  todo el ancho del canvas.
+
+### Corregido
+
+- `BUG-002`: la marca de impacto de la retícula aparecía al recibir daño o al golpear una cobertura;
+  ahora solo se muestra cuando el proyectil del jugador daña a un enemigo.
+
 ## [0.1.0] — 2026-10-31
 
 Primera entrega del vertical slice jugable: campaña de 3 misiones, HUD/radar, audio sintetizado y

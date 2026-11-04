@@ -35,13 +35,15 @@ export const LIGHT_DIRECTION = { x: 0.35, y: 0.85, z: 0.25 } as const;
 /** Radio de colisión del jugador (m). Menor que media celda para poder sortear huecos. */
 export const PLAYER_RADIUS = 1.35;
 
-/** Combate: proyectiles, boca de cañón y retroceso. */
+/** Combate: proyectiles, boca de cañón, retroceso y margen del buffer de disparo. */
 export const COMBAT = {
   muzzleHeight: 1.25,
   bulletRadius: 0.22,
   bulletMaxAgeSeconds: 3,
   bulletStepMeters: 0.5,
   recoilKickRadians: 0.055,
+  /** Margen para conservar un clic hecho justo antes de terminar la recarga (s). */
+  fireBufferSeconds: 0.25,
 } as const;
 
 /** Puntuación por destruir cada tipo de enemigo (el bonus de misión se suma en systems/mission.ts). */

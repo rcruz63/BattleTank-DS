@@ -25,7 +25,9 @@ function playerAt(): ReturnType<typeof createPlayer> {
   return createPlayer({ x: 10, z: 5, yaw: 0 });
 }
 
-function gridWithWall(material: 'madera' | 'ladrillo' | 'hormigon'): ReturnType<typeof createEmptyGrid> {
+function gridWithWall(
+  material: 'madera' | 'ladrillo' | 'hormigon',
+): ReturnType<typeof createEmptyGrid> {
   const grid = createEmptyGrid(5, 5, 4, 1);
   placeObstacle(grid, 2, 2, material);
   return grid;
@@ -53,34 +55,40 @@ describe('recarga y disparo', () => {
     const bullets: Bullet[] = [];
     expect(isWeaponReady(player)).toBe(true);
 
-    expect(updatePlayerWeapon({
-      player,
-      fireRequested: true,
-      stepSeconds: 1 / 60,
-      bullets,
-      direction: { x: 0, y: 0, z: 1 },
-    })).toBe(true);
+    expect(
+      updatePlayerWeapon({
+        player,
+        fireRequested: true,
+        stepSeconds: 1 / 60,
+        bullets,
+        direction: { x: 0, y: 0, z: 1 },
+      }),
+    ).toBe(true);
     expect(bullets).toHaveLength(1);
     expect(isWeaponReady(player)).toBe(false);
     expect(reloadProgress(player)).toBeLessThan(1);
 
-    expect(updatePlayerWeapon({
-      player,
-      fireRequested: true,
-      stepSeconds: 1 / 60,
-      bullets,
-      direction: { x: 0, y: 0, z: 1 },
-    })).toBe(false);
+    expect(
+      updatePlayerWeapon({
+        player,
+        fireRequested: true,
+        stepSeconds: 1 / 60,
+        bullets,
+        direction: { x: 0, y: 0, z: 1 },
+      }),
+    ).toBe(false);
     expect(bullets).toHaveLength(1);
 
     player.reloadRemaining = 0;
-    expect(updatePlayerWeapon({
-      player,
-      fireRequested: true,
-      stepSeconds: 1 / 60,
-      bullets,
-      direction: { x: 0, y: 0, z: 1 },
-    })).toBe(true);
+    expect(
+      updatePlayerWeapon({
+        player,
+        fireRequested: true,
+        stepSeconds: 1 / 60,
+        bullets,
+        direction: { x: 0, y: 0, z: 1 },
+      }),
+    ).toBe(true);
     expect(bullets).toHaveLength(2);
     expect(isWeaponReady(player)).toBe(false);
   });
@@ -192,7 +200,14 @@ describe('impactos de proyectiles', () => {
       stepSeconds: 0.05,
       grid,
       targets: [
-        { id: 'enemigo-1', position: { x: 10, z: 10 }, radius: 1, height: 2.2, faction: 'enemy', heading: 0 },
+        {
+          id: 'enemigo-1',
+          position: { x: 10, z: 10 },
+          radius: 1,
+          height: 2.2,
+          faction: 'enemy',
+          heading: 0,
+        },
       ],
     });
     expect(events).toHaveLength(1);
@@ -251,7 +266,14 @@ describe('impactos de proyectiles', () => {
       stepSeconds: 0.05,
       grid,
       targets: [
-        { id: 'aliado', position: { x: 10, z: 10 }, radius: 1, height: 2.2, faction: 'player', heading: 0 },
+        {
+          id: 'aliado',
+          position: { x: 10, z: 10 },
+          radius: 1,
+          height: 2.2,
+          faction: 'player',
+          heading: 0,
+        },
       ],
     });
     expect(events).toHaveLength(0);
@@ -288,7 +310,14 @@ describe('impactos de proyectiles', () => {
       stepSeconds: 0.05,
       grid,
       targets: [
-        { id: 'enemigo-1', position: { x: 10, z: 10 }, radius: 1, height: 2.2, faction: 'enemy', heading: 0 },
+        {
+          id: 'enemigo-1',
+          position: { x: 10, z: 10 },
+          radius: 1,
+          height: 2.2,
+          faction: 'enemy',
+          heading: 0,
+        },
       ],
     });
     expect(events).toHaveLength(0);
@@ -309,5 +338,55 @@ describe('impactos de proyectiles', () => {
       updateProjectiles({ bullets, stepSeconds: 0.5, grid, targets: [] });
     }
     expect(bullets).toHaveLength(0);
+  });
+});
+
+describe('buffer de disparo durante la recarga', () => {
+  function stepWeapon(
+    player: ReturnType<typeof playerAt>,
+    bullets: Bullet[],
+    fireRequested: boolean,
+    stepSeconds = 0.1,
+  ): boolean {
+    return updatePlayerWeapon({
+      player,
+      fireRequested,
+      stepSeconds,
+      bullets,
+      direction: { x: 0, y: 0, z: 1 },
+    });
+  }
+
+  it('dispara al terminar la recarga si el clic se hizo poco antes', () => {
+    const player = playerAt();
+    const bullets: Bullet[] = [];
+    player.reloadRemaining = 0.2;
+
+    expect(stepWeapon(player, bullets, true)).toBe(false);
+    expect(stepWeapon(player, bullets, false)).toBe(true);
+    expect(bullets).toHaveLength(1);
+  });
+
+  it('descarta el clic si todavía faltaba demasiado para recargar', () => {
+    const player = playerAt();
+    const bullets: Bullet[] = [];
+    player.reloadRemaining = 0.5;
+
+    stepWeapon(player, bullets, true);
+    for (let step = 0; step < 5; step += 1) stepWeapon(player, bullets, false);
+
+    expect(bullets).toHaveLength(0);
+  });
+
+  it('el disparo diferido se consume una sola vez', () => {
+    const player = playerAt();
+    const bullets: Bullet[] = [];
+    player.reloadRemaining = 0.2;
+
+    stepWeapon(player, bullets, true);
+    stepWeapon(player, bullets, false);
+    for (let step = 0; step < 10; step += 1) stepWeapon(player, bullets, false);
+
+    expect(bullets).toHaveLength(1);
   });
 });

@@ -23,6 +23,8 @@ export interface PlayerState {
   reloadRemaining: number;
   /** Duración de la recarga en curso; la potencia la reduce temporalmente. */
   reloadDuration: number;
+  /** Margen restante para aprovechar un clic hecho durante la recarga. */
+  fireBufferRemaining: number;
   alive: boolean;
 }
 
@@ -42,6 +44,7 @@ export function createPlayer(spawn: SpawnPoint): PlayerState {
     armor: PLAYER_TANK.armor,
     reloadRemaining: 0,
     reloadDuration: PLAYER_TANK.reloadSeconds,
+    fireBufferRemaining: 0,
     alive: true,
   };
 }

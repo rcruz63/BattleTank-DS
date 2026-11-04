@@ -137,6 +137,8 @@ function buildScreen(data: HudData): HudScreen | null {
         lines: [
           data.mission.briefing,
           'Objetivo: destruye todas las fuerzas enemigas.',
+          'Controles: WASD/flechas mover y girar · ratón apuntar · clic o ESPACIO disparar · ESC pausa',
+          'Blindaje: frontal ×0,5 · lateral ×1 · trasero ×1,5 — busca el flanco',
           `Escenario #${data.seed}`,
         ],
         action: 'ENTER para desplegar',

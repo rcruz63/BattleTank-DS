@@ -21,7 +21,7 @@ contratos descritos aquí son el acuerdo entre capas, no un inventario exhaustiv
 | Build y dev server | **Vite 8** (`base: './'`, `target: es2022`, `outDir: dist`, sourcemaps), puerto fijo 5273.                                                                                      |
 | Gráficos           | **Canvas 2D** con resolución interna fija **1280×720** escalada por CSS con letterboxing (`index.html`).                                                                        |
 | HUD                | **DOM/CSS** sobre el canvas + un **canvas pequeño independiente** para el radar (implementado).                                                                                 |
-| Tests              | **Vitest** en entorno **Node** (`tests/**/*.test.ts`), sin jsdom; **214 tests en 38 ficheros**.                                                                                 |
+| Tests              | **Vitest** en entorno **Node** (`tests/**/*.test.ts`), sin jsdom; **233 tests en 40 ficheros**.                                                                                 |
 | Calidad            | **ESLint** (tamaño/complejidad) + **Prettier**; puerta `npm run check`.                                                                                                         |
 | Runtime            | **Cero dependencias** y **cero assets externos**: geometría procedural, tipografía del sistema, iconos CSS y audio WebAudio sintetizado.                                        |
 | Persistencia       | `localStorage` solo para récord y misión desbloqueada, clave `battletank-ds.progression.v1` (fase 9).                                                                           |
@@ -96,7 +96,8 @@ BattleTank-DS/
 │   │   ├── background.ts   #   cielo, horizonte y rejilla del suelo
 │   │   ├── painter.ts      #   ordenación y pintado de caras
 │   │   ├── renderer.ts     #   composición: coberturas + tanques + pickups + proyectiles
-│   │   ├── combatFeedback.ts # barras de vida, daño flotante con zona y destello
+│   │   ├── combatFeedback.ts # barras de vida (con recarga enemiga) y daño flotante con zona
+│   │   ├── damageIndicator.ts # arco direccional del daño recibido en el borde
 │   │   └── periscope.ts    #   overlay: máscara, retícula móvil, recarga y marca de impacto
 │   ├── entities/           # datos y comportamiento local
 │   │   ├── player.ts       #   estado del tanque del jugador
@@ -110,7 +111,7 @@ BattleTank-DS/
 │   │   ├── combat.ts       #   recarga, disparo, proyectiles 3D y zona del impacto
 │   │   ├── damage.ts       #   impacto: blindaje base, mejoras, zona direccional y muerte
 │   │   ├── loot.ts         #   recogida, efectos y temporizadores de los pickups
-│   │   ├── feedback.ts     #   visibilidad de enemigos y caducidad de daños flotantes
+│   │   ├── feedback.ts     #   visibilidad, marca de impacto, rumbo del daño y caducidad de popups
 │   │   ├── armor.ts        #   clasificación de zona y multiplicadores de blindaje
 │   │   ├── mission.ts      #   semillas, parámetros de arena, reparto y bonus de misión
 │   │   ├── progression.ts  #   récord/misión desbloqueada con localStorage best-effort
@@ -131,7 +132,7 @@ BattleTank-DS/
 │       ├── hudData.ts      #   adaptación del estado a los datos del HUD
 │       └── render.ts       #   render del mundo + periscopio (el HUD DOM va aparte)
 │
-├── tests/                  # espejo de src/ (38 ficheros, 214 tests) + integración headless
+├── tests/                  # espejo de src/ (40 ficheros, 233 tests) + integración headless
 ├── docs/
 └── dist/                   # build generado (no versionado)
 ```
@@ -245,7 +246,8 @@ requestAnimationFrame
    │    ├─ systems/combat.updatePlayerWeapon: recarga y disparo en la dirección de la mira; si
    │    │  dispara, alerta a ≤ 60 m, activa retroceso y suena el cañón
    │    ├─ systems/ai.updateEnemies: temporizadores, percepción por LOS, alerta, ataque (arco de
-   │    │  fuego ±15°, sin corregir rumbo al recargar) o avance con A* y colisión
+   │    │  fuego ±15°, sin corregir rumbo al recargar) o avance con A* y colisión; devuelve los
+   │    │  disparos del paso y `game` suena `enemy-fire`
    │    ├─ systems/combat.updateProjectiles: subpasos con dirección 3D, impactos en coberturas,
    │    │  tanques (altura 2,2 m) o suelo, zona de blindaje, daño/destrucción y eventos
    │    ├─ systems/loot.updateLoot + collectPickups: temporizadores y recogida a 2 m con su efecto
@@ -300,9 +302,9 @@ requestAnimationFrame
   rumbo lógico ni la simulación ni la dirección del disparo. La sacudida por daño se sustituye de
   momento por el overlay rojo (tinte al recibir impacto y viñeta de vida baja).
 - **Puntería:** el cañón vive en un cono de ±15° de giro y ±4° de cabeceo respecto al casco
-  (`AIM_LIMITS`). El puntero se normaliza a [-1, 1] con el rectángulo del canvas (que puede estar
-  escalado por CSS); la retícula se dibuja en la proyección del ángulo y no en la posición del ratón.
-  El cursor del sistema se oculta sobre el canvas (`cursor: none`).
+  (`AIM_LIMITS`). El desplazamiento del cursor en píxeles se convierte a ángulo con la focal de la
+  cámara (`aimPointerFromCanvas`): la retícula se dibuja donde está el cursor hasta el límite del
+  cono y se recorta después. El cursor del sistema se oculta sobre el canvas (`cursor: none`).
 - **Escalado:** canvas interno fijo 1280×720 escalado por CSS con letterboxing. La UI vive en DOM
   encima y el radar usa su propio canvas.
 
@@ -335,10 +337,11 @@ El plan describe 5 macro-pasos (§6.3); este es el desglose real de la composici
    (`#hud-damage-vignette`) son capas CSS con `radial-gradient` en `ui/styles.css`. La máscara
    inferior del canvas se redujo a 96 px en la fase 11 (antes 118) al no dibujarse el cañón; el HUD
    queda por encima (`z-index` 2 de `#hud-root`).
-7. **Feedback de pantalla.** `render/combatFeedback.ts` dibuja la barra de vida con nombre sobre
-   enemigos visibles y los números de daño con la zona del impacto; `overlayTint` tiñe de rojo al
-   recibir daño; el HUD DOM muestra el aviso de pickup y las pantallas de campaña cubren el
-   resultado (victoria/derrota/campaña completada).
+7. **Feedback de pantalla.** `render/combatFeedback.ts` dibuja la barra de vida con nombre y la
+   barra fina de recarga enemiga sobre enemigos visibles, y los números de daño con la zona del
+   impacto; `overlayTint` tiñe de rojo al recibir daño; `render/damageIndicator.ts` pinta el arco
+   direccional del último impacto recibido; el HUD DOM muestra el aviso de pickup y las pantallas de
+   campaña cubren el resultado (victoria/derrota/campaña completada).
 8. **HUD DOM.** `ui.hud` actualiza vida, avance, puntuación, recarga, efectos, avisos, audio, pausa,
    pantallas de campaña y la opacidad de la viñeta de daño (0 a 0,5 según la vida, siempre por debajo
    del 40 %); el radar se pinta en su canvas y el mundo (barras/daño flotante) sigue en canvas.
@@ -508,7 +511,7 @@ colisión se dividen en funciones pequeñas; si una regla no cabe sin anidar, se
 | IA demasiado precisa encarando al jugador                         | Arco de fuego ±15°, giro limitado y pausa de seguimiento al recargar                                                                  | Mitigado (7.5)                              |
 | Dificultad mal calibrada                                          | Balance en `config/tanks.ts`, IA por misión y simulación headless con `?seed=`                                                        | Implementado; balance a validar en QA       |
 | Oclusión percibida como injusta                                   | Enemigos con la misma LOS; coberturas destructibles y radar                                                                           | Implementado                                |
-| Retícula/puntería descuadrada respecto a la dirección del disparo | `resolveAim` unitario y QA visual de la retícula (ya no hay cañón dibujado)                                                           | Mitigado (bloque 6.5)                       |
+| Retícula/puntería descuadrada respecto a la dirección del disparo | `resolveAim` unitario; mapeo angular 1:1 con el cursor y QA visual de la retícula (ya no hay cañón dibujado)                          | Mitigado (bloque 6.5 y A)                   |
 | Cono de puntería demasiado estrecho o amplio                      | ±15° / ±4° en `AIM_LIMITS`, revisable con QA y ajuste de datos                                                                        | Revisable (fase 11)                         |
 | Cursor del sistema visible distrayendo                            | Oculto sobre el canvas con CSS; la retícula es la referencia                                                                          | Implementado                                |
 | Audio bloqueado por el navegador                                  | Desbloqueo en el primer gesto; degradación silenciosa                                                                                 | Implementado (fase 10)                      |
@@ -557,10 +560,12 @@ colisión se dividen en funciones pequeñas; si una regla no cabe sin anidar, se
   victoria/derrota, puntuación de campaña y persistencia (`battletank-ds.progression.v1`).
 - **Fase 10:** audio cerrado — bus WebAudio inyectable con motor, cañón, impactos, recarga, pickups,
   UI y viento; mute/volumen y HUD. **211 tests en 38 ficheros.**
-- **Fase 11:** pulido en curso — documentación y `PLAN.md` sincronizados con autorización del usuario,
+- **Fase 11:** pulido cerrado — documentación y `PLAN.md` sincronizados con autorización del usuario,
   mejoras UX (viñeta de vida baja, fogonazo del enemigo, máscara inferior de 96 px, aviso de pickup
-  oculto en pausa) y QA headless APTO; quedan la QA de audio de oído, la decisión de release y el tag
-  `v0.1.0`. **214 tests en 38 ficheros.**
+  oculto en pausa) y QA headless APTO; quedan la QA de audio de oído y el tag `v0.1.0`.
+- **Bloque A post-0.1.0:** claridad de combate y onboarding — marca de impacto fiable (`BUG-002`),
+  arco direccional de daño, cañonazo enemigo audible, recarga enemiga visible, buffer de disparo,
+  briefing con controles/blindaje y puntería 1:1 con el cursor. **233 tests en 40 ficheros.**
 
 El inventario real, commit a commit, está en [`STATUS.md`](STATUS.md); el orden y entregables de
 cada fase, en [`PLAN.md`](PLAN.md) §12.

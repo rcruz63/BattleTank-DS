@@ -1,6 +1,7 @@
 /** Síntesis procedural de efectos con WebAudio (sin assets). */
 
-export type SynthCue = 'fire' | 'impact' | 'explosion' | 'damage' | 'reload' | 'pickup' | 'ui';
+export type SynthCue =
+  'fire' | 'enemy-fire' | 'impact' | 'explosion' | 'damage' | 'reload' | 'pickup' | 'ui';
 
 interface ToneSpec {
   readonly type: OscillatorType;
@@ -95,6 +96,18 @@ function playFire(context: AudioContext, output: AudioNode): void {
   });
 }
 
+/** Cañonazo enemigo: más apagado y distante que el del jugador, para localizarlo de oído. */
+function playEnemyFire(context: AudioContext, output: AudioNode): void {
+  playNoise(context, output, { duration: 0.14, gain: 0.12, filterFrequency: 520 });
+  playTone(context, output, {
+    type: 'sine',
+    frequency: 88,
+    endFrequency: 40,
+    duration: 0.24,
+    gain: 0.18,
+  });
+}
+
 function playImpact(context: AudioContext, output: AudioNode): void {
   playNoise(context, output, { duration: 0.12, gain: 0.18, filterFrequency: 700 });
   playTone(context, output, {
@@ -151,6 +164,7 @@ function playUi(context: AudioContext, output: AudioNode): void {
 
 const CUE_PLAYERS: Record<SynthCue, (context: AudioContext, output: AudioNode) => void> = {
   fire: playFire,
+  'enemy-fire': playEnemyFire,
   impact: playImpact,
   explosion: playExplosion,
   damage: playDamage,
@@ -170,10 +184,7 @@ export function createCuePlayer(
 }
 
 /** Viento filtrado de fondo, muy tenue y en bucle. */
-export function createAmbientVoice(
-  context: AudioContext,
-  output: AudioNode,
-): { dispose(): void } {
+export function createAmbientVoice(context: AudioContext, output: AudioNode): { dispose(): void } {
   const source = context.createBufferSource();
   const filter = context.createBiquadFilter();
   const gain = context.createGain();

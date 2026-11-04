@@ -6,6 +6,7 @@
  */
 
 import { clamp } from '../core/math';
+import { aimPointerFromCanvas } from './aim';
 
 export interface InputSnapshot {
   /** -1 (atrás) .. 1 (adelante). */
@@ -180,10 +181,7 @@ const GAME_KEYS = new Set([
 ]);
 
 /** Conecta el estado al teclado. Devuelve la función para desconectar. */
-export function bindKeyboardInput(
-  state: InputState,
-  target: EventTarget = window,
-): () => void {
+export function bindKeyboardInput(state: InputState, target: EventTarget = window): () => void {
   const onKeyDown = (event: Event): void => {
     const keyboardEvent = event as KeyboardEvent;
     if (!GAME_KEYS.has(keyboardEvent.code)) return;
@@ -216,9 +214,10 @@ export function bindMouseInput(state: InputState, canvas: HTMLCanvasElement): ()
   const onPointerMove = (event: PointerEvent): void => {
     const rect = canvas.getBoundingClientRect();
     if (rect.width <= 0 || rect.height <= 0) return;
-    const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-    const y = 1 - ((event.clientY - rect.top) / rect.height) * 2;
-    state.setPointer(x, y);
+    const offsetX = event.clientX - (rect.left + rect.width / 2);
+    const offsetY = event.clientY - (rect.top + rect.height / 2);
+    const pointer = aimPointerFromCanvas(offsetX, offsetY, rect.width);
+    state.setPointer(pointer.x, pointer.y);
   };
 
   const onPointerDown = (event: PointerEvent): void => {

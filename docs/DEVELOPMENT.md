@@ -293,10 +293,11 @@ Detalle completo en [`TESTING.md`](TESTING.md); resumen de convenciones:
   2D simulado y fixtures de rejilla/cámara/caras; la IA, con rejilla, jugador y RNG inyectados.
 - Helpers compartidos en `tests/helpers/` (previsto) para no duplicar fixtures.
 - Los tests son código: también se leen, se refactorizan y no se dejan comentados.
-- Estado actual: **214 tests en 38 ficheros** (`tests/core`, `tests/world`, `tests/render`,
+- Estado actual: **233 tests en 40 ficheros** (`tests/core`, `tests/world`, `tests/render`,
   `tests/systems`, `tests/game`, `tests/config` y `tests/entities`), incluidas las pruebas de
-  puntería, LOS, A*, IA, modelos, oclusión, colisión entre tanques, pickups, blindaje direccional y el
-  pulido UX de la fase 11 (viñeta de vida baja, aviso en pausa y fogonazo enemigo).
+  puntería, LOS, A*, IA, modelos, oclusión, colisión entre tanques, pickups, blindaje direccional, el
+  pulido UX de la fase 11 (viñeta de vida baja, aviso en pausa y fogonazo enemigo) y el bloque A
+  post-0.1.0 (marca de impacto fiable, arco de daño, recarga enemiga, buffer y briefing).
 
 ## 12. Si falla `npm run check`
 
@@ -335,8 +336,9 @@ Decisiones que este documento ha tenido que asumir; conviene cerrarlas y corregi
 - **Licencia:** no declarada; pendiente de decisión del usuario.
 - **Balance fase 6:** el balance real está en `src/config/tanks.ts` (Panzer III 100 PV; Tiger I
   140 PV y 10 % de blindaje); el ajuste de dificultad por misión queda para la fase 9.
-- **Puntería:** el cono de ratón (±15° / ±4°) y el mapeo lineal están en `AIM_LIMITS`/`aim.ts`; no
-  hay sensibilidad configurable ni curvas (ver GAME_DESIGN §12). El cursor se oculta con CSS.
+- **Puntería:** el cono de ratón (±15° / ±4°) y el mapeo angular por focal están en
+  `AIM_LIMITS`/`aim.ts`; no hay sensibilidad configurable ni curvas (ver GAME_DESIGN §12). El cursor
+  se oculta con CSS.
 - **Pendientes de diseño:** ver [`GAME_DESIGN.md`](GAME_DESIGN.md#12-pendientes-de-diseño-para-el-lead)
   (fórmula de puntuación, reducciones de daño de pickups, balance de misiones, reposición de IA,
   modelo de impacto de tanques…).

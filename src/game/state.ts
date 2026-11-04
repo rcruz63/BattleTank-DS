@@ -12,6 +12,10 @@ export interface EffectsState {
   recoil: number;
   hitMarker: number;
   damageFlash: number;
+  /** Rumbo absoluto del último impacto recibido, para el indicador direccional. */
+  damageBearing: number;
+  /** 0..1, intensidad del indicador direccional de daño. */
+  damageIndicator: number;
   pickupFlash: number;
   pickupNotice: string;
   pickupColor: string;
@@ -35,6 +39,7 @@ const EFFECT_RATE = {
   recoil: 4.5,
   hitMarker: 5,
   damageFlash: 2.5,
+  damageIndicator: 2.2,
   pickupFlash: 0.8,
 } as const;
 
@@ -43,6 +48,8 @@ export function createEffects(): EffectsState {
     recoil: 0,
     hitMarker: 0,
     damageFlash: 0,
+    damageBearing: 0,
+    damageIndicator: 0,
     pickupFlash: 0,
     pickupNotice: '',
     pickupColor: PALETTE.texto,
@@ -57,5 +64,9 @@ export function decayEffects(effects: EffectsState, stepSeconds: number): void {
   effects.recoil = Math.max(0, effects.recoil - stepSeconds * EFFECT_RATE.recoil);
   effects.hitMarker = Math.max(0, effects.hitMarker - stepSeconds * EFFECT_RATE.hitMarker);
   effects.damageFlash = Math.max(0, effects.damageFlash - stepSeconds * EFFECT_RATE.damageFlash);
+  effects.damageIndicator = Math.max(
+    0,
+    effects.damageIndicator - stepSeconds * EFFECT_RATE.damageIndicator,
+  );
   effects.pickupFlash = Math.max(0, effects.pickupFlash - stepSeconds * EFFECT_RATE.pickupFlash);
 }

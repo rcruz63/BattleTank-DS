@@ -6,6 +6,7 @@ import { playerForward } from '../entities/player';
 import type { PlayerState } from '../entities/player';
 import { overlayTint } from '../render/canvas';
 import { drawCombatFeedback } from '../render/combatFeedback';
+import { drawDamageIndicator } from '../render/damageIndicator';
 import { drawPeriscope } from '../render/periscope';
 import { createPlayerCamera } from '../render/playerCamera';
 import { renderWorld } from '../render/renderer';
@@ -59,5 +60,13 @@ export function renderGame(state: GameState, context: CanvasRenderingContext2D):
 
   if (effects.damageFlash > 0) {
     overlayTint(context, PALETTE.destelloDano, 0.28 * effects.damageFlash);
+  }
+
+  if (effects.damageIndicator > 0) {
+    drawDamageIndicator(context, VIEWPORT, {
+      playerYaw: player.yaw,
+      bearing: effects.damageBearing,
+      intensity: effects.damageIndicator,
+    });
   }
 }

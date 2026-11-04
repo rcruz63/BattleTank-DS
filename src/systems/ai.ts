@@ -53,7 +53,11 @@ function aimAngle(from: WorldPoint, to: WorldPoint): number {
 }
 
 /** Despierta a los enemigos cercanos cuando el jugador dispara (les delata el estampido). */
-export function alertEnemiesNear(enemies: readonly EnemyState[], point: WorldPoint, radius: number): void {
+export function alertEnemiesNear(
+  enemies: readonly EnemyState[],
+  point: WorldPoint,
+  radius: number,
+): void {
   for (const enemy of enemies) {
     if (!enemy.alive || enemy.alerted) continue;
     if (planarDistance(enemy.position, point) <= radius) {
@@ -85,7 +89,7 @@ function fireEnemyBullet(enemy: EnemyState, context: AiContext): void {
   );
 }
 
-function updateAttack(enemy: EnemyState, context: AiContext): void {
+function updateAttack(enemy: EnemyState, context: AiContext): boolean {
   const targetAngle = aimAngle(enemy.position, context.player.position);
   const reloading = enemy.reloadRemaining > 0;
 
@@ -99,11 +103,12 @@ function updateAttack(enemy: EnemyState, context: AiContext): void {
     aimError <= degreesToRadians(AI_TUNING.fireArcDegrees) &&
     enemy.reactionTimer <= 0 &&
     !reloading;
-  if (!canShoot) return;
+  if (!canShoot) return false;
 
   fireEnemyBullet(enemy, context);
   enemy.reloadRemaining = enemy.reloadSeconds;
   enemy.muzzleFlash = 1;
+  return true;
 }
 
 /** Siguiente centro de celda de la ruta; consume las celdas ya alcanzadas. */
@@ -199,12 +204,16 @@ function updateAwareness(enemy: EnemyState, perception: Perception, context: AiC
   enemy.pathTimer = 0;
 }
 
-function updateEnemy(enemy: EnemyState, context: AiContext, others: readonly EnemyState[]): void {
+function updateEnemy(
+  enemy: EnemyState,
+  context: AiContext,
+  others: readonly EnemyState[],
+): boolean {
   tickEnemyTimers(enemy, context.stepSeconds);
 
   if (!context.player.alive) {
     enemy.aiMode = 'idle';
-    return;
+    return false;
   }
 
   const perception = perceive(enemy, context);
@@ -212,22 +221,25 @@ function updateEnemy(enemy: EnemyState, context: AiContext, others: readonly Ene
 
   if (!enemy.alerted) {
     enemy.aiMode = 'idle';
-    return;
+    return false;
   }
 
   if (perception.seesPlayer && perception.distance <= AI_TUNING.attackRange) {
     enemy.aiMode = 'attack';
-    updateAttack(enemy, context);
-    return;
+    return updateAttack(enemy, context);
   }
 
   enemy.aiMode = 'advance';
   advanceEnemy(enemy, context, others);
+  return false;
 }
 
-export function updateEnemies(enemies: readonly EnemyState[], context: AiContext): void {
+/** Avanza la IA y devuelve cuántos enemigos dispararon en el paso (para el audio). */
+export function updateEnemies(enemies: readonly EnemyState[], context: AiContext): number {
+  let shots = 0;
   for (const enemy of enemies) {
     if (!enemy.alive) continue;
-    updateEnemy(enemy, context, enemies);
+    if (updateEnemy(enemy, context, enemies)) shots += 1;
   }
+  return shots;
 }

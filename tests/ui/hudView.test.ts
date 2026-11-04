@@ -88,3 +88,18 @@ describe('vista del HUD', () => {
     expect(view.notice).toBeNull();
   });
 });
+
+describe('briefing de misión', () => {
+  it('enseña controles y blindaje antes de desplegar', () => {
+    const data = createGame({ seed: 42, autoStart: false }).getHudData();
+    const view = buildHudView(data);
+    const text = view.screen?.lines.join(' ') ?? '';
+
+    expect(view.screen?.kicker).toBe('MISIÓN 1');
+    expect(view.screen?.action).toBe('ENTER para desplegar');
+    expect(text).toContain('WASD');
+    expect(text).toContain('ESPACIO');
+    expect(text).toContain('frontal ×0,5');
+    expect(text).toContain('lateral ×1');
+  });
+});

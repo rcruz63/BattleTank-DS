@@ -101,4 +101,30 @@ describe('audio de la partida', () => {
 
     game.dispose();
   });
+
+  it('suena el cañonazo enemigo cuando un enemigo dispara', () => {
+    const input = createInputState();
+    const audio = new FakeAudio();
+    const game = createGame({ seed: 42, input, audio });
+
+    const enemy = game.enemies[0];
+    if (!enemy) throw new Error('La misión debe tener enemigos.');
+    const forward = { x: Math.sin(game.player.yaw), z: Math.cos(game.player.yaw) };
+    enemy.position = {
+      x: game.player.position.x + forward.x * 6,
+      z: game.player.position.z + forward.z * 6,
+    };
+    enemy.alerted = true;
+    enemy.reactionTimer = 0;
+    enemy.reloadRemaining = 0;
+    enemy.yaw = Math.atan2(
+      game.player.position.x - enemy.position.x,
+      game.player.position.z - enemy.position.z,
+    );
+
+    game.update(1 / 60);
+    expect(audio.cues).toContain('enemy-fire');
+
+    game.dispose();
+  });
 });

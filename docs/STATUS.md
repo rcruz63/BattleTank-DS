@@ -1,7 +1,7 @@
 # Estado del proyecto — BattleTank-DS
 
-> **Actualizado:** 2026-11-04 · **Fase actual:** 11 cerrada salvo QA de oído y tag (`0.1.0` preparado)
-> **Último commit:** `chore(build): fijar workers_dev y preview_urls`
+> **Actualizado:** 2026-11-04 · **Fase actual:** pulido post-0.1.0 — **bloque A cerrado**
+> **Último commit:** `feat(ux): claridad de combate y onboarding del bloque A`
 >
 > Este fichero es el punto de entrada para retomar el proyecto, sea otra persona, otro chat u
 > otro modelo. Se actualiza en **cada commit**. La verdad sobre el alcance está en el plan.
@@ -11,14 +11,24 @@
 1. Lee [`docs/PLAN.md`](PLAN.md) (alcance y fases) y este estado.
 2. `npm install` y `npm run check` para confirmar que la base está sana.
 3. `npm run dev` y abre `http://localhost:5273`.
-4. Lee «Incidencias conocidas» antes de elegir tarea: el release `0.1.0` está preparado; quedan la
-   QA manual de oído y crear el tag `v0.1.0`. Audio (10), campaña (9), HUD/radar (8), pickups (7),
-   blindaje direccional (7.5) y `BUG-001` (6.6) ya están cerrados.
+4. Lee «Incidencias conocidas» antes de elegir tarea: el release `0.1.0` está preparado y el bloque A
+   de pulido post-entrega está cerrado; quedan la QA manual de oído, el tag `v0.1.0` y los bloques
+   B/C de pulido. Audio (10), campaña (9), HUD/radar (8), pickups (7), blindaje direccional (7.5),
+   `BUG-001` (6.6) y `BUG-002` (bloque A) ya están cerrados.
 5. Sigue el flujo de [`docs/DEVELOPMENT.md`](DEVELOPMENT.md): tests → `npm run check` → changelog
    → estado → commit.
 
 ## Hecho
 
+- [x] **Pulido post-0.1.0 — bloque A: claridad de combate y onboarding (2026-11-04).** La marca de
+      impacto solo se activa cuando el proyectil del jugador daña a un enemigo (`BUG-002`: antes
+      aparecía al recibir daño o al golpear coberturas); el daño recibido muestra un arco rojo
+      direccional en el borde (`render/damageIndicator.ts`) y el cañonazo enemigo suena con un cue
+      propio (`enemy-fire`). La recarga enemiga se dibuja como barra fina bajo la vida. El disparo
+      tiene un buffer de 0,25 s para clics justo antes de terminar la recarga. El briefing muestra
+      controles y pista de blindaje. La puntería del ratón pasa a mapearse por ángulo con la focal:
+      la retícula sigue al cursor 1:1 hasta el límite del cono. **233 tests en 40 ficheros** y QA
+      visual headless con capturas (briefing, retícula a 120 px, arco de daño y recarga enemiga).
 - [x] **Despliegue en Cloudflare Workers (2026-11-04).** `wrangler.jsonc` publica `dist/` como
       assets del Worker `battletank-ds` (assets-only, sin script de servidor, variables ni bindings).
       Primer deploy real correcto en <https://battletank-ds.rpublico.workers.dev> (HTTP 200 con los
@@ -137,15 +147,14 @@
 
 ## En curso
 
-- **Fase 11 — release preparado (2026-10-31).** Documentación y `PLAN.md` sincronizados con
-  autorización explícita, mejoras UX implementadas y revalidadas (viñeta de vida baja, fogonazo
-  enemigo, máscara inferior de 96 px y aviso de pickup oculto en pausa), QA headless **APTO**
-  (85/85 + 41/41, 0 errores de consola, 60 fps estables, 457 caras máx) y release `0.1.0` preparado
-  sin tag. Quedan la QA manual de oído y, después, el tag anotado `v0.1.0` (sin push).
+- **Ninguno.** Bloque A cerrado y pendiente de la revisión del usuario. Siguiente: **bloque B**
+  (sensación de movimiento, feedback de colisión, audio de motor y legibilidad de barras/radar),
+  tras la pausa acordada después de cada bloque.
 
 ## Incidencias conocidas
 
-- Ninguna abierta. `BUG-001` quedó resuelto en el bloque 6.6. La confusión del panel temporal
+- Ninguna abierta. `BUG-001` quedó resuelto en el bloque 6.6 y `BUG-002` (marca de impacto falsa al
+  recibir daño o golpear coberturas) en el bloque A post-0.1.0. La confusión del panel temporal
   («fase 7 / enemigos 3/4 / proyectiles 0») se resolvió el 2026-10-28 reetiquetándolo; era el HUD
   temporal de QA, no el HUD final.
 
@@ -169,17 +178,33 @@
 | 10    | Audio: efectos sintetizados WebAudio, volumen y mute              | Completada                                      |
 | 11    | Pulido, QA, rendimiento, documentación final y tag `v0.1.0`       | **Casi completa** (tag pendiente de QA de oído) |
 
+### Pulido post-0.1.0 (acordado el 2026-11-04)
+
+Pausa después de cada bloque para revisar la evolución con el usuario.
+
+| Bloque | Contenido                                                                                                                                                                            | Estado                   |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------ |
+| A      | Claridad de combate y onboarding: marca de impacto, dirección del daño, cañonazo enemigo, recarga enemiga visible, buffer de disparo, puntería 1:1 y briefing con controles/blindaje | **Cerrado** (2026-11-04) |
+| B      | Sensación y legibilidad: inercia/aceleración, feedback de colisión, motor ligado a la velocidad real, barras/radar y audio direccional                                               | Pendiente de revisión    |
+| C      | Dificultad y balance: radio de alerta, escalado de misión 2/3, TTK frontal y pickups; validar con simulación headless                                                                | Pendiente de revisión    |
+
 ## Deuda técnica registrada
 
+- **Movimiento sin inercia (detectado en el playtest del 2026-11-04):** `systems/movement.ts` aplica
+  la velocidad máxima al instante, pero el README y `GAME_DESIGN` hablan de «inercia ligera». Se
+  resolverá en el bloque B (aceleración/frenada y motor ligado a la velocidad real) o corrigiendo la
+  documentación.
+- **Puntería del ratón:** el mapeo ya es angular (retícula 1:1 con el cursor hasta el cono) y no
+  lineal contra el canvas; falta una opción de sensibilidad (bloque B/0.2).
 - **Supuestos de pickups pendientes de validar:** la mejora cura también los 20 PV al subir el
   máximo, las reducciones de daño son multiplicativas y recoger una mejora con el tope ×3 la consume
-  sin efecto. Confirmar en la fase 11 (pulido).
+  sin efecto. Confirmar en el bloque C (dificultad y balance).
 - **Pantallas de campaña mínimas:** briefing, resumen, derrota y fin de campaña están
   implementados; no hay menú inicial ni selector de misión (se arranca en la desbloqueada más alta).
-- **Balance del blindaje pendiente de la fase 11:** multiplicadores y umbrales ya están en
+- **Balance del blindaje pendiente del bloque C:** multiplicadores y umbrales ya están en
   `balance.ts`; hay que validar 5/3/2 y 8/4/3 y si la ventana de recarga de la IA resulta demasiado
-  generosa (fase 11).
-- **IA sin corregir rumbo al recargar:** implementado como ventana de flanqueo; revisar en la fase 11
+  generosa (bloque C, con simulación headless).
+- **IA sin corregir rumbo al recargar:** implementado como ventana de flanqueo; revisar en el bloque C
   si hay que acortarla o mantenerla.
 - IA sin patrulla ni coordinación de flanqueo: los enemigos permanecen al acecho hasta ver u oír al
   jugador. Suficiente para 0.1.0; ampliable tras la entrega.
@@ -195,6 +220,10 @@
 
 ## Decisiones y notas operativas
 
+- **Bloque A verificado (2026-11-04):** `npm run check` verde con **233 tests en 40 ficheros**; QA
+  headless con capturas del briefing con controles/blindaje, retícula desplazada junto al cursor,
+  arco direccional de daño, barra de recarga enemiga y ausencia de marca de impacto falsa. Sin
+  errores de consola.
 - **Flujo de trabajo acordado con el usuario:** pausa al cerrar cada fase para revisión/intervención. Se retoma con «continúa la fase N» o «continúa el bloque N».
 - **Cambios aprobados 2026-10-27:** corregir `BUG-001` (6.6) y añadir blindaje direccional/flanqueo (7.5). Registrados en `PLAN.md` §2/§12 y `DECISIONS.md` ADR-009. Bloques 6.6/7.5 y fases 7, 8, 9 y 10 cerrados; siguiente: pulido/entrega (fase 11).
 - **QA del bloque 6.6:** además de los tests de regresión, se condujo el juego real en Chrome headless vía CDP (sin dependencias nuevas) para avanzar contra un enemigo: el jugador se detiene a 2,9 m (suma de radios 2,75 m + margen 0,15 m) y no lo cruza.

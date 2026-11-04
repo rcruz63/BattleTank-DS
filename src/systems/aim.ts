@@ -29,15 +29,35 @@ export interface ResolvedAim {
 }
 
 function focalLength(viewport: Viewport): number {
-  return viewport.width / 2 / Math.tan(degreesToRadians(CAMERA_DEFAULTS.fovDegrees) / 2);
+  return focalFromWidth(viewport.width);
+}
+
+function focalFromWidth(width: number): number {
+  return width / 2 / Math.tan(degreesToRadians(CAMERA_DEFAULTS.fovDegrees) / 2);
+}
+
+/**
+ * Traduce el desplazamiento del cursor en píxeles (respecto al centro del canvas) al puntero
+ * normalizado del cono. Se usa la focal de la proyección, de modo que la retícula se dibuja
+ * exactamente donde está el cursor hasta tocar el límite del cono; más allá, se recorta.
+ */
+export function aimPointerFromCanvas(
+  offsetX: number,
+  offsetY: number,
+  canvasWidth: number,
+): AimPointer {
+  const focal = focalFromWidth(canvasWidth);
+  if (!(focal > 0)) return { x: 0, y: 0 };
+  const maxYaw = degreesToRadians(AIM_LIMITS.maxYawDegrees);
+  const maxPitch = degreesToRadians(AIM_LIMITS.maxPitchDegrees);
+  return {
+    x: clamp(Math.atan2(offsetX, focal) / maxYaw, -1, 1),
+    y: clamp(Math.atan2(-offsetY, focal) / maxPitch, -1, 1),
+  };
 }
 
 /** Resuelve el puntero normalizado en dirección de cañón y punto de retícula. */
-export function resolveAim(
-  baseYaw: number,
-  viewport: Viewport,
-  pointer: AimPointer,
-): ResolvedAim {
+export function resolveAim(baseYaw: number, viewport: Viewport, pointer: AimPointer): ResolvedAim {
   const maxYaw = degreesToRadians(AIM_LIMITS.maxYawDegrees);
   const maxPitch = degreesToRadians(AIM_LIMITS.maxPitchDegrees);
   const yawOffset = clamp(pointer.x, -1, 1) * maxYaw;

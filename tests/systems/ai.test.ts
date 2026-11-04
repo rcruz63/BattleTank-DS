@@ -29,8 +29,9 @@ describe('IA de enemigos', () => {
     enemy.reactionTimer = 0;
 
     const bullets: Bullet[] = [];
-    updateEnemies([enemy], contextFor(grid, player, bullets));
+    const shots = updateEnemies([enemy], contextFor(grid, player, bullets));
 
+    expect(shots).toBe(1);
     expect(bullets).toHaveLength(1);
     expect(bullets[0]?.owner).toBe('enemy');
     expect(enemy.aiMode).toBe('attack');
@@ -44,8 +45,9 @@ describe('IA de enemigos', () => {
     const enemy = createEnemy('enemigo-2', 'light', { x: 10, z: 26, yaw: Math.PI });
 
     const bullets: Bullet[] = [];
-    updateEnemies([enemy], contextFor(grid, player, bullets));
+    const shots = updateEnemies([enemy], contextFor(grid, player, bullets));
 
+    expect(shots).toBe(0);
     expect(enemy.alerted).toBe(false);
     expect(enemy.aiMode).toBe('idle');
     expect(bullets).toHaveLength(0);
