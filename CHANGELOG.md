@@ -7,6 +7,12 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 ## [No publicado]
 
+### Añadido
+
+- Despliegue estático en Cloudflare Workers: `wrangler.jsonc` publica `dist/` como assets del Worker
+  `battletank-ds`, sin script de servidor, variables de entorno ni bindings. El build (`npm run
+  build`, `base: './'`) no cambia; verificado con `npx wrangler deploy --dry-run`.
+
 ## [0.1.0] — 2026-10-31
 
 Primera entrega del vertical slice jugable: campaña de 3 misiones, HUD/radar, audio sintetizado y

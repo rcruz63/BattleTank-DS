@@ -77,6 +77,32 @@ npm run preview  # sirve dist/ para verificar el build
 | `npm run format` / `npm run format:check` | Formatea con Prettier / comprueba el formato sin escribir.                                                                    |
 | `npm run check`                           | **Puerta de calidad**: typecheck + lint + tests + build. Obligatoria antes de cada commit.                                    |
 
+## Despliegue (Cloudflare Workers)
+
+El juego es 100 % estático: se publica el contenido de `dist/` como _assets_ de un Worker sin
+lógica de servidor. La configuración vive en [`wrangler.jsonc`](wrangler.jsonc), con el nombre del
+Worker (`battletank-ds`) y `assets.directory: ./dist`. En Cloudflare Workers Builds basta con:
+
+| Ajuste         | Valor                                                                           |
+| -------------- | ------------------------------------------------------------------------------- |
+| Build command  | `npm run build` (o `npm run check` para no publicar si fallan tipos/lint/tests) |
+| Deploy command | `npx wrangler deploy`                                                           |
+| Root directory | raíz del repositorio                                                            |
+
+No hay variables de entorno, secretos ni bindings. El build de Vite usa `base: './'`, así que los
+assets funcionan igual servidos desde la raíz del dominio o desde un subdirectorio. Para comprobar
+la configuración sin publicar nada:
+
+```bash
+npx wrangler deploy --dry-run
+```
+
+Sin `wrangler.jsonc`, `wrangler deploy` no sabe qué subir (y en CI cae en la configuración
+automática de Wrangler, que requiere confirmación interactiva). El aviso del dashboard
+`WorkerResource.getWorkerResult: response missing default_environment.script` indica que el Worker
+todavía no tiene un script/versión desplegada; no es un error de compilación, pero el primer deploy
+necesita este fichero de configuración.
+
 ## Controles
 
 | Acción               | Entrada                    | Estado                                                                                                                                           |
