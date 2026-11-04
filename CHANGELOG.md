@@ -11,7 +11,9 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
 
 - Despliegue estático en Cloudflare Workers: `wrangler.jsonc` publica `dist/` como assets del Worker
   `battletank-ds`, sin script de servidor, variables de entorno ni bindings. El build (`npm run
-  build`, `base: './'`) no cambia; verificado con `npx wrangler deploy --dry-run`.
+  build`, `base: './'`) no cambia; verificado con `npx wrangler deploy --dry-run`. Primer deploy real
+  el 2026-11-04 en <https://battletank-ds.rpublico.workers.dev>; `workers_dev` y `preview_urls`
+  quedan explícitos para que el deploy no emita avisos.
 
 ## [0.1.0] — 2026-10-31
 

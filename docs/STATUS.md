@@ -1,7 +1,7 @@
 # Estado del proyecto — BattleTank-DS
 
 > **Actualizado:** 2026-11-04 · **Fase actual:** 11 cerrada salvo QA de oído y tag (`0.1.0` preparado)
-> **Último commit:** `chore(build): publicar dist en Cloudflare Workers`
+> **Último commit:** `chore(build): fijar workers_dev y preview_urls`
 >
 > Este fichero es el punto de entrada para retomar el proyecto, sea otra persona, otro chat u
 > otro modelo. Se actualiza en **cada commit**. La verdad sobre el alcance está en el plan.
@@ -20,12 +20,11 @@
 ## Hecho
 
 - [x] **Despliegue en Cloudflare Workers (2026-11-04).** `wrangler.jsonc` publica `dist/` como
-      assets del Worker `battletank-ds` (sin script de servidor, variables ni bindings). README con
-      los ajustes de Workers Builds (build `npm run build`, deploy `npx wrangler deploy`, raíz del
-      repo) y verificación local con `npx wrangler deploy --dry-run`. `npm run check` en verde
-      (214 tests). **Pendiente:** push y primer deploy real; si el dashboard mantiene el aviso
-      `default_environment.script`, revisar si el Worker es assets-only (el sitio funciona igual) o
-      valorar un Worker passthrough mínimo. El tag `v0.1.0` sigue pendiente de la QA manual de audio.
+      assets del Worker `battletank-ds` (assets-only, sin script de servidor, variables ni bindings).
+      Primer deploy real correcto en <https://battletank-ds.rpublico.workers.dev> (HTTP 200 con los
+      assets hasheados; versión `c56389ae-a073-47d9-9e5c-4e740ddf42ae`); `workers_dev` y
+      `preview_urls` quedan explícitos para que el build no emita avisos. Wrangler 4.157.0 se instala
+      con `npx` (sin pin en `package.json`). El tag `v0.1.0` sigue pendiente de la QA manual de audio.
 - [x] **Release `0.1.0` preparado (2026-10-31).** `package.json`/`package-lock.json` a `0.1.0`,
       `CHANGELOG` con `[0.1.0] — 2026-10-31`, README y STATUS finales y build de producción verificado.
       **No se ha creado el tag:** queda pendiente de la QA manual de audio de oído, y no se ha hecho

@@ -4,6 +4,10 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "battletank-ds",
+  // Explícitos para que `wrangler deploy` no emita avisos y quede documentado: el juego se sirve en
+  // *.workers.dev y las previews por versión quedan habilitadas (los assets no contienen secretos).
+  "workers_dev": true,
+  "preview_urls": true,
   "compatibility_date": "2026-11-04",
   "assets": {
     "directory": "./dist",
