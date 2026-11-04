@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { MISSIONS } from '../../src/config/missions';
-import { buildMissionParams, buildMissionRoster, missionBonus, missionSeed } from '../../src/systems/mission';
+import {
+  buildMissionParams,
+  buildMissionRoster,
+  missionBonus,
+  missionSeed,
+} from '../../src/systems/mission';
 
 describe('campaña de misiones', () => {
   it('tiene tres misiones con dificultad creciente', () => {
@@ -12,12 +17,8 @@ describe('campaña de misiones', () => {
     expect(MISSIONS[0]?.enemies.filter((type) => type === 'heavy')).toHaveLength(0);
     expect(MISSIONS[1]?.enemies.filter((type) => type === 'heavy')).toHaveLength(1);
     expect(MISSIONS[2]?.enemies.filter((type) => type === 'heavy')).toHaveLength(2);
-    expect(MISSIONS[2]?.ai.damageMultiplier).toBeGreaterThan(
-      MISSIONS[0]?.ai.damageMultiplier ?? 0,
-    );
-    expect(MISSIONS[2]?.ai.reactionSeconds).toBeLessThan(
-      MISSIONS[0]?.ai.reactionSeconds ?? 0,
-    );
+    expect(MISSIONS[2]?.ai.damageMultiplier).toBeGreaterThan(MISSIONS[0]?.ai.damageMultiplier ?? 0);
+    expect(MISSIONS[2]?.ai.reactionSeconds).toBeLessThan(MISSIONS[0]?.ai.reactionSeconds ?? 0);
   });
 
   it('genera parámetros de arena y reparte los tipos de enemigo', () => {
@@ -28,14 +29,19 @@ describe('campaña de misiones', () => {
     expect(params.enemyCount).toBe(mission.enemies.length);
     expect(params.widthCells).toBe(mission.arena.widthCells);
     expect(params.pickupCount).toBe(mission.arena.pickupCount);
+    expect(params.minEnemyDistance).toBe(mission.arena.minEnemyDistance);
 
+    const playerSpawn = { x: 0, z: 0, yaw: 0 };
     const spawns = Array.from({ length: mission.enemies.length }, (_, index) => ({
       x: index * 4,
       z: 20,
       yaw: 0,
     }));
-    const roster = buildMissionRoster(mission, spawns);
-    expect(roster.map((entry) => entry.type)).toEqual([...mission.enemies]);
+    const roster = buildMissionRoster(mission, spawns, playerSpawn);
+    expect(roster).toHaveLength(mission.enemies.length);
+    expect(roster.map((entry) => entry.type).sort()).toEqual([...mission.enemies].sort());
+    const heavy = roster.find((entry) => entry.type === 'heavy');
+    expect(heavy?.spawn.x).toBe(16);
     expect(roster[0]?.spawn.x).toBe(0);
   });
 
@@ -45,5 +51,20 @@ describe('campaña de misiones', () => {
     expect(missionSeed(42, 1)).toBe(missionSeed(42, 1));
     expect(missionBonus(100)).toBe(700);
     expect(missionBonus(0)).toBe(500);
+  });
+
+  it('reserva los spawns más lejanos para los carros pesados', () => {
+    const mission = MISSIONS[2];
+    if (!mission) throw new Error('Falta la misión 3.');
+    const playerSpawn = { x: 0, z: 0, yaw: 0 };
+    const spawns = [0, 4, 8, 12, 16, 20].map((x) => ({ x, z: 20, yaw: 0 }));
+    const roster = buildMissionRoster(mission, spawns, playerSpawn);
+    const distance = (entry: (typeof roster)[number]) => Math.hypot(entry.spawn.x, entry.spawn.z);
+    const heavyDistances = roster.filter((entry) => entry.type === 'heavy').map(distance);
+    const lightDistances = roster.filter((entry) => entry.type === 'light').map(distance);
+
+    expect(heavyDistances).toHaveLength(2);
+    expect(lightDistances).toHaveLength(4);
+    expect(Math.min(...heavyDistances)).toBeGreaterThanOrEqual(Math.max(...lightDistances));
   });
 });

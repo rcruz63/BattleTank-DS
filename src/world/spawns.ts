@@ -4,6 +4,7 @@ import { TAU } from '../core/math';
 import type { Rng } from '../core/rng';
 import { cellCenter, cellFromIndex } from './grid';
 import { planarDistance } from './geometry';
+import { hasLineOfSight } from './los';
 import type { GenerationParams, SpawnPoint, WorldGrid, WorldPoint } from './types';
 
 const ENEMY_SEPARATION = 8;
@@ -60,12 +61,18 @@ export interface SpawnOptions {
 export function chooseEnemySpawns(options: SpawnOptions): SpawnPoint[] | null {
   const { grid, reachable, params, rng, playerSpawn } = options;
   const candidates = candidatePoints(grid, reachable, playerSpawn, params.minEnemyDistance);
-  const chosen = pickSpread({
-    candidates,
-    count: params.enemyCount,
-    minSeparation: ENEMY_SEPARATION,
-    rng,
-  });
+  // Los enemigos no empiezan con línea de visión sobre el jugador: así la partida empieza en
+  // acecho y no con varios disparando a la vez desde el primer segundo. Si el mapa no ofrece
+  // suficientes celdas ocultas, se relaja la condición en vez de fallar la generación.
+  const hidden = candidates.filter((point) => !hasLineOfSight(grid, playerSpawn, point));
+  const pick = (pool: readonly WorldPoint[]) =>
+    pickSpread({
+      candidates: pool,
+      count: params.enemyCount,
+      minSeparation: ENEMY_SEPARATION,
+      rng,
+    });
+  const chosen = pick(hidden) ?? pick(candidates);
   if (!chosen) return null;
   return chosen.map((point) => ({ ...point, yaw: rng.range(0, TAU) }));
 }

@@ -34,9 +34,10 @@ técnica) en [`docs/STATUS.md`](docs/STATUS.md).
 > pausa. La campaña encadena tres misiones con briefing, resumen, victoria/derrota y persistencia de
 > récord/desbloqueo. El audio está sintetizado con WebAudio (motor, cañón, impactos, recarga, pickups
 > y UI), con `M` para silenciar y `−`/`+` para el volumen. Queda la QA manual de oído y crear el tag
-> `v0.1.0`. Sobre la entrega se ha cerrado el **bloque A de pulido post-0.1.0** (marca de impacto
-> fiable, arco direccional de daño, cañonazo enemigo audible, recarga enemiga visible, buffer de
-> disparo, briefing con controles/blindaje y puntería 1:1 con el cursor). Consulta
+> `v0.1.0`. Sobre la entrega se han cerrado los **bloques A y A.1 de pulido post-0.1.0**: marca de
+> impacto fiable, arco direccional de daño, cañonazo enemigo audible, recarga enemiga visible, buffer
+> de disparo, briefing con controles/blindaje, puntería 1:1 con el cursor, selector de misión 1/2/3
+> y aparición justa de enemigos (sin línea de visión inicial y con los Tigers lejos). Consulta
 > [`docs/STATUS.md`](docs/STATUS.md) para el estado exacto.
 
 El título «BATTLE TANK — PERISCOPIO» es provisional y puede cambiarse en un commit de
@@ -119,6 +120,7 @@ deploy correcto.
 | Disparar             | `Espacio` o clic izquierdo | **Disponible.** Un disparo por pulsación, sin fuego automático; recarga de 2,4 s.                                                                |
 | Pausa                | `Esc`                      | **Disponible.** Congela la simulación y muestra controles y semilla.                                                                             |
 | Confirmar pantallas  | `Enter`                    | **Disponible.** Despliega, continúa tras una misión o reintenta.                                                                                 |
+| Cambiar de misión    | `1` / `2` / `3` (briefing) | **Disponible.** Cambia entre las misiones desbloqueadas sin borrar récord ni desbloqueo.                                                         |
 | Silenciar            | `M`                        | **Disponible.** Alterna mute; el HUD muestra `SILENCIADO`.                                                                                       |
 | Volumen              | `−` / `+`                  | **Disponible.** Ajusta el volumen maestro; se muestra en el HUD/pausa.                                                                           |
 | Depuración           | `F3`                       | Previsto: overlay con fps, caras, celdas visibles y entidades.                                                                                   |
@@ -158,7 +160,7 @@ BattleTank-DS/
 │   ├── ui/             # HUD DOM, modelo hudView, radar y pantallas de campaña
 │   ├── audio/          # bus WebAudio y síntesis procedural de efectos
 │   └── game/           # composición, máquina de estados de campaña, simulación y render
-├── tests/              # espejo de src/ (233 tests en 40 ficheros) + integración headless
+├── tests/              # espejo de src/ (239 tests en 40 ficheros) + integración headless
 ├── docs/               # plan, estado y documentación del proyecto
 └── dist/               # build generado (no versionado)
 ```
@@ -182,7 +184,8 @@ el navegador bloquea el almacenamiento, el juego debe seguir funcionando sin per
 ## Limitaciones conocidas y siguiente paso
 
 - **Pantallas de campaña:** briefing, resumen, derrota y fin de campaña implementados; no hay menú
-  inicial ni selector de misión (se arranca en la desbloqueada más alta).
+  inicial completo, pero el briefing incluye un selector de misión `1`/`2`/`3` entre las
+  desbloqueadas (se arranca en la desbloqueada más alta).
 - **Feedback de mundo:** barras de vida, daño flotante por zona y destello siguen dibujándose en el
   canvas del mundo (no son DOM).
 - **`BUG-001` corregido en el bloque 6.6:** el jugador y los enemigos ya no se atraviesan; cada

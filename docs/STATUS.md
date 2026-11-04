@@ -1,7 +1,7 @@
 # Estado del proyecto — BattleTank-DS
 
-> **Actualizado:** 2026-11-04 · **Fase actual:** pulido post-0.1.0 — **bloque A cerrado**
-> **Último commit:** `feat(ux): claridad de combate y onboarding del bloque A`
+> **Actualizado:** 2026-11-04 · **Fase actual:** pulido post-0.1.0 — **bloques A y A.1 cerrados**
+> **Último commit:** `fix(ux): selector de misión y aparición justa de enemigos`
 >
 > Este fichero es el punto de entrada para retomar el proyecto, sea otra persona, otro chat u
 > otro modelo. Se actualiza en **cada commit**. La verdad sobre el alcance está en el plan.
@@ -11,15 +11,25 @@
 1. Lee [`docs/PLAN.md`](PLAN.md) (alcance y fases) y este estado.
 2. `npm install` y `npm run check` para confirmar que la base está sana.
 3. `npm run dev` y abre `http://localhost:5273`.
-4. Lee «Incidencias conocidas» antes de elegir tarea: el release `0.1.0` está preparado y el bloque A
-   de pulido post-entrega está cerrado; quedan la QA manual de oído, el tag `v0.1.0` y los bloques
-   B/C de pulido. Audio (10), campaña (9), HUD/radar (8), pickups (7), blindaje direccional (7.5),
-   `BUG-001` (6.6) y `BUG-002` (bloque A) ya están cerrados.
+4. Lee «Incidencias conocidas» antes de elegir tarea: el release `0.1.0` está preparado y los bloques
+   A/A.1 de pulido post-entrega están cerrados; quedan la QA manual de oído, el tag `v0.1.0` y los
+   bloques B/C de pulido. Audio (10), campaña (9), HUD/radar (8), pickups (7), blindaje direccional
+   (7.5), `BUG-001` (6.6) y `BUG-002` (bloque A) ya están cerrados.
 5. Sigue el flujo de [`docs/DEVELOPMENT.md`](DEVELOPMENT.md): tests → `npm run check` → changelog
    → estado → commit.
 
 ## Hecho
 
+- [x] **Pulido post-0.1.0 — bloque A.1: selector de misión y aparición justa (2026-11-04).** El
+      briefing tiene un selector de misión con `1/2/3` (solo desbloqueadas) que permite cambiar la
+      misión sin borrar la progresión; `createGame` admite progresión inyectable para tests/QA. La
+      aparición de enemigos ahora exige celdas **sin línea de visión** sobre el jugador y una
+      distancia mínima por misión (20/24/28 m); los carros pesados se asignan a los spawns más
+      lejanos. Medido sobre 300 semillas: la misión 3 no empieza con enemigos alertados ni visibles
+      (300/300), el enemigo más cercano pasa de p10 20,4 m a 28,8 m, dos enemigos a menos de 30 m
+      bajan del 25 % al 1,3 % y los dos Tigres a menos de 30 m del 1,7 % al 0 % (el más cercano,
+      42,5 m; media 74,1 m). **239 tests en 40 ficheros** y QA headless: selector probado con la
+      misión 3 desbloqueada y arranque de la 3 sin daño a los 2,5 s.
 - [x] **Pulido post-0.1.0 — bloque A: claridad de combate y onboarding (2026-11-04).** La marca de
       impacto solo se activa cuando el proyectil del jugador daña a un enemigo (`BUG-002`: antes
       aparecía al recibir daño o al golpear coberturas); el daño recibido muestra un arco rojo
@@ -147,9 +157,9 @@
 
 ## En curso
 
-- **Ninguno.** Bloque A cerrado y pendiente de la revisión del usuario. Siguiente: **bloque B**
-  (sensación de movimiento, feedback de colisión, audio de motor y legibilidad de barras/radar),
-  tras la pausa acordada después de cada bloque.
+- **Ninguno.** Bloques A y A.1 cerrados y pendientes de la revisión del usuario. Siguiente:
+  **bloque B** (sensación de movimiento, feedback de colisión, audio de motor y legibilidad de
+  barras/radar), tras la pausa acordada después de cada bloque.
 
 ## Incidencias conocidas
 
@@ -185,6 +195,7 @@ Pausa después de cada bloque para revisar la evolución con el usuario.
 | Bloque | Contenido                                                                                                                                                                            | Estado                   |
 | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------ |
 | A      | Claridad de combate y onboarding: marca de impacto, dirección del daño, cañonazo enemigo, recarga enemiga visible, buffer de disparo, puntería 1:1 y briefing con controles/blindaje | **Cerrado** (2026-11-04) |
+| A.1    | Selector de misión en el briefing y aparición justa de enemigos (sin LOS inicial, distancia mínima por misión y pesados en los spawns lejanos)                                       | **Cerrado** (2026-11-04) |
 | B      | Sensación y legibilidad: inercia/aceleración, feedback de colisión, motor ligado a la velocidad real, barras/radar y audio direccional                                               | Pendiente de revisión    |
 | C      | Dificultad y balance: radio de alerta, escalado de misión 2/3, TTK frontal y pickups; validar con simulación headless                                                                | Pendiente de revisión    |
 
@@ -200,7 +211,8 @@ Pausa después de cada bloque para revisar la evolución con el usuario.
   máximo, las reducciones de daño son multiplicativas y recoger una mejora con el tope ×3 la consume
   sin efecto. Confirmar en el bloque C (dificultad y balance).
 - **Pantallas de campaña mínimas:** briefing, resumen, derrota y fin de campaña están
-  implementados; no hay menú inicial ni selector de misión (se arranca en la desbloqueada más alta).
+  implementados; no hay menú inicial completo, pero el briefing incluye un selector de misión
+  1/2/3 (solo desbloqueadas). Se arranca en la desbloqueada más alta.
 - **Balance del blindaje pendiente del bloque C:** multiplicadores y umbrales ya están en
   `balance.ts`; hay que validar 5/3/2 y 8/4/3 y si la ventana de recarga de la IA resulta demasiado
   generosa (bloque C, con simulación headless).
@@ -220,6 +232,10 @@ Pausa después de cada bloque para revisar la evolución con el usuario.
 
 ## Decisiones y notas operativas
 
+- **Bloque A.1 verificado (2026-11-04):** selector de misión probado con la misión 3 desbloqueada
+  (3 → 1 con `1`, vuelta con `3`); en el arranque de la misión 3 todos los enemigos están `idle`,
+  sin alerta ni visibilidad, con el jugador a 100 PV a los 2,5 s; el Tigre más cercano queda a 80,9 m
+  en la semilla probada. Sin errores de consola.
 - **Bloque A verificado (2026-11-04):** `npm run check` verde con **233 tests en 40 ficheros**; QA
   headless con capturas del briefing con controles/blindaje, retícula desplazada junto al cursor,
   arco direccional de daño, barra de recarga enemiga y ausencia de marca de impacto falsa. Sin

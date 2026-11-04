@@ -89,4 +89,44 @@ describe('campaña', () => {
 
     game.dispose();
   });
+
+  it('permite cambiar de misión desde el briefing entre las desbloqueadas', () => {
+    const input = createInputState();
+    const game = createGame({
+      seed: 42,
+      input,
+      autoStart: false,
+      progression: { bestScore: 0, unlockedMission: 2 },
+    });
+
+    expect(game.phase).toBe('briefing');
+    expect(game.missionIndex).toBe(2);
+
+    input.handleKeyDown('Digit1');
+    input.handleKeyUp('Digit1');
+    game.update(1 / 60);
+    expect(game.phase).toBe('briefing');
+    expect(game.missionIndex).toBe(0);
+    expect(game.getHudData().score).toBe(0);
+
+    input.handleKeyDown('Digit3');
+    input.handleKeyUp('Digit3');
+    game.update(1 / 60);
+    expect(game.missionIndex).toBe(2);
+
+    game.dispose();
+  });
+
+  it('ignora las misiones bloqueadas en el briefing', () => {
+    const input = createInputState();
+    const game = createGame({ seed: 42, input, autoStart: false });
+
+    expect(game.missionIndex).toBe(0);
+    input.handleKeyDown('Digit3');
+    input.handleKeyUp('Digit3');
+    game.update(1 / 60);
+    expect(game.missionIndex).toBe(0);
+
+    game.dispose();
+  });
 });

@@ -293,11 +293,12 @@ Detalle completo en [`TESTING.md`](TESTING.md); resumen de convenciones:
   2D simulado y fixtures de rejilla/cámara/caras; la IA, con rejilla, jugador y RNG inyectados.
 - Helpers compartidos en `tests/helpers/` (previsto) para no duplicar fixtures.
 - Los tests son código: también se leen, se refactorizan y no se dejan comentados.
-- Estado actual: **233 tests en 40 ficheros** (`tests/core`, `tests/world`, `tests/render`,
+- Estado actual: **239 tests en 40 ficheros** (`tests/core`, `tests/world`, `tests/render`,
   `tests/systems`, `tests/game`, `tests/config` y `tests/entities`), incluidas las pruebas de
   puntería, LOS, A*, IA, modelos, oclusión, colisión entre tanques, pickups, blindaje direccional, el
-  pulido UX de la fase 11 (viñeta de vida baja, aviso en pausa y fogonazo enemigo) y el bloque A
-  post-0.1.0 (marca de impacto fiable, arco de daño, recarga enemiga, buffer y briefing).
+  pulido UX de la fase 11 (viñeta de vida baja, aviso en pausa y fogonazo enemigo), el bloque A
+  post-0.1.0 (marca de impacto fiable, arco de daño, recarga enemiga, buffer y briefing) y el bloque
+  A.1 (selector de misión, spawns sin LOS inicial y pesados en los spawns lejanos).
 
 ## 12. Si falla `npm run check`
 

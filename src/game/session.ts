@@ -15,12 +15,7 @@ import { resolveAim } from '../systems/aim';
 import type { ResolvedAim } from '../systems/aim';
 import { createLootState } from '../systems/loot';
 import type { LootState } from '../systems/loot';
-import {
-  buildMissionParams,
-  buildMissionRoster,
-  missionAt,
-  missionSeed,
-} from '../systems/mission';
+import { buildMissionParams, buildMissionRoster, missionAt, missionSeed } from '../systems/mission';
 import { generateArena } from '../world/generate';
 import type { GeneratedArena } from '../world/types';
 
@@ -44,17 +39,15 @@ export interface MissionSession {
 }
 
 /** Genera el escenario y las entidades de una misión; no arranca la simulación. */
-export function createMissionSession(
-  missionIndex: number,
-  baseSeed: number,
-): MissionSession {
+export function createMissionSession(missionIndex: number, baseSeed: number): MissionSession {
   const index = Math.max(0, Math.min(MISSIONS.length - 1, missionIndex));
   const mission = missionAt(index);
   const seed = missionSeed(baseSeed, index);
   const arena = generateArena(buildMissionParams(mission, seed));
   const player = createPlayer(arena.playerSpawn);
-  const enemies = buildMissionRoster(mission, arena.enemySpawns).map(({ type, spawn }, enemyIndex) =>
-    createEnemy(`enemigo-${mission.id}-${enemyIndex + 1}`, type, spawn),
+  const enemies = buildMissionRoster(mission, arena.enemySpawns, arena.playerSpawn).map(
+    ({ type, spawn }, enemyIndex) =>
+      createEnemy(`enemigo-${mission.id}-${enemyIndex + 1}`, type, spawn),
   );
 
   return {
@@ -87,4 +80,3 @@ export function missionProgress(session: MissionSession): number {
 export function missionAccuracy(session: MissionSession): number {
   return session.shotsFired > 0 ? session.shotsHit / session.shotsFired : 0;
 }
-

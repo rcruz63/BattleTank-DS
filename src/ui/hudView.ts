@@ -1,6 +1,7 @@
 /** Modelo puro del HUD: transforma el estado de partida en datos listos para DOM y radar. */
 
 import { clamp } from '../core/math';
+import { MISSIONS } from '../config/missions';
 import type { MissionDefinition, MissionPhase } from '../config/missions';
 import type { EnemyState } from '../entities/enemy';
 import type { PickupState } from '../entities/pickup';
@@ -126,6 +127,15 @@ function statLines(data: HudData): string[] {
   ];
 }
 
+/** Lista de misiones con la actual y las bloqueadas marcadas; se usa en el briefing. */
+function missionMenu(data: HudData): string {
+  return MISSIONS.map((mission, index) => {
+    const current = index === data.mission.id - 1 ? '▶ ' : '';
+    const locked = index > data.unlockedMission ? ' (bloqueada)' : '';
+    return `${current}${index + 1} · ${mission.name}${locked}`;
+  }).join('   ');
+}
+
 function buildScreen(data: HudData): HudScreen | null {
   if (data.paused) return null;
 
@@ -139,6 +149,8 @@ function buildScreen(data: HudData): HudScreen | null {
           'Objetivo: destruye todas las fuerzas enemigas.',
           'Controles: WASD/flechas mover y girar · ratón apuntar · clic o ESPACIO disparar · ESC pausa',
           'Blindaje: frontal ×0,5 · lateral ×1 · trasero ×1,5 — busca el flanco',
+          `Misiones: ${missionMenu(data)}`,
+          'Pulsa 1, 2 o 3 para cambiar de misión',
           `Escenario #${data.seed}`,
         ],
         action: 'ENTER para desplegar',

@@ -102,4 +102,22 @@ describe('briefing de misión', () => {
     expect(text).toContain('frontal ×0,5');
     expect(text).toContain('lateral ×1');
   });
+
+  it('lista las misiones y marca las bloqueadas en el briefing', () => {
+    const locked = buildHudView(createGame({ seed: 42, autoStart: false }).getHudData());
+    const lockedText = locked.screen?.lines.join(' ') ?? '';
+    expect(lockedText).toContain('Misiones:');
+    expect(lockedText).toContain('Cruce de caminos (bloqueada)');
+    expect(lockedText).toContain('Pulsa 1, 2 o 3 para cambiar de misión');
+
+    const unlockedData = createGame({
+      seed: 42,
+      autoStart: false,
+      progression: { bestScore: 100, unlockedMission: 2 },
+    }).getHudData();
+    const unlocked = buildHudView(unlockedData);
+    const unlockedText = unlocked.screen?.lines.join(' ') ?? '';
+    expect(unlockedText).toContain('▶ 3 · Última línea');
+    expect(unlockedText).not.toContain('(bloqueada)');
+  });
 });

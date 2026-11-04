@@ -27,6 +27,8 @@ export interface InputSnapshot {
   readonly mute: boolean;
   /** -1 baja volumen, 1 sube, 0 sin cambio (− / +). */
   readonly volumeDelta: number;
+  /** Misión elegida en el briefing (1..3); 0 = sin selección. */
+  readonly missionSelect: number;
 }
 
 export interface InputState {
@@ -48,6 +50,14 @@ const CONFIRM_KEY = 'Enter';
 const MUTE_KEY = 'KeyM';
 const VOLUME_DOWN_KEY = 'Minus';
 const VOLUME_UP_KEY = 'Equal';
+const MISSION_KEYS: Readonly<Record<string, number>> = {
+  Digit1: 1,
+  Digit2: 2,
+  Digit3: 3,
+  Numpad1: 1,
+  Numpad2: 2,
+  Numpad3: 3,
+};
 
 interface InputEdges {
   readonly held: Set<string>;
@@ -56,6 +66,7 @@ interface InputEdges {
   confirmQueued: boolean;
   muteQueued: boolean;
   volumeDelta: number;
+  missionSelect: number;
   aimX: number;
   aimY: number;
 }
@@ -68,6 +79,7 @@ function createEdges(): InputEdges {
     confirmQueued: false,
     muteQueued: false,
     volumeDelta: 0,
+    missionSelect: 0,
     aimX: 0,
     aimY: 0,
   };
@@ -80,6 +92,7 @@ function resetEdges(edges: InputEdges): void {
   edges.confirmQueued = false;
   edges.muteQueued = false;
   edges.volumeDelta = 0;
+  edges.missionSelect = 0;
   edges.aimX = 0;
   edges.aimY = 0;
 }
@@ -112,6 +125,12 @@ function press(edges: InputEdges, code: string): void {
   queueOnce(edges.held, code, VOLUME_UP_KEY, () => {
     edges.volumeDelta = 1;
   });
+  const mission = MISSION_KEYS[code];
+  if (mission !== undefined) {
+    queueOnce(edges.held, code, code, () => {
+      edges.missionSelect = mission;
+    });
+  }
   edges.held.add(code);
 }
 
@@ -136,12 +155,14 @@ function takeSnapshot(edges: InputEdges): InputSnapshot {
     confirm: edges.confirmQueued,
     mute: edges.muteQueued,
     volumeDelta: edges.volumeDelta,
+    missionSelect: edges.missionSelect,
   };
   edges.fireQueued = false;
   edges.pauseQueued = false;
   edges.confirmQueued = false;
   edges.muteQueued = false;
   edges.volumeDelta = 0;
+  edges.missionSelect = 0;
   return snapshot;
 }
 
@@ -178,6 +199,12 @@ const GAME_KEYS = new Set([
   'KeyM',
   'Minus',
   'Equal',
+  'Digit1',
+  'Digit2',
+  'Digit3',
+  'Numpad1',
+  'Numpad2',
+  'Numpad3',
 ]);
 
 /** Conecta el estado al teclado. Devuelve la función para desconectar. */

@@ -96,4 +96,14 @@ describe('entrada de teclado', () => {
     expect(input.snapshot().volumeDelta).toBe(0);
   });
 
+  it('expone la misión elegida con los dígitos 1-3', () => {
+    const input = createInputState();
+    expect(input.snapshot().missionSelect).toBe(0);
+    input.handleKeyDown('Digit2');
+    expect(input.snapshot().missionSelect).toBe(2);
+    expect(input.snapshot().missionSelect).toBe(0);
+    input.handleKeyUp('Digit2');
+    input.handleKeyDown('Numpad3');
+    expect(input.snapshot().missionSelect).toBe(3);
+  });
 });

@@ -2,12 +2,7 @@
 
 export type MissionEnemyClass = 'light' | 'heavy';
 
-export type MissionPhase =
-  | 'briefing'
-  | 'playing'
-  | 'victory'
-  | 'defeat'
-  | 'campaign-complete';
+export type MissionPhase = 'briefing' | 'playing' | 'victory' | 'defeat' | 'campaign-complete';
 
 export interface MissionArenaConfig {
   readonly widthCells: number;
@@ -15,6 +10,8 @@ export interface MissionArenaConfig {
   readonly obstacleDensity: number;
   readonly destructibleRatio: number;
   readonly pickupCount: number;
+  /** Distancia mínima jugador↔enemigo al aparecer (m). */
+  readonly minEnemyDistance: number;
 }
 
 export interface MissionAiConfig {
@@ -45,6 +42,7 @@ export const MISSIONS: readonly MissionDefinition[] = [
       obstacleDensity: 0.12,
       destructibleRatio: 0.72,
       pickupCount: 4,
+      minEnemyDistance: 20,
     },
     ai: { reactionSeconds: 1.4, fireSpreadRadians: 0.07, damageMultiplier: 0.8 },
   },
@@ -60,6 +58,7 @@ export const MISSIONS: readonly MissionDefinition[] = [
       obstacleDensity: 0.16,
       destructibleRatio: 0.72,
       pickupCount: 4,
+      minEnemyDistance: 24,
     },
     ai: { reactionSeconds: 1.1, fireSpreadRadians: 0.05, damageMultiplier: 1 },
   },
@@ -75,6 +74,7 @@ export const MISSIONS: readonly MissionDefinition[] = [
       obstacleDensity: 0.2,
       destructibleRatio: 0.72,
       pickupCount: 5,
+      minEnemyDistance: 28,
     },
     ai: { reactionSeconds: 0.9, fireSpreadRadians: 0.035, damageMultiplier: 1.2 },
   },

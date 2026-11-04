@@ -14,6 +14,7 @@ import { createInputState } from '../systems/input';
 import type { InputState } from '../systems/input';
 import type { LootState } from '../systems/loot';
 import { loadProgression } from '../systems/progression';
+import type { Progression } from '../systems/progression';
 import type { GeneratedArena } from '../world/types';
 import { getHudData } from './hudData';
 import { renderGame } from './render';
@@ -30,6 +31,8 @@ export interface GameOptions {
   readonly autoStart?: boolean;
   /** Bus de audio inyectable; por defecto, uno silencioso (tests). */
   readonly audio?: AudioBus;
+  /** Progresión inyectable para tests/QA; por defecto se lee de localStorage. */
+  readonly progression?: Progression;
 }
 
 export interface Game {
@@ -52,10 +55,8 @@ export interface Game {
 function createGameState(options: GameOptions): GameState {
   const baseSeed = options.seed ?? Date.now() >>> 0;
   const autoStart = options.autoStart ?? true;
-  const progression = loadProgression();
-  const startIndex = autoStart
-    ? 0
-    : Math.min(progression.unlockedMission, MISSIONS.length - 1);
+  const progression = options.progression ?? loadProgression();
+  const startIndex = autoStart ? 0 : Math.min(progression.unlockedMission, MISSIONS.length - 1);
   const session = createMissionSession(startIndex, baseSeed);
   session.phase = autoStart ? 'playing' : 'briefing';
   const audio = options.audio ?? createSilentAudioBus();

@@ -24,12 +24,20 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
   trasero ×1,5) antes de desplegar.
 - Buffer de disparo de 0,25 s: un clic hecho justo antes de terminar la recarga dispara al quedar el
   arma lista, sin perder la pulsación.
+- Selector de misión en el briefing con las teclas 1/2/3: permite cambiar entre las misiones
+  desbloqueadas sin borrar la progresión ni tocar la URL. El arranque sigue en la misión
+  desbloqueada más alta, pero ya no es una vía única. `createGame` acepta una progresión inyectable
+  para tests/QA.
 
 ### Cambiado
 
 - La puntería con ratón se mapea por ángulo con la focal de la cámara: la retícula sigue al cursor
   1:1 hasta el límite del cono (±15° / ±4°) y se recorta después, en lugar de repartir el cono por
   todo el ancho del canvas.
+- Los enemigos aparecen al empezar **sin línea de visión** sobre el jugador, con distancia mínima
+  por misión (20/24/28 m) y los carros pesados asignados a los spawns más lejanos. Se evita
+  empezar la misión 3 rodeado y con los dos Tigres encima o recibiendo disparos desde el primer
+  segundo.
 
 ### Corregido
 

@@ -21,7 +21,7 @@ contratos descritos aquí son el acuerdo entre capas, no un inventario exhaustiv
 | Build y dev server | **Vite 8** (`base: './'`, `target: es2022`, `outDir: dist`, sourcemaps), puerto fijo 5273.                                                                                      |
 | Gráficos           | **Canvas 2D** con resolución interna fija **1280×720** escalada por CSS con letterboxing (`index.html`).                                                                        |
 | HUD                | **DOM/CSS** sobre el canvas + un **canvas pequeño independiente** para el radar (implementado).                                                                                 |
-| Tests              | **Vitest** en entorno **Node** (`tests/**/*.test.ts`), sin jsdom; **233 tests en 40 ficheros**.                                                                                 |
+| Tests              | **Vitest** en entorno **Node** (`tests/**/*.test.ts`), sin jsdom; **239 tests en 40 ficheros**.                                                                                 |
 | Calidad            | **ESLint** (tamaño/complejidad) + **Prettier**; puerta `npm run check`.                                                                                                         |
 | Runtime            | **Cero dependencias** y **cero assets externos**: geometría procedural, tipografía del sistema, iconos CSS y audio WebAudio sintetizado.                                        |
 | Persistencia       | `localStorage` solo para récord y misión desbloqueada, clave `battletank-ds.progression.v1` (fase 9).                                                                           |
@@ -132,7 +132,7 @@ BattleTank-DS/
 │       ├── hudData.ts      #   adaptación del estado a los datos del HUD
 │       └── render.ts       #   render del mundo + periscopio (el HUD DOM va aparte)
 │
-├── tests/                  # espejo de src/ (40 ficheros, 233 tests) + integración headless
+├── tests/                  # espejo de src/ (40 ficheros, 239 tests) + integración headless
 ├── docs/
 └── dist/                   # build generado (no versionado)
 ```
@@ -417,11 +417,14 @@ Pasos, todos deterministas a partir de una semilla (implementados en la fase 3):
 4. **Validación con _flood fill_:** las zonas alcanzables deben incluir el spawn del jugador, los
    spawns de enemigos y los pickups; no puede haber zonas aisladas inalcanzables.
 5. **Colocación** de jugador, enemigos y pickups con distancias mínimas y una zona de seguridad
-   alrededor del jugador, con el RNG sembrado.
+   alrededor del jugador, con el RNG sembrado. Los enemigos se colocan en celdas **sin línea de
+   visión** sobre el jugador (con relajación si el mapa no da suficientes) y a la distancia mínima
+   de la misión (20/24/28 m).
 6. **Reintentos acotados** (máx. 30); la política de fallback al agotarlos sigue pendiente (hoy se
    muestra un error en pantalla).
 7. **Reparto de enemigos:** definido por misión en `config/missions.ts` (ligeros/pesados y tuning
-   de IA); `buildMissionRoster` lo asigna a los spawns generados.
+   de IA); `buildMissionRoster` lo asigna a los spawns generados y reserva los más lejanos para los
+   carros pesados, para que un Tiger no pueda aparecer encima al empezar.
 8. **Salida:** rejilla de celdas + spawns + semilla; sin Canvas ni DOM.
 
 Los tests comprueban determinismo por semilla, conectividad, ausencia de solapamientos y distancias
@@ -565,7 +568,10 @@ colisión se dividen en funciones pequeñas; si una regla no cabe sin anidar, se
   oculto en pausa) y QA headless APTO; quedan la QA de audio de oído y el tag `v0.1.0`.
 - **Bloque A post-0.1.0:** claridad de combate y onboarding — marca de impacto fiable (`BUG-002`),
   arco direccional de daño, cañonazo enemigo audible, recarga enemiga visible, buffer de disparo,
-  briefing con controles/blindaje y puntería 1:1 con el cursor. **233 tests en 40 ficheros.**
+  briefing con controles/blindaje y puntería 1:1 con el cursor.
+- **Bloque A.1 post-0.1.0:** selector de misión 1/2/3 en el briefing (solo desbloqueadas) y
+  aparición justa de enemigos (sin LOS inicial, distancia mínima por misión y pesados en los
+  spawns más lejanos). **239 tests en 40 ficheros.**
 
 El inventario real, commit a commit, está en [`STATUS.md`](STATUS.md); el orden y entregables de
 cada fase, en [`PLAN.md`](PLAN.md) §12.

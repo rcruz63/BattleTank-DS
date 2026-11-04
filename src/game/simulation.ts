@@ -218,6 +218,20 @@ function advanceScreen(state: GameState): void {
   }
 }
 
+/**
+ * Cambia de misión desde el briefing, solo entre las desbloqueadas.
+ * Permite corregir el arranque en la misión más alta sin borrar la progresión.
+ */
+function selectMission(state: GameState, missionIndex: number): void {
+  const session = state.session;
+  if (missionIndex === session.missionIndex) return;
+  const unlocked = Math.min(state.progression.unlockedMission, MISSIONS.length - 1);
+  if (missionIndex < 0 || missionIndex > unlocked) return;
+  state.campaignScore = 0;
+  startMission(state, missionIndex, 'briefing');
+  state.audio.play('ui');
+}
+
 function evaluateMission(state: GameState): void {
   const session = state.session;
   if (!session.player.alive) {
@@ -225,6 +239,18 @@ function evaluateMission(state: GameState): void {
     return;
   }
   if (session.enemies.every((enemy) => !enemy.alive)) finishVictory(state);
+}
+
+/** Entrada de las pantallas: cambiar de misión en el briefing o confirmar con ENTER. */
+function handleScreenInput(state: GameState, snapshot: InputSnapshot): void {
+  if (state.session.phase === 'briefing' && snapshot.missionSelect > 0) {
+    selectMission(state, snapshot.missionSelect - 1);
+    return;
+  }
+  if (snapshot.confirm) {
+    state.audio.play('ui');
+    advanceScreen(state);
+  }
 }
 
 /** Avanza la partida un paso de simulación o resuelve una pantalla de campaña. */
@@ -248,10 +274,7 @@ export function stepCombat(state: GameState, stepSeconds: number): void {
 
   if (session.phase !== 'playing') {
     state.audio.setEngine(0);
-    if (snapshot.confirm) {
-      state.audio.play('ui');
-      advanceScreen(state);
-    }
+    handleScreenInput(state, snapshot);
     return;
   }
 

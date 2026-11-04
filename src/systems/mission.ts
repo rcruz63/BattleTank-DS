@@ -3,6 +3,7 @@
 import { ARENA_DEFAULTS } from '../config/balance';
 import { HEALTH_BONUS_PER_POINT, MISSIONS, MISSION_BONUS } from '../config/missions';
 import type { MissionDefinition, MissionEnemyClass } from '../config/missions';
+import { planarDistance } from '../world/geometry';
 import type { SpawnPoint } from '../world/types';
 import type { GenerationParams } from '../world/types';
 
@@ -29,18 +30,37 @@ export function buildMissionParams(mission: MissionDefinition, seed: number): Ge
     obstacleDensity: mission.arena.obstacleDensity,
     destructibleRatio: mission.arena.destructibleRatio,
     pickupCount: mission.arena.pickupCount,
+    minEnemyDistance: mission.arena.minEnemyDistance,
     enemyCount: mission.enemies.length,
   };
 }
 
-/** Reparte los tipos de enemigo de la misión en los spawns generados (mismo orden). */
+/**
+ * Reparte los tipos de enemigo de la misión entre los spawns generados. Los pesados se quedan
+ * con los spawns más lejanos al jugador: un Tiger no debe aparecer encima en el primer segundo,
+ * y así se corrige la mala suerte del reparto aleatorio sin tocar la generación del mapa.
+ */
 export function buildMissionRoster(
   mission: MissionDefinition,
   spawns: readonly SpawnPoint[],
+  playerSpawn: SpawnPoint,
 ): MissionEnemySpawn[] {
-  return mission.enemies.map((type, index) => {
-    const spawn = spawns[index];
-    if (!spawn) throw new Error('La generación no produjo suficientes spawns de enemigo.');
+  if (spawns.length < mission.enemies.length) {
+    throw new Error('La generación no produjo suficientes spawns de enemigo.');
+  }
+  const heavyCount = mission.enemies.filter((type) => type === 'heavy').length;
+  const farthest = new Set(
+    [...spawns]
+      .sort(
+        (first, second) => planarDistance(second, playerSpawn) - planarDistance(first, playerSpawn),
+      )
+      .slice(0, heavyCount),
+  );
+  let heaviesLeft = heavyCount;
+
+  return spawns.slice(0, mission.enemies.length).map((spawn) => {
+    const type: MissionEnemyClass = heaviesLeft > 0 && farthest.has(spawn) ? 'heavy' : 'light';
+    if (type === 'heavy') heaviesLeft -= 1;
     return { type, spawn };
   });
 }

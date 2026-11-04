@@ -3,6 +3,7 @@ import { ARENA_DEFAULTS } from '../../src/config/balance';
 import { MATERIALS } from '../../src/config/materials';
 import { generateArena } from '../../src/world/generate';
 import { collectReachableCells, isBlocked, worldToCell } from '../../src/world/grid';
+import { hasLineOfSight } from '../../src/world/los';
 import type { GeneratedArena, WorldGrid, WorldPoint } from '../../src/world/types';
 
 const params = { seed: 42, ...ARENA_DEFAULTS };
@@ -75,7 +76,7 @@ describe('generación de escenarios', () => {
     const arena = generateArena(params);
     const distance = (a: WorldPoint, b: WorldPoint) => Math.hypot(a.x - b.x, a.z - b.z);
     for (const enemy of arena.enemySpawns) {
-      expect(distance(enemy, arena.playerSpawn)).toBeGreaterThanOrEqual(20);
+      expect(distance(enemy, arena.playerSpawn)).toBeGreaterThanOrEqual(params.minEnemyDistance);
     }
     for (const pickup of arena.pickupSpawns) {
       expect(distance(pickup, arena.playerSpawn)).toBeGreaterThanOrEqual(8);
@@ -94,6 +95,15 @@ describe('generación de escenarios', () => {
     for (const obstacle of grid.obstacles) {
       if (!obstacle) continue;
       expect(obstacle.health).toBe(MATERIALS[obstacle.material].maxHealth);
+    }
+  });
+
+  it('coloca a los enemigos sin línea de visión sobre el jugador al empezar', () => {
+    for (const seed of [42, 7, 123]) {
+      const arena = generateArena({ ...params, seed });
+      for (const enemy of arena.enemySpawns) {
+        expect(hasLineOfSight(arena.grid, arena.playerSpawn, enemy)).toBe(false);
+      }
     }
   });
 });

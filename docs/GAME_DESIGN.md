@@ -4,9 +4,9 @@ Documento de diseño del vertical slice **0.1.0**. Se deriva del plan aprobado
 ([`PLAN.md`](PLAN.md), fuente de verdad del alcance); si hay conflicto, manda el plan y se corrige
 este documento. Estado: fases 0–10 y los bloques 6.5 (puntería con ratón), 6.6 (colisión entre
 tanques), 7.5 (blindaje direccional) y el ajuste 7.5.1 (claridad/feedback) cerrados y la entrega
-`0.1.0` preparada. El bloque A de pulido post-entrega (claridad de combate y onboarding) está
-cerrado el 2026-11-04; el siguiente trabajo es el bloque B (sensación y legibilidad). El detalle
-vivo está en [`STATUS.md`](STATUS.md).
+`0.1.0` preparada. Los bloques A (claridad de combate y onboarding) y A.1 (selector de misión y
+aparición justa de enemigos) del pulido post-entrega están cerrados el 2026-11-04; el siguiente
+trabajo es el bloque B (sensación y legibilidad). El detalle vivo está en [`STATUS.md`](STATUS.md).
 
 **Balance de tanques:** los números concretos (PV, velocidad, giro, recarga, daño, blindaje y
 velocidad de proyectil) viven en **`src/config/tanks.ts`**, que es la fuente de verdad. Este
@@ -46,7 +46,7 @@ línea de tiro a cañonazos y administrar la recarga son las decisiones del bucl
 
 Bucle de una partida:
 
-1. **Briefing** de misión (DOM): nombre, texto, objetivo, controles, pista de blindaje y semilla; `ENTER` para desplegar.
+1. **Briefing** de misión (DOM): nombre, texto, objetivo, controles, pista de blindaje, selector de misión (1/2/3) y semilla; `ENTER` para desplegar.
 2. El jugador **avanza** por el escenario generado sin mapa completo: periscopio, radar y barra de
    progreso (solo porcentaje, nunca número de enemigos restantes).
 3. **Combate:** los enemigos acechan hasta detectar al jugador, toman línea de visión y disparan. Las
@@ -67,7 +67,8 @@ por coberturas indestructibles, así que en la práctica solo se pierde por dañ
 
 **Campaña:** 3 misiones encadenadas. Al terminar la tercera se muestra el resumen final de campaña.
 La partida arranca en el briefing de la misión desbloqueada más alta (no hay menú inicial), con el
-récord visible en los resúmenes. No hay guardado a mitad de partida.
+récord visible en los resúmenes y un selector de misión 1/2/3 entre las desbloqueadas. No hay
+guardado a mitad de partida.
 
 ## 3. Controles
 
@@ -80,6 +81,7 @@ récord visible en los resúmenes. No hay guardado a mitad de partida.
 | Disparar            | `Espacio` o clic izquierdo | **Disponible.** Un disparo por pulsación; mantener no repite. Recarga de 2,4 s.                                                                        |
 | Pausa               | `Esc`                      | **Disponible.** Congela la simulación y muestra la pantalla de pausa con controles y semilla.                                                          |
 | Confirmar pantallas | `Enter`                    | **Disponible.** Avanza el briefing, el resumen de misión o el reintento.                                                                               |
+| Cambiar de misión   | `1` / `2` / `3` (briefing) | **Disponible.** Cambia el briefing entre las misiones desbloqueadas; no borra récord ni desbloqueo.                                                    |
 | Silenciar           | `M`                        | **Disponible.** Alterna mute; el estado se ve en el HUD y en pausa.                                                                                    |
 | Volumen             | `−` / `+`                  | **Disponible.** Ajusta el volumen maestro; se muestra en el HUD/pausa.                                                                                 |
 | Depuración          | `F3`                       | Previsto (fase 11): overlay con fps, caras, celdas visibles y entidades.                                                                               |
@@ -119,7 +121,7 @@ jugador no puede disparar de lado, ellos tampoco.
 - **Rumbo:** marca tenue del casco en el periscopio y radar orientado con el rumbo; una brújula
   dedicada no entra en 0.1.0.
 - **Pantallas:** briefing, pausa, victoria, derrota y fin de campaña implementadas; no hay menú
-  inicial ni selector de misión en 0.1.0.
+  inicial completo, pero el briefing incluye un selector de misión 1/2/3 entre las desbloqueadas.
 
 Estado actual (fases 8–11): el **HUD DOM** muestra arriba a la izquierda «M4 SHERMAN», barra y valor
 de vida y recarga («LISTO» o segundos); arriba al centro, la misión y «AVANCE DE SECTOR» con
@@ -285,6 +287,11 @@ Reglas de justicia y comportamiento:
   mientras `enemy.muzzleFlash` está activo) que ayuda a leer el disparo sin alterar la simulación.
 - **Escalado por misión:** reacción, dispersión y daño enemigo definidos en `config/missions.ts`
   sobre los valores base de `AI_TUNING` (`src/config/balance.ts`); implementado en la fase 9.
+- **Aparición justa (bloque A.1 post-0.1.0):** al empezar la misión, cada enemigo se coloca en una
+  celda **sin línea de visión** sobre el jugador y a la distancia mínima de la misión; los carros
+  pesados ocupan los spawns más lejanos. Así el primer contacto llega al avanzar o al delatarse el
+  jugador, no con varios enemigos disparando desde el spawn. Si un mapa no ofrece suficientes celdas
+  ocultas, la generación relaja la condición antes que fallar.
 - **Sin coordinación avanzada:** no hay flanqueo coordinado, reposición táctica ni uso inteligente de
   coberturas; solo A* básico y colisión. Es deuda planificada, no un fallo.
 - **Daño mutuo con blindaje:** el daño base se reduce según `armor` del tanque (jugador y enemigos);
@@ -328,11 +335,11 @@ desbloqueada más alta.
 Campaña de 3 misiones generadas con parámetros escalados, definidos como datos en
 `src/config/missions.ts`:
 
-| Misión | Nombre              | Enemigos              | Densidad coberturas | Reacción | Dispersión | Daño enemigo |
-| ------ | ------------------- | --------------------- | ------------------- | -------- | ---------- | ------------ |
-| 1      | Avance por el valle | 3 ligeros             | 12 %                | 1,4 s    | 0,07 rad   | ×0,8         |
-| 2      | Cruce de caminos    | 4 ligeros + 1 pesado  | 16 %                | 1,1 s    | 0,05 rad   | ×1,0         |
-| 3      | Última línea        | 4 ligeros + 2 pesados | 20 %                | 0,9 s    | 0,035 rad  | ×1,2         |
+| Misión | Nombre              | Enemigos              | Densidad coberturas | Distancia mín. | Reacción | Dispersión | Daño enemigo |
+| ------ | ------------------- | --------------------- | ------------------- | -------------- | -------- | ---------- | ------------ |
+| 1      | Avance por el valle | 3 ligeros             | 12 %                | 20 m           | 1,4 s    | 0,07 rad   | ×0,8         |
+| 2      | Cruce de caminos    | 4 ligeros + 1 pesado  | 16 %                | 24 m           | 1,1 s    | 0,05 rad   | ×1,0         |
+| 3      | Última línea        | 4 ligeros + 2 pesados | 20 %                | 28 m           | 0,9 s    | 0,035 rad  | ×1,2         |
 
 La «precisión» de la IA no es una probabilidad de acierto: se compone de `reactionSeconds`,
 `fireSpreadRadians` y `damageMultiplier` en `config/missions.ts`.
