@@ -6,8 +6,10 @@ estables para trabajar sin romper nada. Si el código contradice este documento,
 corrige el documento y se anota la discrepancia.
 
 - Repositorio: `BattleTank-DS` · juego **BATTLE TANK — PERISCOPIO** (título provisional).
-- Versión objetivo: **`0.1.0`** (vertical slice jugable de 3 misiones). Ver
-  [`docs/PLAN.md`](docs/PLAN.md).
+- Versión objetivo actual: **`0.1.0`** (vertical slice jugable de 3 misiones). Ver
+  [`docs/PLAN.md`](docs/PLAN.md). La propuesta 0.2 vive en
+  [`docs/ROADMAP_0.2.md`](docs/ROADMAP_0.2.md): **no es alcance aprobado** hasta que el usuario lo
+  diga y no modifica `PLAN.md`.
 - Idioma: interfaz, comentarios y documentación en **español**; identificadores, tipos y nombres de
   fichero en **inglés**.
 
@@ -21,6 +23,9 @@ En este orden; no empieces a programar sin haber leído los tres primeros:
 3. [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) — normas de código, ESLint, git, changelog y
    definición de terminado.
 4. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — capas, contratos y pipeline de render.
+5. Si la tarea pertenece a 0.2: [`docs/ROADMAP_0.2.md`](docs/ROADMAP_0.2.md) — hito activo, alcance
+   cerrado, criterios de aceptación y **pausa obligatoria al cerrarlo**. Es una propuesta: no se
+   empieza un hito sin aprobación del usuario.
 
 Después, según lo que vayas a hacer: [`docs/GAME_DESIGN.md`](docs/GAME_DESIGN.md) para diseño,
 números y contenido; [`docs/TESTING.md`](docs/TESTING.md) para pruebas y QA;
@@ -42,16 +47,16 @@ o anótalo y coméntalo; `main` nunca debe quedar roto. Los fallos y limitacione
 
 ## 3. Límites duros (no negociables)
 
-| Norma | Límite | Dónde se comprueba |
-|---|---|---|
-| Fichero | 200 líneas objetivo, **300 error** (tests y configs exentos) | ESLint `max-lines` |
-| Función | 40 líneas objetivo, **60 error** | ESLint `max-lines-per-function` |
-| Complejidad ciclomática | ≤ 10 | ESLint `complexity` |
-| Anidamiento de bloques | ≤ 3 | ESLint `max-depth` |
-| Bucles anidados | **prohibidos** (`for`/`while` dentro de otro bucle) | ESLint `no-restricted-syntax` |
-| Parámetros | ≤ 4 (si no, objeto de opciones) | ESLint `max-params` |
-| Sentencias por función | ≤ 20 | ESLint `max-statements` |
-| Tipos | sin `any`, sin `@ts-ignore`; `unknown` + validación si hace falta | TypeScript + ESLint |
+| Norma                   | Límite                                                            | Dónde se comprueba              |
+| ----------------------- | ----------------------------------------------------------------- | ------------------------------- |
+| Fichero                 | 200 líneas objetivo, **300 error** (tests y configs exentos)      | ESLint `max-lines`              |
+| Función                 | 40 líneas objetivo, **60 error**                                  | ESLint `max-lines-per-function` |
+| Complejidad ciclomática | ≤ 10                                                              | ESLint `complexity`             |
+| Anidamiento de bloques  | ≤ 3                                                               | ESLint `max-depth`              |
+| Bucles anidados         | **prohibidos** (`for`/`while` dentro de otro bucle)               | ESLint `no-restricted-syntax`   |
+| Parámetros              | ≤ 4 (si no, objeto de opciones)                                   | ESLint `max-params`             |
+| Sentencias por función  | ≤ 20                                                              | ESLint `max-statements`         |
+| Tipos                   | sin `any`, sin `@ts-ignore`; `unknown` + validación si hace falta | TypeScript + ESLint             |
 
 El detalle exacto de las reglas (opciones reales en `eslint.config.js`), las exenciones de `tests/` y
 el procedimiento de excepción están en [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md#3-reglas-eslint).
@@ -92,20 +97,20 @@ Reglas de arquitectura que también son duras:
 
 ## 5. Mapa de ficheros y responsabilidades
 
-| Zona | Contenido | Responsable habitual |
-|---|---|---|
-| `src/**` | Implementación por capas (ver tabla inferior). | Lead / desarrollo |
-| `src/config/**` | Balance y contenido editable: identidad, tanques, misiones, paleta, balance. | Lead |
-| `src/core/**` | Matemáticas, RNG, bucle, bus de eventos. Puro y testeable. | Lead |
-| `src/world/**` | Rejilla, generación procedural, colisión, LOS, A*. Sin DOM. | Lead |
-| `src/render/**` | Cámara, proyección, recorte, caras, painter, escena. Sin mutar estado. | Lead |
-| `src/entities/**`, `src/systems/**` | Entidades y reglas de juego (combate, IA, loot, misión, puntuación, progresión, input). | Lead |
-| `src/ui/**`, `src/audio/**` | Adaptadores: DOM/CSS/canvas del radar y WebAudio. | Lead |
-| `src/game/**`, `src/main.ts` | Composición, máquina de estados y arranque. | Lead |
-| `tests/**` | Espejo de `src/` + integración headless; checklist manual en `TESTING.md`. | QA / desarrollo |
-| `docs/**`, `README.md`, `AGENTS.md`, `CHANGELOG.md` | Documentación viva y handoff. | Documentación |
-| `docs/STATUS.md` | Estado exacto tras cada commit. | Documentación / Lead |
-| `index.html`, `package.json`, `tsconfig.json`, `vite.config.ts`, `vitest.config.ts`, `eslint.config.js`, `.prettierrc.json` | Andamiaje y configuración. | Lead |
+| Zona                                                                                                                        | Contenido                                                                               | Responsable habitual |
+| --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | -------------------- |
+| `src/**`                                                                                                                    | Implementación por capas (ver tabla inferior).                                          | Lead / desarrollo    |
+| `src/config/**`                                                                                                             | Balance y contenido editable: identidad, tanques, misiones, paleta, balance.            | Lead                 |
+| `src/core/**`                                                                                                               | Matemáticas, RNG, bucle, bus de eventos. Puro y testeable.                              | Lead                 |
+| `src/world/**`                                                                                                              | Rejilla, generación procedural, colisión, LOS, A*. Sin DOM.                             | Lead                 |
+| `src/render/**`                                                                                                             | Cámara, proyección, recorte, caras, painter, escena. Sin mutar estado.                  | Lead                 |
+| `src/entities/**`, `src/systems/**`                                                                                         | Entidades y reglas de juego (combate, IA, loot, misión, puntuación, progresión, input). | Lead                 |
+| `src/ui/**`, `src/audio/**`                                                                                                 | Adaptadores: DOM/CSS/canvas del radar y WebAudio.                                       | Lead                 |
+| `src/game/**`, `src/main.ts`                                                                                                | Composición, máquina de estados y arranque.                                             | Lead                 |
+| `tests/**`                                                                                                                  | Espejo de `src/` + integración headless; checklist manual en `TESTING.md`.              | QA / desarrollo      |
+| `docs/**`, `README.md`, `AGENTS.md`, `CHANGELOG.md`                                                                         | Documentación viva y handoff.                                                           | Documentación        |
+| `docs/STATUS.md`                                                                                                            | Estado exacto tras cada commit.                                                         | Documentación / Lead |
+| `index.html`, `package.json`, `tsconfig.json`, `vite.config.ts`, `vitest.config.ts`, `eslint.config.js`, `.prettierrc.json` | Andamiaje y configuración.                                                              | Lead                 |
 
 Regla de convivencia: escrituras disjuntas por rol; si hay varias personas/agentes, cada uno escribe
 solo en su zona y las interfaces se fijan antes en `src/*/types.ts`. Los commits los hace el Lead.
@@ -127,6 +132,19 @@ commit de feature, como manda el plan).
 
 Si una fase se puede paralelizar (p. ej. render y gameplay), fija antes las interfaces en
 `src/render/types.ts` y `src/world/types.ts` y evita solapar escrituras.
+
+### Pausa obligatoria al cerrar un hito (0.2)
+
+La unidad de trabajo de 0.2 es el hito de [`docs/ROADMAP_0.2.md`](docs/ROADMAP_0.2.md). Al terminar
+uno:
+
+1. `npm run check` verde, QA manual y documentación actualizada.
+2. Commit atómico.
+3. Actualiza la tabla de estado y la bitácora del roadmap.
+4. **Para.** No empieces el hito siguiente hasta que el usuario diga explícitamente «continúa el
+   hito X» (o equivalente). Si la petición es ambigua, pregunta.
+
+No se encadenan hitos «porque parezca trivial»: la revisión intermedia es parte del flujo.
 
 ## 7. Estilo de código y de commits
 
@@ -164,6 +182,7 @@ Si una fase se puede paralelizar (p. ej. render y gameplay), fija antes las inte
 - [ ] Sin ficheros temporales, sin `node_modules/`/`dist/` añadidos, sin cambios fuera de alcance.
 - [ ] Commit convencional hecho (o cambios comunicados al Lead si no eres quien commitea).
 - [ ] Dudas y contradicciones anotadas como pendientes, no resueltas en silencio.
+- [ ] Si has cerrado un hito de 0.2: has parado y pedido revisión, sin empezar el siguiente.
 
 ## 9. Si encuentras una contradicción o una ambigüedad
 

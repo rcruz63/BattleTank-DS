@@ -29,6 +29,11 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
   desbloqueada más alta, pero ya no es una vía única. `createGame` acepta una progresión inyectable
   para tests/QA.
 
+- Hoja de ruta 0.2 en `docs/ROADMAP_0.2.md`: propuesta de evolución «caza» con objetivos de misión,
+  mapa amplio, IA de patrulla/desalerta y paisaje; hitos B → D → E → F → G, criterios de aceptación,
+  decisiones pendientes y **pausa obligatoria al cerrar cada hito**. No modifica `PLAN.md` ni el
+  alcance aprobado de 0.1.0; queda pendiente de aprobación.
+
 ### Cambiado
 
 - La puntería con ratón se mapea por ángulo con la focal de la cámara: la retícula sigue al cursor

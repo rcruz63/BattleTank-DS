@@ -194,17 +194,18 @@ el navegador bloquea el almacenamiento, el juego debe seguir funcionando sin per
 
 ## Documentación
 
-| Documento                                      | Propósito                                                                                                  |
-| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| [`docs/PLAN.md`](docs/PLAN.md)                 | Plan aprobado: alcance, arquitectura, fases y criterios de aceptación. Es la fuente de verdad del alcance. |
-| [`docs/STATUS.md`](docs/STATUS.md)             | Estado vivo: hecho, en curso, pendiente, deuda técnica y cómo retomar.                                     |
-| [`docs/GAME_DESIGN.md`](docs/GAME_DESIGN.md)   | Diseño de juego: bucle, controles, HUD, coberturas, pickups, enemigos, misiones, balance.                  |
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Módulos, contratos entre capas, flujo por frame y pipeline pseudo-3D.                                      |
-| [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)   | Normas de código, ESLint, git, changelog, definición de terminado y plantillas.                            |
-| [`docs/DECISIONS.md`](docs/DECISIONS.md)       | ADRs cortos: decisiones tomadas, porqué y consecuencias.                                                   |
-| [`docs/TESTING.md`](docs/TESTING.md)           | Estrategia de pruebas, convenciones y checklist manual de QA.                                              |
-| [`AGENTS.md`](AGENTS.md)                       | Cómo retomar el proyecto (humano o IA): orden de lectura, comandos y límites.                              |
-| [`CHANGELOG.md`](CHANGELOG.md)                 | Historial de cambios por versión y feature (Keep a Changelog, en español).                                 |
+| Documento                                      | Propósito                                                                                                        |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| [`docs/PLAN.md`](docs/PLAN.md)                 | Plan aprobado: alcance, arquitectura, fases y criterios de aceptación. Es la fuente de verdad del alcance.       |
+| [`docs/ROADMAP_0.2.md`](docs/ROADMAP_0.2.md)   | Propuesta 0.2: visión de caza, objetivos de misión, hitos, criterios y pausa por hito (pendiente de aprobación). |
+| [`docs/STATUS.md`](docs/STATUS.md)             | Estado vivo: hecho, en curso, pendiente, deuda técnica y cómo retomar.                                           |
+| [`docs/GAME_DESIGN.md`](docs/GAME_DESIGN.md)   | Diseño de juego: bucle, controles, HUD, coberturas, pickups, enemigos, misiones, balance.                        |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Módulos, contratos entre capas, flujo por frame y pipeline pseudo-3D.                                            |
+| [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)   | Normas de código, ESLint, git, changelog, definición de terminado y plantillas.                                  |
+| [`docs/DECISIONS.md`](docs/DECISIONS.md)       | ADRs cortos: decisiones tomadas, porqué y consecuencias.                                                         |
+| [`docs/TESTING.md`](docs/TESTING.md)           | Estrategia de pruebas, convenciones y checklist manual de QA.                                                    |
+| [`AGENTS.md`](AGENTS.md)                       | Cómo retomar el proyecto (humano o IA): orden de lectura, comandos y límites.                                    |
+| [`CHANGELOG.md`](CHANGELOG.md)                 | Historial de cambios por versión y feature (Keep a Changelog, en español).                                       |
 
 ## Normas de commits y changelog
 

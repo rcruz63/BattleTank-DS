@@ -1,25 +1,31 @@
 # Estado del proyecto — BattleTank-DS
 
-> **Actualizado:** 2026-11-04 · **Fase actual:** pulido post-0.1.0 — **bloques A y A.1 cerrados**
-> **Último commit:** `fix(ux): selector de misión y aparición justa de enemigos`
+> **Actualizado:** 2026-11-06 · **Fase actual:** 0.1.0 entregada y pulida (A/A.1); **propuesta 0.2 pendiente de aprobación**
+> **Último commit:** `docs(plan): hoja de ruta 0.2 y pausa por hito`
 >
 > Este fichero es el punto de entrada para retomar el proyecto, sea otra persona, otro chat u
 > otro modelo. Se actualiza en **cada commit**. La verdad sobre el alcance está en el plan.
 
 ## Cómo retomar
 
-1. Lee [`docs/PLAN.md`](PLAN.md) (alcance y fases) y este estado.
+1. Lee [`docs/PLAN.md`](PLAN.md) (alcance y fases), este estado y, si vas a trabajar en 0.2,
+   [`docs/ROADMAP_0.2.md`](ROADMAP_0.2.md) (propuesta: hito activo y pausa obligatoria).
 2. `npm install` y `npm run check` para confirmar que la base está sana.
 3. `npm run dev` y abre `http://localhost:5273`.
 4. Lee «Incidencias conocidas» antes de elegir tarea: el release `0.1.0` está preparado y los bloques
-   A/A.1 de pulido post-entrega están cerrados; quedan la QA manual de oído, el tag `v0.1.0` y los
-   bloques B/C de pulido. Audio (10), campaña (9), HUD/radar (8), pickups (7), blindaje direccional
-   (7.5), `BUG-001` (6.6) y `BUG-002` (bloque A) ya están cerrados.
+   A/A.1 de pulido post-entrega están cerrados; quedan la QA manual de oído, el tag `v0.1.0` y la
+   aprobación/ejecución de la propuesta 0.2. Audio (10), campaña (9), HUD/radar (8), pickups (7),
+   blindaje direccional (7.5), `BUG-001` (6.6) y `BUG-002` (bloque A) ya están cerrados.
 5. Sigue el flujo de [`docs/DEVELOPMENT.md`](DEVELOPMENT.md): tests → `npm run check` → changelog
    → estado → commit.
 
 ## Hecho
 
+- [x] **Propuesta 0.2 documentada (2026-11-06).** Hoja de ruta
+      [`docs/ROADMAP_0.2.md`](ROADMAP_0.2.md) con visión de caza, objetivos de misión, hitos
+      B (sensación) → D (objetivos) → E (prototipo caza) → F (paisaje/contenido) → G (spike de
+      alturas, opcional), criterios de aceptación, decisiones pendientes, normas y **pausa
+      obligatoria al cerrar cada hito**. No modifica `PLAN.md`; queda pendiente de aprobación.
 - [x] **Pulido post-0.1.0 — bloque A.1: selector de misión y aparición justa (2026-11-04).** El
       briefing tiene un selector de misión con `1/2/3` (solo desbloqueadas) que permite cambiar la
       misión sin borrar la progresión; `createGame` admite progresión inyectable para tests/QA. La
@@ -157,9 +163,9 @@
 
 ## En curso
 
-- **Ninguno.** Bloques A y A.1 cerrados y pendientes de la revisión del usuario. Siguiente:
-  **bloque B** (sensación de movimiento, feedback de colisión, audio de motor y legibilidad de
-  barras/radar), tras la pausa acordada después de cada bloque.
+- **Ninguno.** Bloques A y A.1 cerrados. La **propuesta 0.2** está documentada y pendiente de
+  aprobación; si se aprueba, el siguiente hito es **B — sensación y legibilidad**. No se empieza
+  hasta que el usuario lo pida expresamente («continúa el hito B»).
 
 ## Incidencias conocidas
 
@@ -190,14 +196,31 @@
 
 ### Pulido post-0.1.0 (acordado el 2026-11-04)
 
-Pausa después de cada bloque para revisar la evolución con el usuario.
+Pausa después de cada bloque para revisar la evolución con el usuario. Los bloques B y C se
+integran en la propuesta 0.2: B es el hito B (sensación y legibilidad) y C se absorbe en el
+hito E (balance de la caza).
 
-| Bloque | Contenido                                                                                                                                                                            | Estado                   |
-| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------ |
-| A      | Claridad de combate y onboarding: marca de impacto, dirección del daño, cañonazo enemigo, recarga enemiga visible, buffer de disparo, puntería 1:1 y briefing con controles/blindaje | **Cerrado** (2026-11-04) |
-| A.1    | Selector de misión en el briefing y aparición justa de enemigos (sin LOS inicial, distancia mínima por misión y pesados en los spawns lejanos)                                       | **Cerrado** (2026-11-04) |
-| B      | Sensación y legibilidad: inercia/aceleración, feedback de colisión, motor ligado a la velocidad real, barras/radar y audio direccional                                               | Pendiente de revisión    |
-| C      | Dificultad y balance: radio de alerta, escalado de misión 2/3, TTK frontal y pickups; validar con simulación headless                                                                | Pendiente de revisión    |
+| Bloque | Contenido                                                                                                                                                                            | Estado                                      |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------- |
+| A      | Claridad de combate y onboarding: marca de impacto, dirección del daño, cañonazo enemigo, recarga enemiga visible, buffer de disparo, puntería 1:1 y briefing con controles/blindaje | **Cerrado** (2026-11-04)                    |
+| A.1    | Selector de misión en el briefing y aparición justa de enemigos (sin LOS inicial, distancia mínima por misión y pesados en los spawns lejanos)                                       | **Cerrado** (2026-11-04)                    |
+| B      | Sensación y legibilidad: inercia/aceleración, feedback de colisión, motor ligado a la velocidad real, barras/radar y audio direccional                                               | **Hito B de 0.2** (pendiente de aprobación) |
+| C      | Dificultad y balance: radio de alerta, escalado de misión 2/3, TTK frontal y pickups; validar con simulación headless                                                                | **Se absorbe en el hito E de 0.2**          |
+
+## 0.2 «Caza» (propuesta, pendiente de aprobación)
+
+Detalle, alcance cerrado y criterios en [`docs/ROADMAP_0.2.md`](ROADMAP_0.2.md). Resumen:
+
+| Hito | Contenido                                                                                             | Estado                  |
+| ---- | ----------------------------------------------------------------------------------------------------- | ----------------------- |
+| B    | Sensación y legibilidad: inercia/aceleración, motor, colisión, barras/radar                           | Pendiente de aprobación |
+| D    | Objetivos de misión, salida/extracción, HUD, marcadores y selector escalable                          | Pendiente               |
+| E    | Prototipo «Caza»: mapa amplio, patrullas, visión/oído, desalerta, radar limitado y una misión de caza | Pendiente               |
+| F    | Paisaje (setos/taludes), 6–8 misiones con objetivos, puntuación y contenido                           | Pendiente               |
+| G    | Spike de alturas reales (opcional, no comprometido)                                                   | No iniciado             |
+
+**Regla de parada:** al cerrar cada hito se actualiza este estado/bitácora, se commitea y **se
+para** para revisión. No se encadena el siguiente sin petición explícita del usuario.
 
 ## Deuda técnica registrada
 
@@ -240,7 +263,10 @@ Pausa después de cada bloque para revisar la evolución con el usuario.
   headless con capturas del briefing con controles/blindaje, retícula desplazada junto al cursor,
   arco direccional de daño, barra de recarga enemiga y ausencia de marca de impacto falsa. Sin
   errores de consola.
-- **Flujo de trabajo acordado con el usuario:** pausa al cerrar cada fase para revisión/intervención. Se retoma con «continúa la fase N» o «continúa el bloque N».
+- **Flujo de trabajo acordado con el usuario:** pausa al cerrar cada fase/hito para
+  revisión/intervención. Se retoma con «continúa la fase N», «continúa el bloque N» o «continúa el
+  hito X»; en 0.2 la unidad es el hito de [`docs/ROADMAP_0.2.md`](ROADMAP_0.2.md) y no se encadena
+  ninguno sin petición explícita.
 - **Cambios aprobados 2026-10-27:** corregir `BUG-001` (6.6) y añadir blindaje direccional/flanqueo (7.5). Registrados en `PLAN.md` §2/§12 y `DECISIONS.md` ADR-009. Bloques 6.6/7.5 y fases 7, 8, 9 y 10 cerrados; siguiente: pulido/entrega (fase 11).
 - **QA del bloque 6.6:** además de los tests de regresión, se condujo el juego real en Chrome headless vía CDP (sin dependencias nuevas) para avanzar contra un enemigo: el jugador se detiene a 2,9 m (suma de radios 2,75 m + margen 0,15 m) y no lo cruza.
 - **QA de la fase 7:** se recogieron los tres pickups en Chrome headless vía CDP (botiquín de 40 a 70 PV, mejora de 100 a 120 de vida máxima, potencia con recarga de 1,56 s) y se verificaron con capturas el icono en el mundo, el aviso flotante y la línea de estado.
