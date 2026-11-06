@@ -30,9 +30,13 @@ introduce cada feature; ver [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).
   para tests/QA.
 
 - Hoja de ruta 0.2 en `docs/ROADMAP_0.2.md`: propuesta de evolución «caza» con objetivos de misión,
-  mapa amplio, IA de patrulla/desalerta y paisaje; hitos B → D → E → F → G, criterios de aceptación,
-  decisiones pendientes y **pausa obligatoria al cerrar cada hito**. No modifica `PLAN.md` ni el
-  alcance aprobado de 0.1.0; queda pendiente de aprobación.
+  mapa amplio, IA de patrulla/desalerta y paisaje; hitos B → D → E → F → G → H (campaña larga
+  posterior), criterios de aceptación, normas y **pausa obligatoria al cerrar cada hito**.
+  Decisiones del usuario fijadas el 2026-11-06: 8 min por misión, salida obligatoria solo si es
+  objetivo, mata-todos solo tutorial, sigilo por visión (el motor no delata; los disparos sí),
+  setos/niebla suficientes para 0.2, alturas opcionales, campaña larga posterior y sin plazo. No
+  modifica `PLAN.md` ni el alcance aprobado de 0.1.0; el arranque del hito B sigue pendiente de
+  confirmación.
 
 ### Cambiado
 

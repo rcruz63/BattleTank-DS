@@ -1,7 +1,8 @@
 # Hoja de ruta 0.2 — «Caza» (propuesta)
 
-> **Estado:** propuesta de trabajo, **pendiente de aprobación del usuario**. No modifica
-> [`PLAN.md`](PLAN.md) —la fuente de verdad del alcance aprobado de 0.1.0— ni compromete fechas.
+> **Estado:** propuesta de trabajo **revisada con las decisiones del usuario (2026-11-06)**;
+> pendiente de confirmación para arrancar el hito B. No modifica [`PLAN.md`](PLAN.md) —la fuente de
+> verdad del alcance aprobado de 0.1.0— ni compromete fechas.
 > **Base:** 0.1.0 preparada + bloques A y A.1 cerrados (commits `d1fd5f6` y `a6775fb`), 239 tests.
 > **Actualizado:** 2026-11-06.
 >
@@ -59,44 +60,46 @@ pesado. La 0.1.0 no se rompe: queda como modo arcade/tutorial y conserva su tag.
 
 ### Pilares de 0.2
 
-1. **Buscar, decidir, golpear.** La información es el recurso escaso: rutas, coberturas, ruido y
-   contacto tardío. El radar deja de ser un mapa.
+1. **Buscar, decidir, golpear.** La información es el recurso escaso: rutas, coberturas, líneas de
+   visión y contacto tardío. Los disparos se oyen; el ruido del motor propio no delata.
 2. **Objetivos por encima de mata-todos.** Cada misión declara qué hay que hacer; eliminar enemigos
-   es una herramienta, no la condición de victoria por defecto.
+   es una herramienta, no la condición de victoria por defecto. El mata-todos queda para el tutorial.
 3. **Tanque con peso.** Inercia, motor, colisión y audio coherentes; conducir y maniobrar importa.
-4. **Campaña extensible por datos.** 6–8 misiones con verbos variados; añadir una misión debe ser
-   datos + tests, no programar un sistema.
+4. **Campaña extensible por datos.** La campaña larga (6–8+) se abordará en una fase posterior
+   (hito H); en 0.2 se deja el sistema listo para añadir misiones como datos + tests.
 5. **Legibilidad y rendimiento.** 60 fps, feedback claro, sin depender solo del color y sin
    desvelar el escenario.
 
 ### Fuera de alcance de 0.2 (salvo aprobación explícita)
 
 Multijugador, móvil/táctil, gamepad, assets externos, dependencias de runtime, editor de mapas,
-localización, campaña de más de 8 misiones, guardado a mitad de partida, alturas reales del terreno
-antes del hito G (spike) y cualquier cambio de `PLAN.md` sin autorización.
+localización, la campaña larga de 6–8+ misiones (hito H, posterior a 0.2), guardado a mitad de
+partida, alturas reales del terreno antes del hito G (spike) y cualquier cambio de `PLAN.md` sin
+autorización.
 
 ---
 
 ## 3. Fusión: qué se conserva, qué cambia y qué se aparca
 
-| Pieza previa                                           | Decisión en 0.2                                                                                                                                                                                                                       |
-| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Bloque A (claridad de combate)                         | **Se conserva.** Es la base de legibilidad; en mapas amplios hace aún más falta.                                                                                                                                                      |
-| Bloque A.1 (aparición justa y selector)                | **Se conserva.** El contacto tardío y la selección de misión son prerrequisitos. El selector 1/2/3 se sustituye por una lista escalable en el hito D.                                                                                 |
-| Bloque B (inercia, colisión, motor, barras/radar)      | **Se hace como hito B.** Independiente del enfoque y necesario para la sensación de caza.                                                                                                                                             |
-| Bloque C (balance de misión 2/3, TTK, radio de alerta) | **Se absorbe en el hito E.** No se recalibra dos veces el mismo combate; las palancas siguen en `config/`.                                                                                                                            |
-| «Mata a todos»                                         | Pasa a ser **un tipo de objetivo** para tutoriales o misiones concretas.                                                                                                                                                              |
-| Mapa pequeño y combate inmediato                       | Se sustituye en el hito E por mapa amplio, patrullas y contacto tardío.                                                                                                                                                               |
-| Radar omnisciente de 45 m                              | Se rediseña en E: contactos alertados, en movimiento, disparando o última posición conocida.                                                                                                                                          |
-| Tres misiones actuales                                 | Decisión pendiente: adaptarlas como prólogo/tutorial o dejarlas como «clásico». Por defecto: **una sola campaña de 6–8 misiones**, con las tres primeras reescritas como tutorial. El 0.1.0 sigue intacto en la historia y en su tag. |
-| Terreno con alturas                                    | **Aparcado** al hito G; primero setos/taludes y niebla en F.                                                                                                                                                                          |
+| Pieza previa                                           | Decisión en 0.2                                                                                                                                                                     |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bloque A (claridad de combate)                         | **Se conserva.** Es la base de legibilidad; en mapas amplios hace aún más falta.                                                                                                    |
+| Bloque A.1 (aparición justa y selector)                | **Se conserva.** El contacto tardío y la selección de misión son prerrequisitos. El selector 1/2/3 se sustituye por una lista escalable en el hito D.                               |
+| Bloque B (inercia, colisión, motor, barras/radar)      | **Se hace como hito B.** Independiente del enfoque y necesario para la sensación de caza.                                                                                           |
+| Bloque C (balance de misión 2/3, TTK, radio de alerta) | **Se absorbe en el hito E.** No se recalibra dos veces el mismo combate; las palancas siguen en `config/`.                                                                          |
+| «Mata a todos»                                         | **Solo tutorial (misión 1)** y tipo de objetivo; no será el defecto de la campaña.                                                                                                  |
+| Mapa pequeño y combate inmediato                       | Se sustituye en el hito E por mapa amplio, patrullas y contacto tardío.                                                                                                             |
+| Radar omnisciente de 45 m                              | Se rediseña en E: contactos alertados, en movimiento, disparando o última posición conocida.                                                                                        |
+| Tres misiones actuales                                 | Se conservan: la 1 como tutorial mata-todos y las 2–3 adaptadas a objetivos. La expansión a 6–8+ es el **hito H**, posterior a 0.2. El 0.1.0 queda intacto en la historia y su tag. |
+| Terreno con alturas                                    | **Aparcado** al hito G; en 0.2 setos/taludes y niebla. Solo se acomete si el sigilo y las rutas no quedan bien sin alturas.                                                         |
 
 ---
 
 ## 4. Hitos
 
 Cada hito tiene alcance cerrado, criterios de aceptación y un commit de cierre. **Al terminar, se
-para y se pide revisión.**
+para y se pide revisión.** No hay plazo: la calidad manda; los esfuerzos son orientativos y no se
+recorta alcance para cumplir una fecha.
 
 ### Hito B — Sensación y legibilidad (base)
 
@@ -143,8 +146,8 @@ extensible.
   designada), `reach` (zona de extracción) y `survive` (tiempo) si el alcance cabe; los tres
   primeros son obligatorios.
 - Estado de objetivos en `MissionSession`; `evaluateMission` deja de mirar solo `enemies.every(!alive)`.
-- La salida se activa al cumplir el objetivo principal; victoria al alcanzarla si la misión define
-  salida (configurable por datos).
+- La salida es un objetivo más: si la misión la declara como principal, es obligatoria; si no hay
+  salida, la victoria llega al cumplir los objetivos principales.
 - Objetivos opcionales con puntos; resumen y puntuación de misión adaptados.
 - HUD: lista de objetivos (principal + opcionales) con estado; la barra de avance pasa a medir
   objetivos cumplidos, no enemigos restantes. Aviso al completar objetivo.
@@ -153,15 +156,16 @@ extensible.
 - Briefing con objetivos y selector de misión escalable (lista con flechas/ENTER en lugar de solo
   `1/2/3`).
 - Una **misión de demostración** (misión 4 o una de las existentes) con «destruye X y sal por el
-  norte» para validar el flujo. No se reescribe la campaña entera todavía.
+  norte» para validar el flujo. La misión 1 se queda como tutorial mata-todos; no se reescribe la
+  campaña entera todavía.
 
-**Fuera:** mapa amplio, IA de patrulla, paisaje, contenido de 6–8 misiones, alturas.
+**Fuera:** mapa amplio, IA de patrulla, paisaje, expansión de campaña (hito H), alturas.
 
 **Criterios de aceptación**
 
 - [ ] Se puede definir por datos una misión con objetivo principal, opcional y salida.
-- [ ] La misión termina al cumplir el principal y salir; si se sale antes, no hay victoria (o se
-      avisa según la regla elegida).
+- [ ] Si la misión declara salida, es obligatoria; si no la declara, la victoria llega al cumplir
+      los objetivos principales. La misión 1 conserva el mata-todos como tutorial.
 - [ ] El HUD muestra los objetivos y su estado sin desvelar el mapa.
 - [ ] El radar y el mundo muestran la salida y el objetivo de forma legible y no solo por color.
 - [ ] La puntuación suma principal + opcionales + bajas; el resumen los muestra.
@@ -186,32 +190,35 @@ golpear y extraer.
 
 - Arena de **36–40 celdas** (144–160 m) para la misión de caza; densidad de obstáculos 8–10 %,
   niebla/distancia de dibujado ajustadas y presupuesto de caras verificado.
-- IA: patrulla con waypoints, cono de visión (±60°), oído (disparo y motor), pérdida de rastro y
-  desalerta tras 5–8 s sin contacto, investigación de última posición y vuelta a patrulla.
+- IA: patrulla con waypoints, cono de visión (±60°), **oído solo de disparos** (el motor propio no
+  delata; los cañonazos sí se oyen), pérdida de rastro y desalerta tras 5–8 s sin contacto,
+  investigación de última posición y vuelta a patrulla.
 - Radar rediseñado: contactos solo si están alertados, disparando, moviéndose o última posición
   conocida; sin visión a través de coberturas.
 - Reparto: 5–7 enemigos en 2–3 patrullas, un Tiger como objetivo, sin LOS inicial, distancias
   mínimas y pesados lejos (lo ya implementado se mantiene).
 - Pickups (4–6) en posiciones que obliguen a decidir ruta; caches opcionales con riesgo.
 - Misión «Caza al Tigre y sal por el norte»: matar al Tiger, opcional eliminar ligeros, extraer.
-  Duración objetivo 6–10 minutos.
+  Duración objetivo 8 minutos (rango 6–10).
 - Balance de combate para el nuevo ritmo: alcance de detección, radio de estampido, TTK, daño
   recibido, curación y puntuación.
 - HUD/UX: objetivos, brújula/radar de salida, avisos de alerta, sin mapa completo.
 
-**Fuera:** alturas reales, bocage completo, campaña de 6–8, menú completo, nuevas clases de enemigo.
+**Fuera:** alturas reales, bocage completo, expansión de campaña (hito H), menú completo, nuevas
+clases de enemigo.
 
 **Criterios de aceptación**
 
-- [ ] La misión se puede jugar de principio a fin en 6–10 minutos.
+- [ ] La misión se puede jugar de principio a fin en 6–10 minutos (objetivo 8).
 - [ ] Es posible evitar parte de la escolta y elegir ruta; el sigilo por ruptura de LOS funciona.
+- [ ] El mapa ofrece al menos dos aproximaciones viables al objetivo (no un pasillo único).
 - [ ] Huir es viable: la IA pierde el rastro y vuelve a patrullar.
 - [ ] El radar no revela el mapa ni a los enemigos no detectados.
 - [ ] El objetivo y la salida se leen sin ambigüedad.
 - [ ] 60 fps estables en la misión de caza; presupuesto de caras y operaciones dentro de lo medido.
-- [ ] Tests de patrulla, visión, oído, desalerta, radar y flujo de objetivos.
+- [ ] Tests de patrulla, visión, oído de disparos, desalerta, radar y flujo de objetivos.
 
-**Tests:** `systems/ai` (patrulla/visión/oído/desalerta), `world/generate`, `ui/radar`,
+**Tests:** `systems/ai` (patrulla/visión/oído de disparos/desalerta), `world/generate`, `ui/radar`,
 `systems/objectives`, `game/campaign`, `game/game`. **Docs:** `GAME_DESIGN`, `ARCHITECTURE`,
 `TESTING`, `BALANCE`/`DEPENDENCIAS` si aplica, `CHANGELOG`, `STATUS`, esta hoja.
 **Riesgo:** alto (mapa vacío, IA compleja, rendimiento, balance). **Esfuerzo:** 3–5 semanas.
@@ -220,28 +227,29 @@ golpear y extraer.
 
 ---
 
-### Hito F — Paisaje y contenido (0.2)
+### Hito F — Paisaje y cierre de 0.2
 
-**Objetivo:** convertir el prototipo en una campaña de 6–8 misiones con identidad visual y rutas
-reales, sin tocar todavía las alturas del terreno.
+**Objetivo:** consolidar el prototipo con identidad visual, rutas reales y las tres misiones
+actuales adaptadas a objetivos; la campaña larga queda para el hito H.
 
 **Alcance**
 
 - **Bocage**: setos, taludes y lindes como materiales/celdas procedurales que bloquean visión y
   canalizan rutas (sin altura de terreno); reducción de cajas genéricas.
 - Geometría/colores procedurales para distinguir seto, terraplén, bosquecillo y edificio; sin assets.
-- Campaña de 6–8 misiones con verbos variados (eliminar, destruir, recuperar, extraer, aguantar).
-- Reescribir las misiones 1–3 como prólogo/tutorial con objetivos; añadir 3–5 nuevas.
-- Objetivos opcionales, puntuación y récord por misión/campaña; resumen final.
+- Adaptar las misiones 1–3: misión 1 tutorial mata-todos; misiones 2–3 con objetivos (destruir,
+  cazar, extraer) y, si encaja, integrar la misión de caza del hito E como cuarta.
+- Objetivos opcionales, puntuación y récord; resumen final.
 - Selector de misión escalable y menú mínimo de campaña; ajustes de audio/sensibilidad si el
   playtest los pide.
 - QA completa, documentación final y tag `v0.2.0` cuando el usuario lo apruebe.
 
-**Fuera:** alturas reales, multijugador, móvil, assets, editor.
+**Fuera:** campaña larga (hito H), alturas reales, multijugador, móvil, assets, editor.
 
 **Criterios de aceptación**
 
-- [ ] 6–8 misiones jugables, cada una con objetivo principal y al menos una con opcional.
+- [ ] Las tres misiones actuales (y la de caza si se integra) se pueden jugar con sus objetivos.
+- [ ] La misión 1 conserva el mata-todos como tutorial; el resto no lo usa por defecto.
 - [ ] El paisaje crea rutas y ocultación sin convertirse en un laberinto.
 - [ ] La campaña se puede completar y reiniciar; progresión persistente correcta.
 - [ ] `npm run check` verde, QA manual completa, documentación sincronizada.
@@ -249,7 +257,7 @@ reales, sin tocar todavía las alturas del terreno.
 
 **Tests:** contrato de misiones, flujo de campaña, generación con setos, objetivos, selector, HUD,
 radar, audio. **Docs:** todas las de handoff. **Riesgo:** coste de contenido y de QA.
-**Esfuerzo:** 2–4 semanas. **Estado:** pendiente.
+**Esfuerzo:** 2–4 semanas (orientativo). **Estado:** pendiente.
 
 ---
 
@@ -261,6 +269,15 @@ radar, audio. **Docs:** todas las de handoff. **Riesgo:** coste de contenido y d
 proyectiles, renderer y presupuesto; informe de riesgos y coste. **No se fusiona sin aprobación.**
 **Criterio de decisión:** solo se acomete si E/F demuestran que la caza funciona y el usuario
 considera las alturas imprescindibles. **Estado:** no iniciado; fuera de 0.2 por defecto.
+
+---
+
+### Hito H — Campaña larga (fase posterior, no en 0.2)
+
+**Objetivo:** expandir la campaña a 6–8+ misiones cuando los sistemas de objetivos y caza estén
+probados. **Alcance:** datos de misiones, verbos variados, progresión, selector, puntuación,
+contenido y QA; sin sistemas nuevos salvo que un verbo lo exija. **Fuera:** 0.2. **Estado:** no
+iniciado; se planifica tras F y con aprobación.
 
 ---
 
@@ -279,11 +296,11 @@ optional: [{ kind: 'destroy', targetId: 'supply-cache', label: 'Destruye el sumi
 Reglas:
 
 - **Principal** obligatorio; **opcionales** suman puntos y pueden fallarse.
-- La **salida** se abre al cumplir los principales; si la misión no declara salida, la victoria
-  llega al cumplirlos.
+- La **salida** es un objetivo más: si la misión la declara como principal, es obligatoria; si no
+  hay salida, la victoria llega al cumplir los objetivos principales.
 - Progreso = objetivos principales cumplidos (no enemigos restantes).
 - Los marcadores usan forma + texto, no solo color.
-- El «mata a todos» queda como `eliminate` con `count = total`.
+- El «mata a todos» queda como `eliminate` con `count = total`, reservado al tutorial (misión 1).
 - El resumen de misión muestra objetivos, precisión, tiempo, daño y puntos.
 
 ## 6. IA de caza (diseño de referencia)
@@ -291,13 +308,19 @@ Reglas:
 Estados: `idle → patrol → alert/investigate → attack → search → return`.
 
 - **Visión:** cono horizontal (±60°), alcance por misión, LOS real.
-- **Oído:** disparo y motor; radio por misión; el jugador puede evitar el ruido.
+- **Oído:** solo disparos; el motor propio no delata (decisión del usuario, 2026-11-06). Sin tecla
+  de apagar motor.
 - **Memoria:** última posición conocida; sin LOS durante N segundos → search → return.
 - **Patrulla:** waypoints por grupos; no todos van a por el jugador a la vez.
+- **Rutas:** el mapa debe ofrecer al menos dos aproximaciones viables al objetivo; evitar pasillos
+  únicos que conviertan la caza en un embudo.
 - **Radar:** contactos solo con alerta, movimiento, disparo o última posición.
 - **Datos:** todos los rangos en `config/` (`balance.ts`, `missions.ts`); nada codificado en `systems`.
 
-## 7. Contenido de campaña (propuesta)
+## 7. Contenido (0.2 y fase posterior)
+
+En 0.2: misión 1 tutorial mata-todos, misiones 2–3 adaptadas a objetivos y la misión de caza del
+hito E como demostración. Las filas 4–8 son la **campaña larga del hito H**, fuera de 0.2.
 
 | #   | Misión                   | Objetivo principal                              | Opcional                 | Coste |
 | --- | ------------------------ | ----------------------------------------------- | ------------------------ | ----- |
@@ -312,23 +335,30 @@ Estados: `idle → patrol → alert/investigate → attack → search → return
 Añadir una misión debe ser **datos + test de contrato**, no un sistema nuevo. La excepción es un
 verbo nuevo (por ejemplo, escoltar), que exige diseño y tests propios.
 
-## 8. Decisiones pendientes
+## 8. Decisiones del usuario (2026-11-06)
 
-Mientras el usuario no diga lo contrario, se aplican estos supuestos y se anotan en `STATUS.md`:
+Estas decisiones sustituyen a los supuestos anteriores. Si cambian, se actualiza este documento
+antes de implementar. El arranque del hito B queda pendiente de confirmación.
 
-| Pregunta                           | Supuesto por defecto                                                           |
-| ---------------------------------- | ------------------------------------------------------------------------------ |
-| Duración objetivo por misión       | 6–10 min; 8 min como referencia                                                |
-| ¿La salida es obligatoria?         | Sí cuando la misión declara salida; si no, victoria al cumplir el principal    |
-| ¿Se conserva «mata a todos»?       | Sí, como tipo de objetivo/tutorial, no como defecto                            |
-| ¿Campaña nueva o reescribir las 3? | Una campaña de 6–8; las 3 pasan a tutorial/prologo; 0.1.0 queda en la historia |
-| Selector de misión                 | Lista con flechas/ENTER en D; los dígitos quedan como atajo si hay ≤9          |
-| Sigilo y ruido                     | Oído de motor y disparo; sin tecla de apagar motor en el primer prototipo      |
-| Radar                              | Solo contactos detectados/última posición; nada a través de coberturas         |
-| Tamaño de arena para caza          | 36–40 celdas (144–160 m) en E; el resto de misiones se adapta en F             |
-| Terreno con alturas                | No en 0.2; setos/taludes en F; spike G solo con aprobación                     |
-| Guardado a mitad de partida        | No; misiones de 6–10 min; revisar si el playtest lo hace frustrante            |
-| Cambios de `PLAN.md`               | Prohibidos sin autorización explícita; este documento es propuesta             |
+| Tema                         | Decisión                                                                                                                                     |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Duración objetivo por misión | **8 min** como referencia (rango 6–10)                                                                                                       |
+| Salida                       | Obligatoria **solo si forma parte del objetivo** de la misión; si no hay salida, victoria al cumplir el principal                            |
+| «Mata a todos»               | **Solo tutorial** (misión 1) y tipo de objetivo; no es el defecto de la campaña                                                              |
+| Campaña                      | Más larga (6–8+) en una **fase posterior** (hito H); 0.2 no la expande                                                                       |
+| Sigilo                       | **Solo visión y cobertura**; el ruido del motor propio no delata; los disparos sí se oyen. Sin apagar motor                                  |
+| Setos/niebla vs alturas      | Cualquiera vale; prioridad: que el sigilo sea posible y haya caminos alternativos. 0.2 setos/taludes/niebla; alturas solo si hacen falta (G) |
+| Tiempo y riesgo              | **Sin plazo**; la calidad por encima de la velocidad; el riesgo lo asume el usuario. Esfuerzos orientativos                                  |
+| Selector de misión           | Lista con flechas/ENTER en D; los dígitos quedan como atajo si hay ≤9                                                                        |
+| Radar                        | Solo contactos detectados/última posición; nada a través de coberturas                                                                       |
+| Tamaño de arena para caza    | 36–40 celdas (144–160 m) en E                                                                                                                |
+| Guardado a mitad de partida  | No; misiones de 6–10 min; revisar si el playtest lo hace frustrante                                                                          |
+| Cambios de `PLAN.md`         | Prohibidos sin autorización explícita; este documento es propuesta                                                                           |
+
+Si un hito no alcanza la calidad esperada, se para y se replantea; **no se recorta alcance por
+plazo**.
+
+---
 
 ## 9. Normas de trabajo (no se relajan)
 
@@ -359,17 +389,19 @@ Recordatorio de [`AGENTS.md`](../AGENTS.md) y [`DEVELOPMENT.md`](DEVELOPMENT.md)
 
 ## 10. Estado y bitácora
 
-| Hito                        | Estado                  | Commit | Notas                                  |
-| --------------------------- | ----------------------- | ------ | -------------------------------------- |
-| B — Sensación y legibilidad | Pendiente de aprobación | —      | Debe cerrarse antes de ampliar el mapa |
-| D — Objetivos y finales     | Pendiente               | —      | Puede empezar tras B                   |
-| E — Prototipo Caza          | Pendiente               | —      | Requiere D; el más arriesgado          |
-| F — Paisaje y contenido     | Pendiente               | —      | Requiere E                             |
-| G — Spike alturas           | No iniciado             | —      | Solo con aprobación                    |
+| Hito                        | Estado                                    | Commit | Notas                                                    |
+| --------------------------- | ----------------------------------------- | ------ | -------------------------------------------------------- |
+| B — Sensación y legibilidad | Decisiones fijadas; pendiente de arranque | —      | Debe cerrarse antes de ampliar el mapa                   |
+| D — Objetivos y finales     | Pendiente                                 | —      | Puede empezar tras B                                     |
+| E — Prototipo Caza          | Pendiente                                 | —      | Requiere D; el más arriesgado                            |
+| F — Paisaje y cierre 0.2    | Pendiente                                 | —      | 3 misiones adaptadas + paisaje; la campaña larga va en H |
+| G — Spike alturas           | No iniciado                               | —      | Solo con aprobación; no bloquea 0.2                      |
+| H — Campaña larga           | No iniciado                               | —      | Fase posterior a 0.2; 6–8+ misiones                      |
 
-| Fecha      | Hito | Sesión    | Resultado                                    | Commit |
-| ---------- | ---- | --------- | -------------------------------------------- | ------ |
-| 2026-11-06 | —    | Propuesta | Hoja de ruta creada; pendiente de aprobación | —      |
+| Fecha      | Hito | Sesión     | Resultado                                                                                                                                  | Commit |
+| ---------- | ---- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------ |
+| 2026-11-06 | —    | Propuesta  | Hoja de ruta creada; pendiente de aprobación                                                                                               | —      |
+| 2026-11-06 | —    | Decisiones | Decisiones del usuario incorporadas: 8 min, salida condicional, mata-todos tutorial, sigilo por visión, campaña larga posterior, sin plazo | —      |
 
 ## 11. Documentos relacionados
 
